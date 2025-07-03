@@ -1,11 +1,7 @@
-instance.zip
-ngrok Authtoken.txt
-requirements.txt
-static.zip
-templates.zip
 __pycache__/app.cpython-312.pyc
 __pycache__/models.cpython-312.pyc
 instance/mquest.db
 instance/mydb.sqlite3
 app_bk.py
-create_users copy.py
+selectDB.py
+test.md
