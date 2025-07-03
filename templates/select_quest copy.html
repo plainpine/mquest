@@ -1,0 +1,60 @@
+<!-- templates/select_quest.html -->
+{% extends "base.html" %}
+
+{% block title %}レベル選択{% endblock %}
+
+{% block content %}
+<h1>{{ level }} のクエストを選んでください</h1>
+
+{% set grouped_quests = {} %}
+{% for quest in quests %}
+  {% set _ = grouped_quests.setdefault(quest.title, []).append(quest) %}
+{% endfor %}
+
+<style>
+.quest-card {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px 0;
+  background-color: #f9f9f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 400px;
+}
+.quest-info {
+  font-size: 16px;
+}
+.button {
+  padding: 6px 14px;
+  background-color: #5c9edb;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+.button:hover {
+  background-color: #357ab8;
+}
+.back-button {
+  margin-top: 20px;
+  display: inline-block;
+}
+</style>
+
+{% for title, quest_list in grouped_quests.items() %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for quest in quest_list %}
+      <li>
+        ID: {{ quest.id }}
+        <a class="button" href="{{ url_for('quest_run', quest_id=quest.id) }}">開始</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endfor %}
+
+<a href="{{ url_for('select_level') }}" class="button back-button">レベル選択に戻る</a>
+{% endblock %}

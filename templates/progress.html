@@ -1,0 +1,33 @@
+<!-- templates/progress.html - 生徒の学習状況画面 -->
+{% extends "base.html" %}
+
+{% block title %}学習状況{% endblock %}
+
+{% block content %}
+<h1>📘 学習進捗状況</h1>
+
+<table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+        <tr>
+            <th>タイトル</th>
+            <th>レベル</th>
+            <th>全問正解数</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for title, level, count in cleared %}
+        <tr>
+            <td>{{ title }}</td>
+            <td>{{ level }}</td>
+            <td>{{ count }}</td>
+        </tr>
+        {% endfor %}
+        {% if not cleared %}
+        <tr><td colspan="3">まだ達成記録がありません。</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<br>
+<a href="{{ url_for('dashboard_student') }}" class="button">← ダッシュボードへ戻る</a>
+{% endblock %}

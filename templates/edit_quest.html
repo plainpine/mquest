@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}クエスト編集{% endblock %}
+
+{% block content %}
+<h2>クエスト編集</h2>
+
+<form method="post" action="{{ url_for('save_quest', quest_id=quest.id) }}">
+  <label>ID: {{ quest.id }}</label><br>
+  <label>タイトル:</label>
+  <input type="text" name="title" value="{{ quest.title }}" required><br>
+  <label>レベル:</label>
+  <input type="text" name="level" value="{{ quest.level }}" required><br><br>
+  <button type="submit">保存</button>
+</form>
+
+<hr>
+<h3>このクエストの問題一覧</h3>
+<form method="post">
+  <table border="1" cellpadding="8">
+    <tr>
+      <th></th>
+      <th>ID</th>
+      <th>種類</th>
+      <th>本文</th>
+    </tr>
+    {% for q in quest.questions %}
+    <tr>
+      <td><input type="radio" name="question_id" value="{{ q.id }}"></td>
+      <td>{{ q.id }}</td>
+      <td>{{ q.type }}</td>
+      <td>{{ q.text[:30] }}...</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <br>
+  <button formaction="{{ url_for('edit_question_action', quest_id=quest.id, question_id=question_id)}}" onclick="return validateQuestionSelection()" formmethod="post">編集</button>
+  <button formaction="{{ url_for('delete_question_action', quest_id=quest.id, question_id=question_id) }}" formmethod="post" onclick="return confirm('本当に削除しますか？');">削除</button>
+  <button formaction="{{ url_for('add_question', quest_id=quest.id) }}" formmethod="post">追加</button>
+</form>
+
+<script>
+function validateQuestionSelection() {
+  const questId = document.querySelector('input[name="question_id"]:checked');
+  if (!questId) {
+    alert("問題を選択してください！");
+    return false;
+  }
+  return true;
+}
+</script>
+<p><a href="{{ url_for('manage_quests') }}">← クエスト一覧に戻る</a></p>
+{% endblock %}

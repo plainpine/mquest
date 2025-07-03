@@ -1,0 +1,175 @@
+<!-- templates/group_learning.html -->
+{% extends "base.html" %}
+
+{% block title %}集合学習モード{% endblock %}
+
+{% block content %}
+<h2>集合学習モード - {{ quest.title }}（{{ quest.level }}）</h2>
+
+<form>
+  {% for question in questions %}
+    <div class="question-block" style="margin-bottom: 2rem;">
+      <div><strong>Q{{ loop.index }}:</strong></div>
+      <div class="markdown" data-content="{{ question.text | e }}"></div>
+      {% set q_index = loop.index0 %}
+
+      {% if question.type == 'choice' %}
+        <div class="choice-block">
+          {% for choice in question.choices %}
+            <div class="choice-option">
+              <span class="markdown" data-content="{{ choice | e }}"></span>
+            </div>
+          {% endfor %}
+        </div>
+
+      {% elif question.type == 'sort' %}
+        {% set parts = question.text.split('/') %}
+        <ul class="sortable" id="q{{ q_index }}_sortable" data-name="q{{ q_index }}">
+          {% for part in parts %}
+            {% set cleaned = part.strip() %}
+            {% if cleaned %}
+              <li class="sortable-item">{{ cleaned }}</li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+
+      {% elif question.type == 'numeric' %}
+        {% for ans in question.answers %}
+          <div class="numeric-block">
+            <label>{{ ans.label }}：</label>
+            <input type="text"
+                   class="numeric-input"
+                   data-qid="{{ q_index }}"
+                   readonly>
+          </div>
+        {% endfor %}
+        <div class="keypad" data-qid="{{ q_index }}">
+          {% for num in range(1, 10) %}
+            <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
+            {% if num % 3 == 0 %}<br>{% endif %}
+          {% endfor %}
+          <button type="button" class="key-btn" data-num="0">0</button>
+          <button type="button" class="key-btn" data-num="del">⌫</button>
+          <button type="button" class="key-btn" data-num="clear">C</button>
+        </div>
+      {% endif %}
+
+      <!-- 答え表示・隠すボタン -->
+      <div>
+        <button type="button" class="toggle-answer" data-index="{{ q_index }}">答え</button>
+        <div class="answer" id="answer-{{ q_index }}" style="display: none; margin-top: 0.5rem;">
+          <strong>正解：</strong>
+          {% if question.type == 'choice' %}
+            <span>{{ question.answer + 1 }}</span>
+          {% elif question.type == 'sort' %}
+            <span>{{ question.answer }}</span>
+          {% elif question.type == 'numeric' %}
+            {% for ans in question.answers %}
+              <div>{{ ans.label }}: {{ ans.answer }}</div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</form>
+
+<a href="{{ url_for('select_quest_by_title_level_admin', title=quest.title, level=quest.level) }}"
+   class="button secondary">クエスト選択に戻る</a>
+
+<!-- JS: Markdown・Sort・Numeric入力・答え表示 -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Markdown対応
+  document.querySelectorAll('.markdown').forEach(div => {
+    let md = div.getAttribute('data-content');
+    if (md) {
+      md = md.replace(/\\n/g, '\n');  // 改行の復元
+      div.innerHTML = marked.parse(md);
+    }
+  });
+
+  // 並び替え
+  document.querySelectorAll('.sortable').forEach(list => {
+    Sortable.create(list, { animation: 150 });
+  });
+
+  // 数値テンキー
+  let activeInput = null;
+  document.querySelectorAll('.numeric-input').forEach(input => {
+    input.addEventListener('focus', () => activeInput = input);
+    input.addEventListener('click', () => activeInput = input);
+  });
+  document.querySelectorAll('.keypad').forEach(keypad => {
+    const qid = keypad.dataset.qid;
+    keypad.querySelectorAll('.key-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!activeInput || activeInput.dataset.qid !== qid) return;
+        const num = btn.dataset.num;
+        if (num === 'del') activeInput.value = activeInput.value.slice(0, -1);
+        else if (num === 'clear') activeInput.value = '';
+        else activeInput.value += num;
+      });
+    });
+  });
+
+  // 答え表示・非表示
+  document.querySelectorAll('.toggle-answer').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.index;
+      const answer = document.getElementById(`answer-${idx}`);
+      const isVisible = answer.style.display === 'block';
+      answer.style.display = isVisible ? 'none' : 'block';
+      btn.textContent = isVisible ? '答え' : '隠す';
+    });
+  });
+});
+</script>
+
+<!-- MathJax (LaTeX数式サポート) -->
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+<style>
+  .choice-option {
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    display: flex;
+    align-items: center;
+    user-select: none;
+  }
+
+  .choice-option.selected {
+    background-color: #d0ebff;
+    border-color: #339af0;
+  }
+
+  .sortable-item {
+    list-style: none;
+    background: #f0f0f0;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: move;
+  }
+
+  .keypad .key-btn {
+    margin: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+  }
+</style>
+{% endblock %}
+

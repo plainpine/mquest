@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}生徒の管理{% endblock %}
+
+{% block content %}
+<h2>生徒の管理</h2>
+
+{% for student in students %}
+<div style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 2rem;">
+    <h3>{{ student.username + ": " + student.nickname}}</h3>
+
+    <h4>進捗状況</h4>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>タイトル</th>
+            <th>レベル</th>
+            <th>全問正解回数</th>
+        </tr>
+        {% for p in student.progress %}
+        <tr>
+            <td>{{ p.title }}</td>
+            <td>{{ p.level }}</td>
+            <td>{{ p.count }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h4>メダル取得数</h4>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>クエストID</th>
+            <th>挑戦回数（メダル数）</th>
+        </tr>
+        {% for m in student.medals %}
+        <tr>
+            <td>{{ m.quest_id }}</td>
+            <td>{{ m.count }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endfor %}
+
+<a href="{{ url_for('dashboard_admin') }}" class="button">管理者ダッシュボードに戻る</a>
+{% endblock %}

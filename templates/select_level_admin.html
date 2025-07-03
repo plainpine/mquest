@@ -1,0 +1,18 @@
+<!-- templates/select_level_admin.html -->
+{% extends "base.html" %}
+
+{% block title %}レベル選択{% endblock %}
+
+{% block content %}
+<h1>「{{ title }}」のレベルを選んでください</h1>
+
+<ul>
+  {% for level in levels %}
+    <li>
+      <a class="button" href="{{ url_for('select_quest_by_title_level_admin', title=title, level=level) }}">{{ level }}</a>
+    </li>
+  {% endfor %}
+</ul>
+
+<a class="button secondary" href="{{ url_for('select_title_admin') }}">タイトル選択に戻る</a>
+{% endblock %}
