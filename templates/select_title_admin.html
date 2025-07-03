@@ -1,0 +1,17 @@
+<!-- templates/select_title_admin.html -->
+{% extends "base.html" %}
+
+{% block title %}タイトル選択{% endblock %}
+
+{% block content %}
+<h1>クエストタイトルを選んでください</h1>
+
+<ul>
+  {% for t in titles %}
+    <li>
+      <a class="button" href="{{ url_for('select_level_admin', title=t) }}">{{ t }}</a>
+    </li>
+  {% endfor %}
+</ul>
+<a href="{{ url_for('dashboard_admin') }}" class="btn">ダッシュボードに戻る</a>
+{% endblock %}

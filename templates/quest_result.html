@@ -1,0 +1,31 @@
+<!-- templates/quest_result.html -->
+{% extends "base.html" %}
+
+{% block title %}クエスト結果{% endblock %}
+
+{% block content %}
+    <ul class="result-list">
+        {% for res in results %}
+            <li>
+                問題 {{ loop.index }}：
+                <!-- {% print(res.get("correct")) %} -->
+                {% if res.get("correct") is true %}
+                    <span class="correct">〇 正解</span>
+                {% else %}
+                    <span class="incorrect">× 不正解</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    {% if all_correct %}
+        <p style="color: green;">全問正解です！</p>
+        <a href="{{ url_for('dashboard_student') }}" class="btn">ダッシュボードに戻る</a>
+        <a href="{{ url_for('select_quest_by_title_level', title=quest.title, level=quest.level) }}"
+            class="button secondary">クエスト選択に戻る</a>
+    {% else %}
+        <p style="color: red;">満点でないため、再挑戦が必要です。</p>
+        <a href="{{ url_for('quest_run', quest_id=quest_id) }}" class="btn">再挑戦する</a>
+        <a href="{{ url_for('dashboard_student') }}" class="btn">ダッシュボードに戻る</a>
+    {% endif %}
+{% endblock %}

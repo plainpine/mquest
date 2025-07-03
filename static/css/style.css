@@ -1,0 +1,362 @@
+/* style.css - 基本レイアウトと色使い */
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: #f5f7fa;
+  color: #333333;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+header {
+  background-color: #3f51b5;
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 15px;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+nav a:hover {
+  color: #ffca28;
+}
+
+main {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+footer {
+  text-align: center;
+  padding: 15px 10px;
+  background-color: #3f51b5;
+  color: white;
+  margin-top: 40px;
+}
+
+h2 {
+  color: #3f51b5;
+  margin-top: 0;
+}
+
+h3 {
+  color: #303f9f;
+  margin-bottom: 10px;
+}
+
+ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+ul li {
+  background-color: #e8eaf6;
+  margin-bottom: 8px;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+ul li a {
+  background-color: #3f51b5;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+ul li a:hover {
+  background-color: #283593;
+}
+
+img {
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.login-form {
+  max-width: 400px;
+  margin: 80px auto;
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+
+.login-form h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #3f51b5;
+  text-align: center;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.login-form button {
+  width: 100%;
+  padding: 12px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-form button:hover {
+  background-color: #283593;
+}
+
+.login-form a {
+  display: block;
+  margin-top: 12px;
+  text-align: center;
+  color: #3f51b5;
+  text-decoration: none;
+}
+
+.login-form a:hover {
+  text-decoration: underline;
+}
+
+/* メダル表示 */
+.medal {
+  font-size: 1.4rem;
+  margin-right: 8px;
+}
+
+/* ボタン共通 */
+button,
+.btn {
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+/* 通常ボタンのスタイル（リンクボタンなど） */
+.btn {
+  background-color: #3498db;
+  color: #fff;
+}
+
+.btn:hover {
+  background-color: #2980b9;
+}
+
+/* プライマリーボタンのカスタムバージョン */
+.btn-primary {
+  background-color: #3f51b5;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #283593;
+}
+
+/* 問題表示エリア */
+.question-area {
+  background-color: #e3f2fd;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+.answer-area {
+  margin-bottom: 20px;
+}
+
+/* 4択問題選択肢 */
+.choice-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.choice-list li {
+  background-color: white;
+  border: 1px solid #3f51b5;
+  margin-bottom: 10px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.choice-list li:hover {
+  background-color: #c5cae9;
+}
+
+/* 選択時の色変化 */
+.choice-list li.selected {
+  background-color: #3f51b5;
+  color: white;
+}
+
+/* 並び替え用ドラッグエリア（簡易） */
+.drag-area {
+  background-color: #f0f4c3;
+  padding: 15px;
+  border-radius: 6px;
+  min-height: 60px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+  display: flex;
+  gap: 10px;
+}
+
+/* 結果表示 */
+.result-correct {
+  color: #388e3c;
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.result-incorrect {
+  color: #d32f2f;
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 600px) {
+  main {
+    margin: 10px;
+    padding: 15px;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  nav a {
+    margin-left: 0;
+    margin-right: 10px;
+  }
+
+  .login-form {
+    margin: 40px 10px;
+  }
+
+  .question-block {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+  }
+
+}
+
+/* 並び替え問題用 */
+.sortable {
+  list-style-type: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  border: 1px dashed #ccc;
+  min-height: 40px;
+}
+
+.sortable-item {
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: move;
+  user-select: none;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #f5f5f5;
+  padding: 1rem 2rem;
+}
+
+h1, h2 {
+  color: #333;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  margin-bottom: 0.8rem;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #4CAF50;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.button:hover {
+  background-color: #45a049;
+}
+
+.button.secondary {
+  background-color: #ccc;
+  color: black;
+}
+
+.button.secondary:hover {
+  background-color: #aaa;
+}

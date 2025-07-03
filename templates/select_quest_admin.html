@@ -1,0 +1,19 @@
+<!-- templates/select_quest_admin.html -->
+{% extends "base.html" %}
+
+{% block title %}クエスト選択{% endblock %}
+
+{% block content %}
+<h1>{{ title }} / {{ level }} のクエストを選んでください</h1>
+
+<ul>
+  {% for quest in quests %}
+    <li>
+      ID: {{ quest.id }}
+      <a class="button" href="{{ url_for('quest_run_group', quest_id=quest.id) }}">開始</a>
+    </li>
+  {% endfor %}
+</ul>
+
+<a class="button secondary" href="{{ url_for('select_level_admin', title=title) }}">レベル選択に戻る</a>
+{% endblock %}

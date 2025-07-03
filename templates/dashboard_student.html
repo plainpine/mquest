@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}生徒ダッシュボード{% endblock %}
+
+{% block content %}
+<h2>ようこそ、{{ session['nickname'] }}さん</h2>
+<div class="dashboard-buttons" style="display: flex; flex-direction: column; gap: 1rem; max-width: 300px; margin: 2rem auto;">
+    <a href="{{ url_for('select_title') }}" class="button" style="padding: 1rem; background-color: #4CAF50; color: white; text-align: center; text-decoration: none; border-radius: 8px;">クエストに挑戦する</a>
+    <a href="{{ url_for('medals') }}" class="button" style="padding: 1rem; background-color: #2196F3; color: white; text-align: center; text-decoration: none; border-radius: 8px;">メダルを見る</a>
+    <a href="{{ url_for('progress') }}" class="button" style="padding: 1rem; background-color: #f57c00; color: white; text-align: center; text-decoration: none; border-radius: 8px;">学習状況</a>
+</div>
+{% endblock %}
+

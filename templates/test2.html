@@ -1,0 +1,39 @@
+<html>
+<head>
+  <style>
+    .keypad button {
+      width: 2em;
+      height: 2em;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <input type="text" class="numeric-input" data-qid="0"><br>
+  <div class="keypad" data-qid="0">
+    <button class="key-btn" data-num="1">1</button>
+    <button class="key-btn" data-num="2">2</button>
+    <button class="key-btn" data-num="3">3</button>
+  </div>
+
+  <script>
+    let lastFocusedInput = null;
+
+    document.querySelectorAll('.numeric-input').forEach(input => {
+      input.addEventListener('focus', () => {
+        lastFocusedInput = input;
+      });
+    });
+
+    document.querySelectorAll('.keypad').forEach(keypad => {
+      const qid = keypad.dataset.qid;
+      keypad.querySelectorAll('.key-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!lastFocusedInput || lastFocusedInput.dataset.qid !== qid) return;
+          lastFocusedInput.value += btn.dataset.num;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

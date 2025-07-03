@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}子どもの学習状況{% endblock %}
+
+{% block content %}
+<h2>子どもの学習状況</h2>
+
+{% if student_data|length == 0 %}
+<p>学習状況を表示できる子どもが登録されていません。</p>
+{% else %}
+<table border="1" cellpadding="5">
+  <tr>
+    <th>ニックネーム</th>
+    <th>ユーザー名</th>
+    <th>メダル数</th>
+    <th>学習履歴</th>
+  </tr>
+  {% for data in student_data %}
+    <tr>
+      <td>{{ data.student.nickname or "未設定" }}</td>
+      <td>{{ data.student.username }}</td>
+      <td>{{ data.medal_count }}</td>
+      <td>
+        {% if data.histories %}
+          <ul>
+            {% for h in data.histories %}
+              <li>
+                クエスト{{ h.quest_id }}：{{ "✔" if h.correct else "✖" }}（{{ h.attempts }}回）
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          試行なし
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

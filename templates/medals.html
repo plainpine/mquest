@@ -1,0 +1,43 @@
+<!-- templates/medals.html - 生徒のメダル表示画面 -->
+{% extends "base.html" %}
+
+{% block title %}メダル一覧{% endblock %}
+
+{% block content %}
+<h1>🏅 メダル一覧</h1>
+
+<table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Quest ID</th>
+            <th>タイトル</th>
+            <th>挑戦回数</th>
+            <th>メダル</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for quest_id, title, attempts in attempts %}
+        <tr>
+            <td>{{ quest_id }}</td>
+            <td>{{ title }}</td>
+            <td>{{ attempts }}</td>
+            <td>
+                {% if attempts == 1 %}
+                    🥇 金
+                {% elif attempts <= 3 %}
+                    🥈 銀
+                {% else %}
+                    🥉 銅
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        {% if not attempts %}
+        <tr><td colspan="4">まだ挑戦記録がありません。</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<br>
+<a href="{{ url_for('dashboard_student') }}" class="button">← ダッシュボードへ戻る</a>
+{% endblock %}

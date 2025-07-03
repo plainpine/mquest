@@ -1,0 +1,45 @@
+<!-- templates/list_quests.html -->
+{% extends "base.html" %}
+{% block title %}Quest一覧{% endblock %}
+{% block content %}
+<h2>Quest一覧</h2>
+<form method="post" action="{{ url_for('handle_quest_action') }}" onsubmit="return validateQuestSelection()">
+  <div style="margin-bottom: 1rem;">
+    <button type="submit" name="action" value="add">追加</button>
+    <button type="submit" name="action" value="edit">編集</button>
+    <button type="submit" name="action" value="delete" onclick="return confirm('本当に削除しますか？')">削除</button>
+  </div>
+  <table border="1" cellpadding="8">
+    <thead>
+      <tr>
+        <th>選択</th>
+        <th>ID</th>
+        <th>タイトル</th>
+        <th>レベル</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for quest in quests %}
+      <tr>
+        <td><input type="radio" name="quest_id" value="{{ quest.id }}"></td>
+        <td>{{ quest.id }}</td>
+        <td>{{ quest.title }}</td>
+        <td>{{ quest.level }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
+
+<script>
+function validateQuestSelection() {
+  const questId = document.querySelector('input[name="quest_id"]:checked');
+  if (!questId) {
+    alert("クエストを選択してください！");
+    return false;
+  }
+  return true;
+}
+</script>
+{% endblock %}
+

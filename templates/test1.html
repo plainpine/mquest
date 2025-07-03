@@ -1,0 +1,29 @@
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    .sortable-item {
+      background: #eee;
+      padding: 10px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      cursor: move;
+    }
+  </style>
+</head>
+<body>
+  <ul class="sortable" id="test_sortable">
+    <li class="sortable-item">A</li>
+    <li class="sortable-item">B</li>
+    <li class="sortable-item">C</li>
+  </ul>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      Sortable.create(document.getElementById('test_sortable'), {
+        animation: 150
+      });
+    });
+  </script>
+</body>
+</html>

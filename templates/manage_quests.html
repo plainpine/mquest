@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}問題の管理{% endblock %}
+
+{% block content %}
+<h2>問題の管理</h2>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>タイトル</th>
+      <th>レベル</th>
+      <th>問題数</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for quest in quests %}
+    <tr>
+      <td>{{ quest.id }}</td>
+      <td>{{ quest.title }}</td>
+      <td>{{ quest.level }}</td>
+      <td>{{ quest.questions|length }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">問題が登録されていません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
