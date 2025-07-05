@@ -10,6 +10,7 @@
 </header>
 <body>
     <form class="login-form" method="POST">
+
         <h2>ログイン</h2>
         {% if error %}
             <script>
@@ -23,6 +24,42 @@
         <input type="password" id="password" name="password" required><br><br>
 
         <button type="submit">ログイン</button>
+
+        <style>
+        #qrcode {
+            width: 128px;
+            height: 128px;
+            display: block;
+            margin-top: 10px;
+        }
+
+        /* ↓ QRコード本体に直接適用 */
+        #qrcode img,
+        #qrcode canvas {
+            width: 128px !important;
+            height: 128px !important;
+            border-radius: 0 !important;
+            display: block;
+        }
+        </style>
+
+        <!-- QRコード表示用 -->
+        <h3>このログイン画面のURLをQRコードで表示</h3>
+        <div id="qrcode"></div>
+
+        <!-- QRコードライブラリの読み込み -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+        <!-- QRコード生成スクリプト -->
+        <script>
+            const currentUrl = window.location.href;
+            const qrcode = new QRCode(document.getElementById("qrcode"), {
+                text: currentUrl,
+                width: 128,
+                height: 128
+            });
+        </script>
+
     </form>
     <footer>
         &copy; 2025 北神まなびあ

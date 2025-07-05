@@ -1,3 +1,4 @@
+<!-- File: templates/edit_quest.html -->
 {% extends "base.html" %}
 
 {% block title %}クエスト編集{% endblock %}
@@ -49,5 +50,5 @@ function validateQuestionSelection() {
   return true;
 }
 </script>
-<p><a href="{{ url_for('manage_quests') }}">← クエスト一覧に戻る</a></p>
+<p><a href="{{ url_for('manage_quests') }}" class="button">クエスト一覧に戻る</a></p>
 {% endblock %}
