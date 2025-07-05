@@ -177,9 +177,9 @@
       div.innerHTML = marked.parse(md);
 
       // MathJaxのレンダリングを遅延させて実行
-      setTimeout(() => {
-        MathJax.typeset();
-      }, 0); // 0msで遅延させる
+      // setTimeout(() => {
+      //   MathJax.typeset();
+      // }, 0); // 0msで遅延させる
     });
 
     // 選択肢のクリックイベント処理

@@ -268,7 +268,7 @@ def quest_result(quest_id):
 
         elif question_type == 'sort':
             user_answer = request.form.get(f'q{i}', '').strip()
-            correct_answer = json.loads(q.answer).strip()  
+            correct_answer = q.answer.strip()  
             correct = correct_answer == user_answer
             expected = q.answer
 
@@ -525,43 +525,53 @@ def edit_question(quest_id, question_id):
         question = Question.query.get_or_404(int(question_id))
         choices = json.loads(question.choices) if question.choices else None
         answers = json.loads(question.answer) if question.type == 'numeric' else None
+
+        # question.answers にセット（テンプレートで読みやすくする）
+        if answers is not None:
+            question.answers = answers  # ✅ ここで直接属性にセット
+
         return render_template('edit_question.html', quest_id=quest.id, question=question, choices=choices, answers=answers)
 
 # 問題の保存画面
 @app.route('/admin/question/save/<int:quest_id>/<question_id>', methods=['POST'])
 def save_question(quest_id, question_id):
-    q_type = request.form['type']
-    text = request.form['text']
-    if question_id == 'new':
-        question = Question(quest_id=quest_id, type=q_type, text=text)
-    else:
-        question = Question.query.get_or_404(int(question_id))
-        question.type = q_type
-        question.text = text
 
-    if q_type == 'choice':
-        choices = [request.form.get(f'choice{i}', '') for i in range(4)]
-        answer = int(request.form['answer'])
-        question.choices = json.dumps(choices)
-        question.answer = json.dumps(answer)
+    action = request.form.get('action')
 
-    elif q_type == 'sort':
-        question.choices = None
-        question.answer = json.dumps(request.form['answer_sort'])
+    if action == 'save_question':
+        q_type = request.form['type']
+        text = request.form['text']
+        if question_id == 'new':
+            question = Question(quest_id=quest_id, type=q_type, text=text)
+        else:
+            question = Question.query.get_or_404(int(question_id))
+            question.type = q_type
+            question.text = text
 
-    elif q_type == 'numeric':
-        answers = []
-        for i in range(4):
-            label = request.form.get(f'label{i}', '')
-            value = request.form.get(f'num_answer{i}', '')
-            if label and value:
-                answers.append({'label': label, 'answer': int(value)})
-        question.choices = None
-        question.answer = json.dumps(answers)
+        if q_type == 'choice':
+            choices = [request.form.get(f'choice{i}', '') for i in range(4)]
+            answer = int(request.form['answer'])
+            question.choices = json.dumps(choices)
+            question.answer = json.dumps(answer)
 
-    db.session.add(question)
-    db.session.commit()
-    flash('問題を保存しました')
+        elif q_type == 'sort':
+            question.choices = None
+            question.answer = request.form['answer_sort']
+
+        elif q_type == 'numeric':
+            answers = []
+            for i in range(4):
+                label = request.form.get(f'label{i}', '')
+                value = request.form.get(f'num_answer{i}', '')
+                if label and value:
+                    answers.append({'label': label, 'answer': int(value)})
+            question.choices = None
+            question.answer = json.dumps(answers)
+
+        db.session.add(question)
+        db.session.commit()
+        flash('問題を保存しました')
+
     return redirect(url_for('edit_quest', quest_id=quest_id))
 
 # タイトル一覧表示（ステップ1）

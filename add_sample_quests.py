@@ -14,27 +14,63 @@ QUEST_DATA = {
         "questions": [
             {
                 "type": "choice",
-                "text": "2 + 2 = ?",
-                "choices": ["3", "4", "5", "6"],
-                "answer": 1
+                "text": "$-8 + 5 = ?$",
+                "choices": ["$-13$", "$3$", "$-3$", "$13$"],
+                "answer": 2
             },
             {
                 "type": "choice",
-                "text": "3 * 3 = ?",
-                "choices": ["6", "7", "8", "9"],
-                "answer": 3
-            },
-            {
-                "type": "choice",
-                "text": "**次の式を解いてください：**\n\n$x^2 + 2x + 1 = 0$",
-                "choices": ["$x = -1$", "$x = 0$", "$x = 1$", "$x = 2$"],
+                "text": "$(6 + 4) \\div 2 = ?$",
+                "choices": ["$5$", "$2$", "$20$", "$8$"],
                 "answer": 0
             },
             {
                 "type": "choice",
-                "text": "**次の式を展開してください：**\n\n$(x + y)^2$",
-                "choices": ["$x^2 + y^2$", "$x^2 + 2xy + y^2$", "$x^2 + xy + y^2$", "$x + y$"],
+                "text": "$\\frac{2}{3} + \\frac{1}{6} = ?$",
+                "choices": ["$\\frac{3}{6}$", "$\\frac{4}{9}$", "$\\frac{5}{6}$", "$\\frac{1}{2}$"],
+                "answer": 2
+            },
+            {
+                "type": "choice",
+                "text": "$-2 \\times (-6) = ?$",
+                "choices": ["$-12$", "$12$", "$-4$", "$4$"],
                 "answer": 1
+            },
+            {
+                "type": "choice",
+                "text": "$7 - (-5) = ?$",
+                "choices": ["$2$", "$12$", "$-2$", "$7$"],
+                "answer": 1
+            },
+            {
+                "type": "choice",
+                "text": "$\\frac{5}{8} - \\frac{1}{4} = ?$",
+                "choices": ["$\\frac{3}{8}$", "$\\frac{4}{8}$", "$\\frac{1}{2}$", "$\\frac{5}{4}$"],
+                "answer": 0
+            },
+            {
+                "type": "choice",
+                "text": "$(-4) \\div 2 = ?$",
+                "choices": ["$2$", "$-2$", "$-6$", "$8$"],
+                "answer": 1
+            },
+            {
+                "type": "choice",
+                "text": "$3 \\times (-5) + 2 = ?$",
+                "choices": ["$-15$", "$-17$", "$-13$", "$13$"],
+                "answer": 2
+            },
+            {
+                "type": "choice",
+                "text": "$(-10) + (-3) = ?$",
+                "choices": ["$13$", "$-7$", "$-13$", "$7$"],
+                "answer": 2
+            },
+            {
+                "type": "choice",
+                "text": "$(4 + 6) \\times (-2) = ?$",
+                "choices": ["$-20$", "$-12$", "$20$", "$12$"],
+                "answer": 0
             }
         ]
     },
@@ -145,6 +181,11 @@ QUEST_DATA = {
 }
 
 with app.app_context():
+    # ✅ 登録前に既存のデータを削除
+    Question.query.delete()
+    Quest.query.delete()
+    db.session.commit()
+
     for qset in QUEST_DATA.values():
         # クエスト全体を登録
         quest = Quest(

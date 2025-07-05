@@ -1,9 +1,19 @@
+<!-- templates/edit_question.html -->
 {% extends "base.html" %}
 {% block title %}問題編集{% endblock %}
 
 {% block content %}
 <h2>問題編集</h2>
-
+<style>
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+</style>
 <form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new', choices=choices, answers=answers) }}">
   <label>タイプ:</label>
   <select name="type" id="type-select">
@@ -40,8 +50,15 @@
     {% endfor %}
   </div>
 
-  <input type="submit" value="保存">
-  <a href="{{ url_for('edit_quest', quest_id=quest_id) }}">戻る</a>
+<!-- 保存ボタン：上段 -->
+<br>
+<form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
+    <!-- 質問タイプ、テキストなど入力フィールド -->
+    <button type="submit" name="action" value="save_question">保存</button>
+</form>
+<!-- 戻るボタン：下段 -->
+<div style="margin-top: 1rem;">
+  <a href="{{ url_for('edit_quest', quest_id=quest_id) }}" class="button">クエスト編集に戻る</a>
 </form>
 
 <style>
