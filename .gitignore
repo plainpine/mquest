@@ -5,3 +5,7 @@ instance/mydb.sqlite3
 app_bk.py
 selectDB.py
 test.md
+instance.zip
+.gitignore
+mquest.db
+templates.zip

@@ -1,7 +1,7 @@
 chcp 65001
 
 REM DBファイルを削除
-del .\instance\mquest.db
+del ..\instance\mquest.db
 REM DBファイルを作成
 python models.py
 REM 初期データ登録

@@ -6,10 +6,10 @@
 {% block content %}
 <h1>クエストタイトルを選んでください</h1>
 
-<ul>
+<ul class="selectable-list">
   {% for t in titles %}
-    <li>
-      <a class="button" href="{{ url_for('select_level', title=t) }}">{{ t }}</a>
+    <li data-url="{{ url_for('select_level', title=t) }}" onclick="window.location.href=this.dataset.url">
+      {{ t }}
     </li>
   {% endfor %}
 </ul>
