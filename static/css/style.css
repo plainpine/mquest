@@ -360,3 +360,12 @@ li {
 .button.secondary:hover {
   background-color: #aaa;
 }
+
+.selectable-list li {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.selectable-list li:hover {
+  background-color: #c5cae9;
+}

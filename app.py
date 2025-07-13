@@ -151,7 +151,9 @@ def select_title():
 @app.route('/select_level/<title>')
 @login_required
 def select_level(title):
+    print(f"Title: {title}")
     levels = db.session.query(Quest.level).filter_by(title=title).distinct().all()
+    print(f"Levels: {levels}")
     return render_template('select_level.html', title=title, levels=[l[0] for l in levels])
 
 @app.route('/select_quest/<title>/<level>')
@@ -268,9 +270,16 @@ def quest_result(quest_id):
 
         elif question_type == 'sort':
             user_answer = request.form.get(f'q{i}', '').strip()
-            correct_answer = q.answer.strip()  
-            correct = correct_answer == user_answer
-            expected = q.answer
+            try:
+                correct_answer = json.loads(q.answer)
+            except (json.JSONDecodeError, TypeError):
+                correct_answer = q.answer
+            
+            if isinstance(correct_answer, str):
+                correct_answer = correct_answer.strip()
+
+            correct = str(correct_answer) == user_answer
+            expected = correct_answer
 
         elif question_type == 'numeric':
             answer_list = json.loads(q.answer)

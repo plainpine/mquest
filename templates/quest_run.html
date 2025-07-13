@@ -4,7 +4,7 @@
 {% block title %}クエスト実行{% endblock %}
 
 {% block content %}
-<h2>クエスト{{ quest_id }}: {{ quest.title }}</h2>
+<h1>クエスト{{ quest_id }}: {{ quest.title }}</h1>
 
 <style>
   .choice-option {
@@ -160,27 +160,41 @@
       fontCache: 'global'
     }
   };
-</script>
 
-<!-- Markdown表示の部分に差分 -->
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // Markdownの初期化
+  function renderMarkdownAndMath() {
     marked.setOptions({ breaks: true });
 
-    // Markdown表示
     document.querySelectorAll('.markdown').forEach(div => {
       let md = div.getAttribute('data-content');
-      md = md.replace(/\\n/g, '\n'); // \\nを改行に変換
-
-      // MarkdownをパースしてからMathJaxで処理
+      if (!md) return;
+      md = md.replace(/\\n/g, '\n');
       div.innerHTML = marked.parse(md);
-
-      // MathJaxのレンダリングを遅延させて実行
-      // setTimeout(() => {
-      //   MathJax.typeset();
-      // }, 0); // 0msで遅延させる
     });
+
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise();
+    }
+  }
+
+  <!-- Markdown表示の部分に差分 -->
+  document.addEventListener("DOMContentLoaded", () => {
+    renderMarkdownAndMath();
+    // // Markdownの初期化
+    // marked.setOptions({ breaks: true });
+
+    // // Markdown表示
+    // document.querySelectorAll('.markdown').forEach(div => {
+    //   let md = div.getAttribute('data-content');
+    //   md = md.replace(/\\n/g, '\n'); // \\nを改行に変換
+
+    //   // MarkdownをパースしてからMathJaxで処理
+    //   div.innerHTML = marked.parse(md);
+
+    //   // MathJaxのレンダリングを遅延させて実行
+    //   // setTimeout(() => {
+    //   //   MathJax.typeset();
+    //   // }, 0); // 0msで遅延させる
+    // });
 
     // 選択肢のクリックイベント処理
     document.querySelectorAll('.choice-option').forEach(option => {
