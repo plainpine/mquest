@@ -19,6 +19,11 @@ class User(UserMixin, db.Model):
     avatar = db.Column(db.LargeBinary, nullable=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
+    # ▼ 世界制覇機能用のカラム
+    user_level = db.Column(db.Integer, default=1)
+    medals = db.Column(db.Integer, default=0)
+    user_title = db.Column(db.String(100), default='見習い')
+
     # ▼ 保護者 ↔ 生徒の関係（1対多）
     children = db.relationship('User', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
 
@@ -43,6 +48,10 @@ class Quest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     level = db.Column(db.String(10), nullable=False)
+
+    # ▼ 世界制覇機能用のカラム
+    world_name = db.Column(db.String(100))
+    fantasy_name = db.Column(db.String(100))
 
     # 明示的に one-to-many の関係を定義
     questions = db.relationship('Question', back_populates='quest', cascade="all, delete-orphan")
@@ -73,3 +82,19 @@ class QuestHistory(db.Model):
     __table_args__ = (
         UniqueConstraint('user_id', 'quest_id', name='unique_user_quest'),
     )
+
+# ▼ 世界制覇機能用の進捗管理モデル
+class UserProgress(db.Model):
+    __tablename__ = 'user_progress'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    quest_id = db.Column(db.Integer, db.ForeignKey('quests.id'), nullable=False)
+    status = db.Column(db.String(50), default='unlocked', nullable=False)  #例: 'unlocked', 'cleared'
+    conquered_at = db.Column(db.DateTime, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'quest_id', name='unique_user_quest_progress'),
+    )
+
+    user = db.relationship('User', backref=db.backref('progress', lazy='dynamic'))
+    quest = db.relationship('Quest', backref=db.backref('progress', lazy='dynamic'))

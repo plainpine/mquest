@@ -18,8 +18,8 @@ users_to_create = [
 ]
 
 with app.app_context():
-    db.create_all()
-    print("✅ テーブルを作成しました。")
+    # db.create_all() # create_db.pyで実行するので不要
+    print("テーブルを作成しました。")
 
     # 事前に保護者を作成しておく（studentより先に）
     username_to_user = {}
@@ -37,7 +37,7 @@ with app.app_context():
             if parent:
                 parent_id = parent.id
             else:
-                print(f"⚠️ 保護者ユーザー {u['parent_username']} が存在しません。")
+                print(f"保護者ユーザー {u['parent_username']} が存在しません。")
 
         user = User(
             username=u["username"],
@@ -48,10 +48,11 @@ with app.app_context():
         )
 
         db.session.add(user)
-        print(f"✅ ユーザー {u['username']}（ロール: {u['role']}）を作成しました。")
+        print(f"ユーザー {u['username']}（ロール: {u['role']}）を作成しました。")
         db.session.flush()  # IDを取得するため
 
         username_to_user[u["username"]] = user
 
     db.session.commit()
-    print("✅ すべてのユーザー作成処理が完了しました。")
+    print("すべてのユーザー作成処理が完了しました。")
+

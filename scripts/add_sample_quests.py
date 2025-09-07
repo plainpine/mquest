@@ -1,15 +1,14 @@
+# scripts/add_sample_quests.py
 import sys
 import os
+import json
+
+# プロジェクトルートをパスに追加
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import json
-from flask import Flask
-from models import db, Quest, Question    # Questモデルは質問単位でデータを持つ想定
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mquest.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
+# app.pyから直接appとdbをインポート
+from app import app, db
+from models import Quest, Question
 
 QUEST_DATA_FILE = os.path.join(os.path.dirname(__file__), 'quests.json')
 
@@ -18,17 +17,20 @@ def load_quest_data():
         return json.load(f)
 
 with app.app_context():
-    # ✅ 登録前に既存のデータを削除
-    Question.query.delete()
-    Quest.query.delete()
-    db.session.commit()
+    # 登録前に既存のデータを削除
+    # Question.query.delete()
+    # Quest.query.delete()
+    # db.session.commit()
+    # print("Existing quests and questions deleted.")
 
     quest_data = load_quest_data()
     for qset in quest_data.values():
         # クエスト全体を登録
         quest = Quest(
             title=qset["title"],
-            level=qset["level"]
+            level=qset["level"],
+            world_name=qset["title"],  # titleをデフォルト値として設定
+            fantasy_name=qset["title"] # titleをデフォルト値として設定
         )
         db.session.add(quest)
         db.session.flush()  # quest.id を取得するために一旦flush
@@ -44,12 +46,4 @@ with app.app_context():
             db.session.add(question)
 
     db.session.commit()
-    print("✅ クエストと問題データを登録しました。")
-
-from app import app
-from models import Quest
-
-with app.app_context():
-    quests = Quest.query.all()
-    for q in quests:
-        print(f"id={q.id}, title={q.title}, level={q.level}")
+    print("Sample quests and questions have been added.")

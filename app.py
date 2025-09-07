@@ -8,7 +8,7 @@ from models import QuestHistory, Quest, Question
 import json
 import logging
 
-from models import db, User, Quest
+from models import db, User, Quest, UserProgress
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'  # セッション管理に必要
@@ -124,7 +124,16 @@ def create_user():
 def dashboard_student():
     if session.get('role') != 'student':
         return redirect(url_for('login'))
-    return render_template('dashboard_student.html', user_id=session.get('user_id'))
+
+    # ▼ 世界制覇機能：制覇済みのクエストIDリストを取得
+    progress_records = UserProgress.query.filter_by(user_id=current_user.id, status='cleared').all()
+    conquered_list = [record.quest_id for record in progress_records]
+
+    return render_template(
+        'dashboard_student.html',
+        user_id=current_user.id, 
+        conquered_list=conquered_list # 制覇済みリストをテンプレートに渡す
+    )
 
 @app.route('/dashboard/parent')
 @login_required
@@ -310,13 +319,24 @@ def quest_result(quest_id):
         })
 
     all_correct = all(r['correct'] for r in results)
-    level = quest.level  # quest["level"] → quest.level に修正
+    level = quest.level
 
-    # 履歴登録（既に全問正解があるなら重複しない）
     user_id = session.get('user_id')
-    from models import QuestHistory
-
     if user_id:
+        # ▼▼▼【世界制覇機能：クリア状況をUserProgressに保存】▼▼▼
+        if all_correct:
+            existing_progress = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+            if not existing_progress:
+                progress = UserProgress(
+                    user_id=user_id,
+                    quest_id=quest_id,
+                    status='cleared',
+                    conquered_at=datetime.now(timezone.utc)
+                )
+                db.session.add(progress)
+        # ▲▲▲【ここまで】▲▲▲
+
+        # 履歴登録（既に全問正解があるなら重複しない）
         existing = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id, correct=True).first()
 
         if existing:
@@ -334,12 +354,13 @@ def quest_result(quest_id):
                 attempts=1,
                 last_attempt=datetime.now(timezone.utc)
             )
-            try:
-                db.session.add(history)
-                db.session.commit()
-            except IntegrityError as e:
-                db.session.rollback()
-                print("保存エラー:", e)
+            db.session.add(history)
+        
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            print("保存エラー:", e)
 
 
     return render_template("quest_result.html",

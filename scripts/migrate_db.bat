@@ -1,9 +1,14 @@
-chcp 65001
+@echo off
+REM This script rebuilds the entire database.
 
-REM DBファイルを削除
-del ..\instance\mquest.db
-REM DBファイルを作成
-python models.py
-REM 初期データ登録
-python create_users.py
-python add_sample_quests.py
+echo [1/3] Creating database schema...
+python ./create_db.py
+
+echo [2/3] Creating sample users...
+python ./create_users.py
+
+echo [3/3] Adding sample quests...
+python ./add_sample_quests.py
+
+echo.
+echo Database migration complete.

@@ -2,6 +2,50 @@
 
 {% block title %}生徒ダッシュボード{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+  .map-container {
+    margin-top: 2rem;
+    border: 1px solid #ccc;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  .map-selector .btn {
+      margin-right: 5px;
+  }
+  .map {
+    display: none;
+    margin-top: 1rem;
+  }
+  .map.active {
+    display: block;
+  }
+  .map svg {
+    width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  .map .conquered {
+    fill: #ffc107; /* 制覇した国の色 (例: オレンジ) */
+    stroke: #d32f2f; /* 国境線 */
+    stroke-width: 1.5px;
+    transition: fill 0.3s ease-in-out;
+  }
+  .map path:not(.conquered) {
+    fill: #e0e0e0; /* 未制覇の国の色 (例: グレー) */
+    stroke: #fff;
+    stroke-width: 1px;
+  }
+  .map path:hover {
+    fill: #bdbdbd; /* ホバー時の色 */
+    cursor: pointer;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <h2>ようこそ、{{ session['nickname'] }}さん</h2>
 <div class="dashboard-buttons" style="display: flex; flex-direction: column; gap: 1rem; max-width: 300px; margin: 2rem auto;">
@@ -9,5 +53,93 @@
     <a href="{{ url_for('medals') }}" class="button" style="padding: 1rem; background-color: #2196F3; color: white; text-align: center; text-decoration: none; border-radius: 8px;">メダルを見る</a>
     <a href="{{ url_for('progress') }}" class="button" style="padding: 1rem; background-color: #f57c00; color: white; text-align: center; text-decoration: none; border-radius: 8px;">学習状況</a>
 </div>
+
+<div class="map-container text-center">
+    <h3>冒険マップ</h3>
+    <div class="map-selector btn-group" role="group">
+      <button type="button" class="btn btn-primary active" onclick="switchMap(event, 'world')">世界地図</button>
+      <button type="button" class="btn btn-secondary" onclick="switchMap(event, 'fantasy')">ファンタジーマップ</button>
+    </div>
+
+    <div id="map-world" class="map active">
+        <object data="/static/maps/world.svg" type="image/svg+xml" width="100%" height="500">
+            <p>世界地図SVGの読み込みに失敗しました。パスを確認してください。</p>
+        </object>
+    </div>
+    <div id="map-fantasy" class="map">
+        <object data="/static/maps/fantasy.svg" type="image/svg+xml" width="100%" height="500">
+            <p>ファンタジーマップSVGの読み込みに失敗しました。パスを確認してください。</p>
+        </object>
+    </div>
+</div>
 {% endblock %}
 
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // --- Variables ---
+    const conquered_list = {{ conquered_list|tojson }};
+    let currentMapType = 'world'; // Default map
+
+    // --- Functions ---
+    function highlightMap(mapType) {
+        const svgObject = document.querySelector(`#map-${mapType} object`);
+        if (!svgObject) return;
+
+        const onSvgLoad = () => {
+            const svgDoc = svgObject.contentDocument;
+            if (!svgDoc) return;
+
+            // Reset all paths
+            svgDoc.querySelectorAll('path').forEach(p => p.classList.remove('conquered'));
+
+            // Highlight conquered paths
+            conquered_list.forEach(id => {
+                // SVG内のpathのidが `world-1` や `fantasy-1` の形式になっていると想定
+                const element = svgDoc.getElementById(`${mapType}-${id}`);
+                if (element) {
+                    element.classList.add('conquered');
+                }
+            });
+        };
+
+        // Check if SVG is already loaded
+        if (svgObject.contentDocument && svgObject.contentDocument.readyState === 'complete') {
+            onSvgLoad();
+        } else {
+            svgObject.addEventListener('load', onSvgLoad);
+        }
+    }
+
+    window.switchMap = function(event, type) {
+        currentMapType = type;
+        // Switch active button
+        document.querySelectorAll('.map-selector button').forEach(btn => {
+            btn.classList.remove('active', 'btn-primary');
+            btn.classList.add('btn-secondary');
+        });
+        event.currentTarget.classList.add('active', 'btn-primary');
+        event.currentTarget.classList.remove('btn-secondary');
+
+        // Switch active map
+        document.querySelectorAll('.map').forEach(m => m.classList.remove('active'));
+        document.getElementById(`map-${type}`).classList.add('active');
+
+        highlightMap(type);
+    }
+
+    // --- Initial Load ---
+    // Set initial button states
+    document.querySelector(".map-selector button[onclick*='world']").classList.add('active', 'btn-primary');
+    document.querySelector(".map-selector button[onclick*='fantasy']").classList.add('btn-secondary');
+
+    highlightMap(currentMapType);
+    // Add listeners for subsequent loads to handle caching
+    const worldObj = document.querySelector(`#map-world object`);
+    if (worldObj) worldObj.addEventListener('load', () => highlightMap('world'));
+    const fantasyObj = document.querySelector(`#map-fantasy object`);
+    if (fantasyObj) fantasyObj.addEventListener('load', () => highlightMap('fantasy'));
+  });
+</script>
+{% endblock %}
