@@ -1,0 +1,9 @@
+<svg width="600" height="200" xmlns="http://www.w3.org/2000/svg">
+  <title>Sample World Map</title>
+  <rect x="10" y="10" width="150" height="100" id="world-1" />
+  <rect x="170" y="10" width="150" height="100" id="world-2" />
+  <rect x="330" y="10" width="150" height="100" id="world-3" />
+  <text x="20" y="60" font-family="sans-serif" font-size="14">Quest 1 (Japan)</text>
+  <text x="180" y="60" font-family="sans-serif" font-size="14">Quest 2 (USA)</text>
+  <text x="340" y="60" font-family="sans-serif" font-size="14">Quest 3 (Egypt)</text>
+</svg>
