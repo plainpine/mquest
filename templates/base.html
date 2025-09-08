@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
      <title>{% block title %}デフォルトタイトル{% endblock %}</title>
+    {% block styles %}{% endblock %}
 </head>
 <body>
     <header>
@@ -21,5 +22,6 @@
     <footer>
         &copy; 2025 北神まなびあ
     </footer>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

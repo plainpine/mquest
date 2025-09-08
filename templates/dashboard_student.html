@@ -57,89 +57,31 @@
 <div class="map-container text-center">
     <h3>冒険マップ</h3>
     <div class="map-selector btn-group" role="group">
-      <button type="button" class="btn btn-primary active" onclick="switchMap(event, 'world')">世界地図</button>
-      <button type="button" class="btn btn-secondary" onclick="switchMap(event, 'fantasy')">ファンタジーマップ</button>
+      <button type="button" class="btn btn-primary active" data-map-type="europe">英語（エウロパ）</button>
+      <button type="button" class="btn btn-secondary" data-map-type="atrantisu">数学（アトランティス）</button>
+      <button type="button" class="btn btn-tertiary" data-map-type="zipangu">国語（ジパング）</button>
     </div>
 
-    <div id="map-world" class="map active">
-        <object data="/static/maps/world.svg" type="image/svg+xml" width="100%" height="500">
-            <p>世界地図SVGの読み込みに失敗しました。パスを確認してください。</p>
+    <div id="map-europe" class="map active">
+        <object data="/static/maps/Europe.svg" type="image/svg+xml" width="100%" height="500">
+            <p>英語（エウロパ）SVGの読み込みに失敗しました。パスを確認してください。</p>
         </object>
     </div>
-    <div id="map-fantasy" class="map">
-        <object data="/static/maps/fantasy.svg" type="image/svg+xml" width="100%" height="500">
-            <p>ファンタジーマップSVGの読み込みに失敗しました。パスを確認してください。</p>
+    <div id="map-atrantisu" class="map">
+        <object data="/static/maps/Atrantisu.svg" type="image/svg+xml" width="100%" height="500">
+            <p>数学（アトランティス）SVGの読み込みに失敗しました。パスを確認してください。</p>
+        </object>
+    </div>
+    <div id="map-zipangu" class="map">
+        <object data="/static/maps/Zipangu.svg" type="image/svg+xml" width="100%" height="500">
+            <p>国語（ジパング）SVGの読み込みに失敗しました。パスを確認してください。</p>
         </object>
     </div>
 </div>
+<div id="conquered-data" data-conquered='{{ conquered_list|tojson }}' style="display: none;"></div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // --- Variables ---
-    const conquered_list = {{ conquered_list|tojson }};
-    let currentMapType = 'world'; // Default map
-
-    // --- Functions ---
-    function highlightMap(mapType) {
-        const svgObject = document.querySelector(`#map-${mapType} object`);
-        if (!svgObject) return;
-
-        const onSvgLoad = () => {
-            const svgDoc = svgObject.contentDocument;
-            if (!svgDoc) return;
-
-            // Reset all paths
-            svgDoc.querySelectorAll('path').forEach(p => p.classList.remove('conquered'));
-
-            // Highlight conquered paths
-            conquered_list.forEach(id => {
-                // SVG内のpathのidが `world-1` や `fantasy-1` の形式になっていると想定
-                const element = svgDoc.getElementById(`${mapType}-${id}`);
-                if (element) {
-                    element.classList.add('conquered');
-                }
-            });
-        };
-
-        // Check if SVG is already loaded
-        if (svgObject.contentDocument && svgObject.contentDocument.readyState === 'complete') {
-            onSvgLoad();
-        } else {
-            svgObject.addEventListener('load', onSvgLoad);
-        }
-    }
-
-    window.switchMap = function(event, type) {
-        currentMapType = type;
-        // Switch active button
-        document.querySelectorAll('.map-selector button').forEach(btn => {
-            btn.classList.remove('active', 'btn-primary');
-            btn.classList.add('btn-secondary');
-        });
-        event.currentTarget.classList.add('active', 'btn-primary');
-        event.currentTarget.classList.remove('btn-secondary');
-
-        // Switch active map
-        document.querySelectorAll('.map').forEach(m => m.classList.remove('active'));
-        document.getElementById(`map-${type}`).classList.add('active');
-
-        highlightMap(type);
-    }
-
-    // --- Initial Load ---
-    // Set initial button states
-    document.querySelector(".map-selector button[onclick*='world']").classList.add('active', 'btn-primary');
-    document.querySelector(".map-selector button[onclick*='fantasy']").classList.add('btn-secondary');
-
-    highlightMap(currentMapType);
-    // Add listeners for subsequent loads to handle caching
-    const worldObj = document.querySelector(`#map-world object`);
-    if (worldObj) worldObj.addEventListener('load', () => highlightMap('world'));
-    const fantasyObj = document.querySelector(`#map-fantasy object`);
-    if (fantasyObj) fantasyObj.addEventListener('load', () => highlightMap('fantasy'));
-  });
-</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
