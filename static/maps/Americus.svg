@@ -1,0 +1,105 @@
+<svg viewBox="-200 0 2200 1200" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .state {
+      fill: #ccd;
+      stroke: #333;
+      stroke-width: 1;
+    }
+    .conquered {
+      fill: #ffc107;
+      stroke: #d32f2f;
+      stroke-width: 1.5;
+    }
+    text {
+      font-family: sans-serif;
+      font-size: 12px;
+      text-anchor: middle;
+      dominant-baseline: middle; /* ← 中央揃え */
+      pointer-events: none;
+      fill: #111;
+    }
+  </style>
+
+  <g id="us-states">
+    <!-- 西・太平洋＆非連結州 -->
+    <rect id="alaska" class="state" x="-50" y="920" width="120" height="80"/><text x="10" y="960">アラスカ</text>
+    <rect id="hawaii" class="state" x="90" y="920" width="120" height="80"/><text x="150" y="960">ハワイ</text>
+    <rect id="washington" class="state" x="0" y="50" width="120" height="80"/><text x="60" y="90">ワシントン</text>
+    <rect id="oregon" class="state" x="0" y="140" width="120" height="80"/><text x="60" y="180">オレゴン</text>
+    <rect id="california" class="state" x="0" y="230" width="120" height="80"/><text x="60" y="270">カリフォルニア</text>
+
+    <!-- 山岳・内陸西部 -->
+    <rect id="idaho" class="state" x="130" y="50" width="120" height="80"/><text x="190" y="90">アイダホ</text>
+    <rect id="nevada" class="state" x="130" y="140" width="120" height="80"/><text x="190" y="180">ネバダ</text>
+    <rect id="arizona" class="state" x="130" y="230" width="120" height="80"/><text x="190" y="270">アリゾナ</text>
+    <rect id="montana" class="state" x="260" y="50" width="120" height="80"/><text x="320" y="90">モンタナ</text>
+    <rect id="wyoming" class="state" x="260" y="140" width="120" height="80"/><text x="320" y="180">ワイオミング</text>
+    <rect id="utah" class="state" x="260" y="230" width="120" height="80"/><text x="320" y="270">ユタ</text>
+    <rect id="colorado" class="state" x="390" y="140" width="120" height="80"/><text x="450" y="180">コロラド</text>
+    <rect id="new-mexico" class="state" x="390" y="230" width="120" height="80"/><text x="450" y="270">ニューメキシコ</text>
+
+    <!-- グレートプレーンズ -->
+    <rect id="north-dakota" class="state" x="520" y="50" width="120" height="80"/><text x="580" y="90">ノースダコタ</text>
+    <rect id="south-dakota" class="state" x="520" y="140" width="120" height="80"/><text x="580" y="180">サウスダコタ</text>
+    <rect id="nebraska" class="state" x="520" y="230" width="120" height="80"/><text x="580" y="270">ネブラスカ</text>
+    <rect id="kansas" class="state" x="520" y="320" width="120" height="80"/><text x="580" y="360">カンザス</text>
+    <rect id="oklahoma" class="state" x="520" y="410" width="120" height="80"/><text x="580" y="450">オクラホマ</text>
+    <rect id="texas" class="state" x="520" y="500" width="120" height="80"/><text x="580" y="540">テキサス</text>
+
+    <!-- 上中西部～五大湖～中西部 -->
+    <rect id="minnesota" class="state" x="650" y="50" width="120" height="80"/><text x="710" y="90">ミネソタ</text>
+    <rect id="iowa" class="state" x="650" y="140" width="120" height="80"/><text x="710" y="180">アイオワ</text>
+    <rect id="missouri" class="state" x="650" y="230" width="120" height="80"/><text x="710" y="270">ミズーリ</text>
+    <rect id="wisconsin" class="state" x="780" y="50" width="120" height="80"/><text x="840" y="90">ウィスコンシン</text>
+    <rect id="illinois" class="state" x="780" y="140" width="120" height="80"/><text x="840" y="180">イリノイ</text>
+    <rect id="indiana" class="state" x="910" y="140" width="120" height="80"/><text x="970" y="180">インディアナ</text>
+    <rect id="michigan" class="state" x="910" y="50" width="120" height="80"/><text x="970" y="90">ミシガン</text>
+    <rect id="ohio" class="state" x="1040" y="140" width="120" height="80"/><text x="1100" y="180">オハイオ</text>
+
+    <!-- 北東部 -->
+    <rect id="pennsylvania" class="state" x="1040" y="230" width="120" height="80"/><text x="1100" y="270">ペンシルベニア</text>
+    <rect id="new-york" class="state" x="1040" y="50" width="120" height="80"/><text x="1100" y="90">ニューヨーク</text>
+    <rect id="vermont" class="state" x="1170" y="50" width="120" height="80"/><text x="1230" y="90">バーモント</text>
+    <rect id="new-hampshire" class="state" x="1300" y="50" width="120" height="80"/><text x="1360" y="90">ニューハンプシャー</text>
+    <rect id="maine" class="state" x="1430" y="50" width="120" height="80"/><text x="1490" y="90">メイン</text>
+    <rect id="massachusetts" class="state" x="1170" y="140" width="120" height="80"/><text x="1230" y="180">マサチューセッツ</text>
+    <rect id="rhode-island" class="state" x="1300" y="140" width="120" height="80"/><text x="1360" y="180">ロードアイランド</text>
+    <rect id="connecticut" class="state" x="1430" y="140" width="120" height="80"/><text x="1490" y="180">コネチカット</text>
+    <rect id="new-jersey" class="state" x="1170" y="230" width="120" height="80"/><text x="1230" y="270">ニュージャージー</text>
+    <rect id="delaware" class="state" x="1300" y="230" width="120" height="80"/><text x="1360" y="270">デラウェア</text>
+    <rect id="maryland" class="state" x="1430" y="230" width="120" height="80"/><text x="1490" y="270">メリーランド</text>
+
+    <!-- アパラチア～南東部 -->
+    <rect id="west-virginia" class="state" x="910" y="230" width="120" height="80"/><text x="970" y="270">ウェストバージニア</text>
+    <rect id="virginia" class="state" x="910" y="320" width="120" height="80"/><text x="970" y="360">バージニア</text>
+    <rect id="north-carolina" class="state" x="1040" y="320" width="120" height="80"/><text x="1100" y="360">ノースカロライナ</text>
+    <rect id="south-carolina" class="state" x="1170" y="320" width="120" height="80"/><text x="1230" y="360">サウスカロライナ</text>
+    <rect id="georgia" class="state" x="1040" y="410" width="120" height="80"/><text x="1100" y="450">ジョージア</text>
+    <rect id="florida" class="state" x="1170" y="410" width="120" height="80"/><text x="1230" y="450">フロリダ</text>
+
+    <!-- ディープサウス／内陸南部 -->
+    <rect id="kentucky" class="state" x="780" y="230" width="120" height="80"/><text x="840" y="270">ケンタッキー</text>
+    <rect id="tennessee" class="state" x="780" y="320" width="120" height="80"/><text x="840" y="360">テネシー</text>
+    <rect id="mississippi" class="state" x="910" y="410" width="120" height="80"/><text x="970" y="450">ミシシッピ</text>
+    <rect id="alabama" class="state" x="910" y="500" width="120" height="80"/><text x="970" y="540">アラバマ</text>
+    <rect id="louisiana" class="state" x="780" y="410" width="120" height="80"/><text x="840" y="450">ルイジアナ</text>
+    <rect id="arkansas" class="state" x="650" y="320" width="120" height="80"/><text x="710" y="360">アーカンソー</text>
+  </g>
+
+  <script><![CDATA[
+    let conqueredStates = [];
+    function applyConquered() {
+      document.querySelectorAll('#us-states .state').forEach(el => el.classList.remove('conquered'));
+      conqueredStates.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('conquered');
+      });
+    }
+    window.updateConquered = function(list) {
+      conqueredStates = Array.isArray(list) ? list.slice() : [];
+      applyConquered();
+    };
+    applyConquered();
+  ]]></script>
+</svg>
+
