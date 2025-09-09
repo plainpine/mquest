@@ -82,6 +82,8 @@
     <rect id="armenia" class="country" x="1580" y="590" width="120" height="80"/><text x="1640" y="630">アルメニア</text>
     <rect id="azerbaijan" class="country" x="1710" y="590" width="120" height="80"/><text x="1770" y="630">アゼルバイジャン</text>
     <rect id="turkey" class="country" x="1450" y="590" width="120" height="80"/><text x="1510" y="630">トルコ</text>
+    <rect id="cyprus" class="country" x="1450" y="680" width="120" height="80"/><text x="1500" y="720">キプロス</text>
+
   </g>
 
   <script><![CDATA[
