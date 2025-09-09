@@ -22,52 +22,52 @@
 
   <g id="europe-countries">
     <!-- 北欧 -->
-    <rect id="iceland" class="country" x="0" y="50" width="120" height="80"/><text x="60" y="90">アイスランド</text>
-    <rect id="norway" class="country" x="150" y="50" width="120" height="80"/><text x="210" y="90">ノルウェー</text>
-    <rect id="sweden" class="country" x="280" y="50" width="120" height="80"/><text x="340" y="90">スウェーデン</text>
-    <rect id="finland" class="country" x="410" y="50" width="120" height="80"/><text x="470" y="90">フィンランド</text>
-    <rect id="denmark" class="country" x="280" y="140" width="120" height="80"/><text x="340" y="180">デンマーク</text>
+    <rect id="iceland" class="country" x="410" y="50" width="120" height="80"/><text x="470" y="90">アイスランド</text>
+    <rect id="norway" class="country" x="800" y="50" width="120" height="80"/><text x="860" y="90">ノルウェー</text>
+    <rect id="sweden" class="country" x="930" y="50" width="120" height="80"/><text x="990" y="90">スウェーデン</text>
+    <rect id="finland" class="country" x="1060" y="50" width="120" height="80"/><text x="1120" y="90">フィンランド</text>
+    <rect id="denmark" class="country" x="670" y="230" width="120" height="80"/><text x="730" y="270">デンマーク</text>
 
     <!-- 西ヨーロッパ -->
-    <rect id="ireland" class="country" x="0" y="200" width="120" height="80"/><text x="60" y="240">アイルランド</text>
-    <rect id="uk" class="country" x="150" y="200" width="120" height="80"/><text x="210" y="240">イギリス</text>
-    <rect id="netherlands" class="country" x="280" y="230" width="120" height="80"/><text x="340" y="270">オランダ</text>
-    <rect id="belgium" class="country" x="410" y="230" width="120" height="80"/><text x="470" y="270">ベルギー</text>
-    <rect id="luxembourg" class="country" x="540" y="230" width="120" height="80"/><text x="600" y="270">ルクセンブルク</text>
-    <rect id="france" class="country" x="280" y="320" width="120" height="80"/><text x="340" y="360">フランス</text>
-    <rect id="monaco" class="country" x="410" y="320" width="120" height="80"/><text x="470" y="360">モナコ</text>
-    <rect id="andorra" class="country" x="540" y="320" width="120" height="80"/><text x="600" y="360">アンドラ</text>
-    <rect id="switzerland" class="country" x="670" y="320" width="120" height="80"/><text x="730" y="360">スイス</text>
-    <rect id="liechtenstein" class="country" x="800" y="320" width="120" height="80"/><text x="860" y="360">リヒテンシュタイン</text>
-    <rect id="germany" class="country" x="670" y="230" width="120" height="80"/><text x="730" y="270">ドイツ</text>
-    <rect id="austria" class="country" x="800" y="230" width="120" height="80"/><text x="860" y="270">オーストリア</text>
+    <rect id="ireland" class="country" x="20" y="230" width="120" height="80"/><text x="80" y="270">アイルランド</text>
+    <rect id="uk" class="country" x="150" y="230" width="120" height="80"/><text x="210" y="270">イギリス</text>
+    <rect id="netherlands" class="country" x="540" y="230" width="120" height="80"/><text x="600" y="270">オランダ</text>
+    <rect id="belgium" class="country" x="410" y="320" width="120" height="80"/><text x="470" y="360">ベルギー</text>
+    <rect id="luxembourg" class="country" x="410" y="410" width="120" height="80"/><text x="470" y="450">ルクセンブルク</text>
+    <rect id="france" class="country" x="280" y="410" width="120" height="80"/><text x="340" y="450">フランス</text>
+    <rect id="monaco" class="country" x="280" y="500" width="120" height="80"/><text x="340" y="540">モナコ</text>
+    <rect id="andorra" class="country" x="150" y="410" width="120" height="80"/><text x="210" y="450">アンドラ</text>
+    <rect id="switzerland" class="country" x="410" y="500" width="120" height="80"/><text x="470" y="540">スイス</text>
+    <rect id="liechtenstein" class="country" x="540" y="410" width="120" height="80"/><text x="600" y="450">リヒテンシュタイン</text>
+    <rect id="san-marino" class="country" x="540" y="320" width="120" height="80"/><text x="600" y="360">ドイツ</text>
+    <rect id="austria" class="country" x="540" y="500" width="120" height="80"/><text x="600" y="540">オーストリア</text>
 
     <!-- 南ヨーロッパ -->
-    <rect id="spain" class="country" x="280" y="410" width="120" height="80"/><text x="340" y="450">スペイン</text>
-    <rect id="portugal" class="country" x="150" y="410" width="120" height="80"/><text x="210" y="450">ポルトガル</text>
-    <rect id="italy" class="country" x="410" y="410" width="120" height="80"/><text x="470" y="450">イタリア</text>
-    <rect id="san-marino" class="country" x="540" y="410" width="120" height="80"/><text x="600" y="450">サンマリノ</text>
-    <rect id="vatican" class="country" x="670" y="410" width="120" height="80"/><text x="730" y="450">バチカン</text>
-    <rect id="malta" class="country" x="800" y="410" width="120" height="80"/><text x="860" y="450">マルタ</text>
-    <rect id="greece" class="country" x="930" y="500" width="120" height="80"/><text x="990" y="540">ギリシャ</text>
-    <rect id="cyprus" class="country" x="1060" y="590" width="120" height="80"/><text x="1120" y="630">キプロス</text>
+    <rect id="spain" class="country" x="150" y="500" width="120" height="80"/><text x="210" y="540">スペイン</text>
+    <rect id="portugal" class="country" x="20" y="500" width="120" height="80"/><text x="80" y="540">ポルトガル</text>
+    <rect id="italy" class="country" x="410" y="770" width="120" height="80"/><text x="470" y="810">イタリア</text>
+    <rect id="san-marino" class="country" x="410" y="590" width="120" height="80"/><text x="470" y="630">サンマリノ</text>
+    <rect id="vatican" class="country" x="410" y="680" width="120" height="80"/><text x="470" y="720">バチカン</text>
+    <rect id="malta" class="country" x="280" y="770" width="120" height="80"/><text x="340" y="810">マルタ</text>
+    <rect id="greece" class="country" x="800" y="770" width="120" height="80"/><text x="860" y="810">ギリシャ</text>
+    <rect id="cyprus" class="country" x="1190" y="770" width="120" height="80"/><text x="1250" y="810">キプロス</text>
 
     <!-- 中欧・東欧 -->
-    <rect id="poland" class="country" x="930" y="230" width="120" height="80"/><text x="990" y="270">ポーランド</text>
-    <rect id="czech" class="country" x="930" y="320" width="120" height="80"/><text x="990" y="360">チェコ</text>
-    <rect id="slovakia" class="country" x="1060" y="320" width="120" height="80"/><text x="1120" y="360">スロバキア</text>
-    <rect id="hungary" class="country" x="1060" y="410" width="120" height="80"/><text x="1120" y="450">ハンガリー</text>
-    <rect id="slovenia" class="country" x="930" y="410" width="120" height="80"/><text x="990" y="450">スロベニア</text>
-    <rect id="croatia" class="country" x="930" y="500" width="120" height="80"/><text x="990" y="540">クロアチア</text>
-    <rect id="bosnia" class="country" x="1060" y="500" width="120" height="80"/><text x="1120" y="540">ボスニア・ヘルツェゴビナ</text>
-    <rect id="serbia" class="country" x="1190" y="500" width="120" height="80"/><text x="1250" y="540">セルビア</text>
-    <rect id="montenegro" class="country" x="1190" y="590" width="120" height="80"/><text x="1250" y="630">モンテネグロ</text>
-    <rect id="kosovo" class="country" x="1060" y="590" width="120" height="80"/><text x="1120" y="630">コソボ</text>
-    <rect id="albania" class="country" x="930" y="590" width="120" height="80"/><text x="990" y="630">アルバニア</text>
-    <rect id="north-macedonia" class="country" x="930" y="680" width="120" height="80"/><text x="990" y="720">北マケドニア</text>
-    <rect id="bulgaria" class="country" x="1190" y="680" width="120" height="80"/><text x="1250" y="720">ブルガリア</text>
-    <rect id="romania" class="country" x="1190" y="410" width="120" height="80"/><text x="1250" y="450">ルーマニア</text>
-    <rect id="moldova" class="country" x="1320" y="410" width="120" height="80"/><text x="1380" y="450">モルドバ</text>
+    <rect id="poland" class="country" x="800" y="230" width="120" height="80"/><text x="860" y="270">ポーランド</text>
+    <rect id="czech" class="country" x="670" y="320" width="120" height="80"/><text x="730" y="360">チェコ</text>
+    <rect id="slovakia" class="country" x="800" y="320" width="120" height="80"/><text x="860" y="360">スロバキア</text>
+    <rect id="hungary" class="country" x="800" y="410" width="120" height="80"/><text x="860" y="450">ハンガリー</text>
+    <rect id="slovenia" class="country" x="670" y="410" width="120" height="80"/><text x="730" y="450">スロベニア</text>
+    <rect id="croatia" class="country" x="670" y="500" width="120" height="80"/><text x="730" y="540">クロアチア</text>
+    <rect id="bosnia" class="country" x="800" y="500" width="120" height="80"/><text x="860" y="540">ボスニア・ヘルツェゴビナ</text>
+    <rect id="serbia" class="country" x="930" y="590" width="120" height="80"/><text x="990" y="630">セルビア</text>
+    <rect id="montenegro" class="country" x="930" y="680" width="120" height="80"/><text x="990" y="720">モンテネグロ</text>
+    <rect id="kosovo" class="country" x="800" y="590" width="120" height="80"/><text x="860" y="630">コソボ</text>
+    <rect id="albania" class="country" x="670" y="590" width="120" height="80"/><text x="730" y="630">アルバニア</text>
+    <rect id="north-macedonia" class="country" x="670" y="680" width="120" height="80"/><text x="730" y="720">北マケドニア</text>
+    <rect id="bulgaria" class="country" x="800" y="680" width="120" height="80"/><text x="860" y="720">ブルガリア</text>
+    <rect id="romania" class="country" x="930" y="410" width="120" height="80"/><text x="990" y="450">ルーマニア</text>
+    <rect id="moldova" class="country" x="930" y="500" width="120" height="80"/><text x="990" y="540">モルドバ</text>
 
     <!-- バルト三国 -->
     <rect id="estonia" class="country" x="930" y="140" width="120" height="80"/><text x="990" y="180">エストニア</text>
@@ -75,14 +75,13 @@
     <rect id="lithuania" class="country" x="1190" y="140" width="120" height="80"/><text x="1250" y="180">リトアニア</text>
 
     <!-- 東欧・黒海周辺 -->
-    <rect id="belarus" class="country" x="1320" y="230" width="120" height="80"/><text x="1380" y="270">ベラルーシ</text>
-    <rect id="ukraine" class="country" x="1450" y="320" width="120" height="80"/><text x="1510" y="360">ウクライナ</text>
-    <rect id="russia" class="country" x="1580" y="230" width="120" height="80"/><text x="1640" y="270">ロシア</text>
-    <rect id="georgia" class="country" x="1580" y="500" width="120" height="80"/><text x="1640" y="540">ジョージア</text>
-    <rect id="armenia" class="country" x="1580" y="590" width="120" height="80"/><text x="1640" y="630">アルメニア</text>
-    <rect id="azerbaijan" class="country" x="1710" y="590" width="120" height="80"/><text x="1770" y="630">アゼルバイジャン</text>
-    <rect id="turkey" class="country" x="1450" y="590" width="120" height="80"/><text x="1510" y="630">トルコ</text>
-    <rect id="cyprus" class="country" x="1450" y="680" width="120" height="80"/><text x="1500" y="720">キプロス</text>
+    <rect id="belarus" class="country" x="930" y="230" width="120" height="80"/><text x="990" y="270">ベラルーシ</text>
+    <rect id="ukraine" class="country" x="930" y="320" width="120" height="80"/><text x="990" y="360">ウクライナ</text>
+    <rect id="russia" class="country" x="1060" y="230" width="510" height="170"/><text x="1120" y="270">ロシア</text>
+    <rect id="georgia" class="country" x="1320" y="410" width="120" height="80"/><text x="1380" y="450">ジョージア</text>
+    <rect id="armenia" class="country" x="1320" y="500" width="120" height="80"/><text x="1380" y="540">アルメニア</text>
+    <rect id="azerbaijan" class="country" x="1450" y="410" width="120" height="80"/><text x="1510" y="450">アゼルバイジャン</text>
+    <rect id="turkey" class="country" x="1190" y="590" width="120" height="80"/><text x="1250" y="630">トルコ</text>
 
   </g>
 
