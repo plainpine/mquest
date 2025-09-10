@@ -1,4 +1,4 @@
-<svg viewBox="-200 0 2200 1800" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="-200 0 2200 1200" xmlns="http://www.w3.org/2000/svg">
   <style>
     .country {
       fill: #ccd;
@@ -59,7 +59,8 @@
     <rect id="hungary" class="country" x="800" y="410" width="120" height="80"/><text x="860" y="450">ハンガリー</text>
     <rect id="slovenia" class="country" x="670" y="410" width="120" height="80"/><text x="730" y="450">スロベニア</text>
     <rect id="croatia" class="country" x="670" y="500" width="120" height="80"/><text x="730" y="540">クロアチア</text>
-    <rect id="bosnia" class="country" x="800" y="500" width="120" height="80"/><text x="860" y="540">ボスニア・ヘルツェゴビナ</text>
+    <rect id="bosnia" class="country" x="800" y="500" width="120" height="80"/>
+		<text x="860" y="540">ボスニア・<tspan x="860" dy="1.2em">ヘルツェゴビナ</tspan></text>
     <rect id="serbia" class="country" x="930" y="590" width="120" height="80"/><text x="990" y="630">セルビア</text>
     <rect id="montenegro" class="country" x="930" y="680" width="120" height="80"/><text x="990" y="720">モンテネグロ</text>
     <rect id="kosovo" class="country" x="800" y="590" width="120" height="80"/><text x="860" y="630">コソボ</text>

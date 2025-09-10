@@ -22,8 +22,8 @@
 
   <g id="us-states">
     <!-- 西・太平洋＆非連結州 -->
-    <rect id="alaska" class="state" x="-50" y="920" width="120" height="80"/><text x="10" y="960">アラスカ</text>
-    <rect id="hawaii" class="state" x="90" y="920" width="120" height="80"/><text x="150" y="960">ハワイ</text>
+    <rect id="alaska" class="state" x="-150" y="50" width="120" height="80"/><text x="-90" y="90">アラスカ</text>
+    <rect id="hawaii" class="state" x="-150" y="500" width="120" height="80"/><text x="-90" y="540">ハワイ</text>
     <rect id="washington" class="state" x="0" y="50" width="120" height="80"/><text x="60" y="90">ワシントン</text>
     <rect id="oregon" class="state" x="0" y="140" width="120" height="80"/><text x="60" y="180">オレゴン</text>
     <rect id="california" class="state" x="0" y="230" width="120" height="80"/><text x="60" y="270">カリフォルニア</text>
@@ -75,14 +75,14 @@
     <rect id="north-carolina" class="state" x="1040" y="320" width="120" height="80"/><text x="1100" y="360">ノースカロライナ</text>
     <rect id="south-carolina" class="state" x="1170" y="320" width="120" height="80"/><text x="1230" y="360">サウスカロライナ</text>
     <rect id="georgia" class="state" x="1040" y="410" width="120" height="80"/><text x="1100" y="450">ジョージア</text>
-    <rect id="florida" class="state" x="1170" y="410" width="120" height="80"/><text x="1230" y="450">フロリダ</text>
+    <rect id="florida" class="state" x="1040" y="500" width="120" height="80"/><text x="1100" y="540">フロリダ</text>
 
     <!-- ディープサウス／内陸南部 -->
     <rect id="kentucky" class="state" x="780" y="230" width="120" height="80"/><text x="840" y="270">ケンタッキー</text>
     <rect id="tennessee" class="state" x="780" y="320" width="120" height="80"/><text x="840" y="360">テネシー</text>
     <rect id="mississippi" class="state" x="910" y="410" width="120" height="80"/><text x="970" y="450">ミシシッピ</text>
-    <rect id="alabama" class="state" x="910" y="500" width="120" height="80"/><text x="970" y="540">アラバマ</text>
-    <rect id="louisiana" class="state" x="780" y="410" width="120" height="80"/><text x="840" y="450">ルイジアナ</text>
+    <rect id="alabama" class="state" x="780" y="410" width="120" height="80"/><text x="840" y="450">アラバマ</text>
+    <rect id="louisiana" class="state" x="650" y="410" width="120" height="80"/><text x="710" y="450">ルイジアナ</text>
     <rect id="arkansas" class="state" x="650" y="320" width="120" height="80"/><text x="710" y="360">アーカンソー</text>
   </g>
 
