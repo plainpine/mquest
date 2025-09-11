@@ -153,8 +153,8 @@
 <script>
   window.MathJax = {
     tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      inlineMath: [['$', '$'], ['\(', '\)']],
+      displayMath: [['$$', '$$'], ['\[', '\]']]
     },
     svg: {
       fontCache: 'global'
@@ -270,6 +270,17 @@
           }
         });
       });
+    });
+
+    // ハードウェアキーボードからの数値入力を処理
+    document.addEventListener('keydown', (event) => {
+      if (!activeInput) return;
+
+      if (event.key >= '0' && event.key <= '9') {
+        activeInput.value += event.key;
+      } else if (event.key === 'Backspace') {
+        activeInput.value = activeInput.value.slice(0, -1);
+      }
     });
   });
 </script>
