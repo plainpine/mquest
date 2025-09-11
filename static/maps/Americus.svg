@@ -22,68 +22,68 @@
 
   <g id="us-states">
     <!-- 西・太平洋＆非連結州 -->
-    <rect id="alaska" class="state" x="0" y="50" width="120" height="80"/><text x="60" y="90">アラスカ</text>
-    <rect id="hawaii" class="state" x="0" y="500" width="120" height="80"/><text x="60" y="540">ハワイ</text>
-    <rect id="washington" class="state" x="150" y="50" width="120" height="80"/><text x="210" y="90">ワシントン</text>
-    <rect id="oregon" class="state" x="150" y="140" width="120" height="80"/><text x="210" y="180">オレゴン</text>
-    <rect id="california" class="state" x="150" y="230" width="120" height="80"/><text x="210" y="270">カリフォルニア</text>
+    <rect id="1" class="state" x="0" y="50" width="120" height="80"/><text x="60" y="90">アラスカ</text>
+    <rect id="2" class="state" x="0" y="500" width="120" height="80"/><text x="60" y="540">ハワイ</text>
+    <rect id="3" class="state" x="150" y="50" width="120" height="80"/><text x="210" y="90">ワシントン</text>
+    <rect id="4" class="state" x="150" y="140" width="120" height="80"/><text x="210" y="180">オレゴン</text>
+    <rect id="5" class="state" x="150" y="230" width="120" height="80"/><text x="210" y="270">カリフォルニア</text>
 
     <!-- 山岳・内陸西部 -->
-    <rect id="idaho" class="state" x="280" y="50" width="120" height="80"/><text x="340" y="90">アイダホ</text>
-    <rect id="nevada" class="state" x="280" y="140" width="120" height="80"/><text x="340" y="180">ネバダ</text>
-    <rect id="arizona" class="state" x="280" y="230" width="120" height="80"/><text x="340" y="270">アリゾナ</text>
-    <rect id="montana" class="state" x="410" y="50" width="120" height="80"/><text x="470" y="90">モンタナ</text>
-    <rect id="wyoming" class="state" x="410" y="140" width="120" height="80"/><text x="470" y="180">ワイオミング</text>
-    <rect id="utah" class="state" x="410" y="230" width="120" height="80"/><text x="470" y="270">ユタ</text>
-    <rect id="colorado" class="state" x="540" y="140" width="120" height="80"/><text x="600" y="180">コロラド</text>
-    <rect id="new-mexico" class="state" x="540" y="230" width="120" height="80"/><text x="600" y="270">ニューメキシコ</text>
+    <rect id="6" class="state" x="280" y="50" width="120" height="80"/><text x="340" y="90">アイダホ</text>
+    <rect id="7" class="state" x="280" y="140" width="120" height="80"/><text x="340" y="180">ネバダ</text>
+    <rect id="8" class="state" x="280" y="230" width="120" height="80"/><text x="340" y="270">アリゾナ</text>
+    <rect id="9" class="state" x="410" y="50" width="120" height="80"/><text x="470" y="90">モンタナ</text>
+    <rect id="10" class="state" x="410" y="140" width="120" height="80"/><text x="470" y="180">ワイオミング</text>
+    <rect id="11" class="state" x="410" y="230" width="120" height="80"/><text x="470" y="270">ユタ</text>
+    <rect id="12" class="state" x="540" y="140" width="120" height="80"/><text x="600" y="180">コロラド</text>
+    <rect id="13" class="state" x="540" y="230" width="120" height="80"/><text x="600" y="270">ニューメキシコ</text>
 
     <!-- グレートプレーンズ -->
-    <rect id="north-dakota" class="state" x="670" y="50" width="120" height="80"/><text x="730" y="90">ノースダコタ</text>
-    <rect id="south-dakota" class="state" x="670" y="140" width="120" height="80"/><text x="730" y="180">サウスダコタ</text>
-    <rect id="nebraska" class="state" x="670" y="230" width="120" height="80"/><text x="730" y="270">ネブラスカ</text>
-    <rect id="kansas" class="state" x="670" y="320" width="120" height="80"/><text x="730" y="360">カンザス</text>
-    <rect id="oklahoma" class="state" x="670" y="410" width="120" height="80"/><text x="730" y="450">オクラホマ</text>
-    <rect id="texas" class="state" x="670" y="500" width="120" height="80"/><text x="730" y="540">テキサス</text>
+    <rect id="14" class="state" x="670" y="50" width="120" height="80"/><text x="730" y="90">ノースダコタ</text>
+    <rect id="15" class="state" x="670" y="140" width="120" height="80"/><text x="730" y="180">サウスダコタ</text>
+    <rect id="16" class="state" x="670" y="230" width="120" height="80"/><text x="730" y="270">ネブラスカ</text>
+    <rect id="17" class="state" x="670" y="320" width="120" height="80"/><text x="730" y="360">カンザス</text>
+    <rect id="18" class="state" x="670" y="410" width="120" height="80"/><text x="730" y="450">オクラホマ</text>
+    <rect id="19" class="state" x="670" y="500" width="120" height="80"/><text x="730" y="540">テキサス</text>
 
     <!-- 上中西部～五大湖～中西部 -->
-    <rect id="minnesota" class="state" x="800" y="50" width="120" height="80"/><text x="860" y="90">ミネソタ</text>
-    <rect id="iowa" class="state" x="800" y="140" width="120" height="80"/><text x="860" y="180">アイオワ</text>
-    <rect id="missouri" class="state" x="800" y="230" width="120" height="80"/><text x="860" y="270">ミズーリ</text>
-    <rect id="wisconsin" class="state" x="930" y="50" width="120" height="80"/><text x="990" y="90">ウィスコンシン</text>
-    <rect id="illinois" class="state" x="930" y="140" width="120" height="80"/><text x="990" y="180">イリノイ</text>
-    <rect id="indiana" class="state" x="1060" y="140" width="120" height="80"/><text x="1120" y="180">インディアナ</text>
-    <rect id="michigan" class="state" x="1060" y="50" width="120" height="80"/><text x="1120" y="90">ミシガン</text>
-    <rect id="ohio" class="state" x="1190" y="140" width="120" height="80"/><text x="1250" y="180">オハイオ</text>
+    <rect id="20" class="state" x="800" y="50" width="120" height="80"/><text x="860" y="90">ミネソタ</text>
+    <rect id="21" class="state" x="800" y="140" width="120" height="80"/><text x="860" y="180">アイオワ</text>
+    <rect id="22" class="state" x="800" y="230" width="120" height="80"/><text x="860" y="270">ミズーリ</text>
+    <rect id="23" class="state" x="930" y="50" width="120" height="80"/><text x="990" y="90">ウィスコンシン</text>
+    <rect id="24" class="state" x="930" y="140" width="120" height="80"/><text x="990" y="180">イリノイ</text>
+    <rect id="25" class="state" x="1060" y="140" width="120" height="80"/><text x="1120" y="180">インディアナ</text>
+    <rect id="26" class="state" x="1060" y="50" width="120" height="80"/><text x="1120" y="90">ミシガン</text>
+    <rect id="27" class="state" x="1190" y="140" width="120" height="80"/><text x="1250" y="180">オハイオ</text>
 
     <!-- 北東部 -->
-    <rect id="pennsylvania" class="state" x="1190" y="230" width="120" height="80"/><text x="1250" y="270">ペンシルベニア</text>
-    <rect id="new-york" class="state" x="1190" y="50" width="120" height="80"/><text x="1250" y="90">ニューヨーク</text>
-    <rect id="vermont" class="state" x="1320" y="50" width="120" height="80"/><text x="1380" y="90">バーモント</text>
-    <rect id="new-hampshire" class="state" x="1450" y="50" width="120" height="80"/><text x="1510" y="90">ニューハンプシャー</text>
-    <rect id="maine" class="state" x="1580" y="50" width="120" height="80"/><text x="1640" y="90">メイン</text>
-    <rect id="massachusetts" class="state" x="1320" y="140" width="120" height="80"/><text x="1380" y="180">マサチューセッツ</text>
-    <rect id="rhode-island" class="state" x="1450" y="140" width="120" height="80"/><text x="1510" y="180">ロードアイランド</text>
-    <rect id="connecticut" class="state" x="1580" y="140" width="120" height="80"/><text x="1640" y="180">コネチカット</text>
-    <rect id="new-jersey" class="state" x="1320" y="230" width="120" height="80"/><text x="1380" y="270">ニュージャージー</text>
-    <rect id="delaware" class="state" x="1450" y="230" width="120" height="80"/><text x="1510" y="270">デラウェア</text>
-    <rect id="maryland" class="state" x="1580" y="230" width="120" height="80"/><text x="1640" y="270">メリーランド</text>
+    <rect id="28" class="state" x="1190" y="230" width="120" height="80"/><text x="1250" y="270">ペンシルベニア</text>
+    <rect id="29" class="state" x="1190" y="50" width="120" height="80"/><text x="1250" y="90">ニューヨーク</text>
+    <rect id="30" class="state" x="1320" y="50" width="120" height="80"/><text x="1380" y="90">バーモント</text>
+    <rect id="31" class="state" x="1450" y="50" width="120" height="80"/><text x="1510" y="90">ニューハンプシャー</text>
+    <rect id="32" class="state" x="1580" y="50" width="120" height="80"/><text x="1640" y="90">メイン</text>
+    <rect id="33" class="state" x="1320" y="140" width="120" height="80"/><text x="1380" y="180">マサチューセッツ</text>
+    <rect id="34" class="state" x="1450" y="140" width="120" height="80"/><text x="1510" y="180">ロードアイランド</text>
+    <rect id="35" class="state" x="1580" y="140" width="120" height="80"/><text x="1640" y="180">コネチカット</text>
+    <rect id="36" class="state" x="1320" y="230" width="120" height="80"/><text x="1380" y="270">ニュージャージー</text>
+    <rect id="37" class="state" x="1450" y="230" width="120" height="80"/><text x="1510" y="270">デラウェア</text>
+    <rect id="38" class="state" x="1580" y="230" width="120" height="80"/><text x="1640" y="270">メリーランド</text>
 
 	<!-- アパラチア～南東部 -->
-	<rect id="west-virginia" class="state" x="1060" y="230" width="120" height="80"/><text x="1120" y="270">ウェストバージニア</text>
-	<rect id="virginia" class="state" x="1060" y="320" width="120" height="80"/><text x="1120" y="360">バージニア</text>
-	<rect id="north-carolina" class="state" x="1190" y="320" width="120" height="80"/><text x="1250" y="360">ノースカロライナ</text>
-	<rect id="south-carolina" class="state" x="1320" y="320" width="120" height="80"/><text x="1380" y="360">サウスカロライナ</text>
-	<rect id="georgia" class="state" x="1190" y="410" width="120" height="80"/><text x="1250" y="450">ジョージア</text>
-	<rect id="florida" class="state" x="1190" y="500" width="120" height="80"/><text x="1250" y="540">フロリダ</text>
+	<rect id="39" class="state" x="1060" y="230" width="120" height="80"/><text x="1120" y="270">ウェストバージニア</text>
+	<rect id="40" class="state" x="1060" y="320" width="120" height="80"/><text x="1120" y="360">バージニア</text>
+	<rect id="41" class="state" x="1190" y="320" width="120" height="80"/><text x="1250" y="360">ノースカロライナ</text>
+	<rect id="42" class="state" x="1320" y="320" width="120" height="80"/><text x="1380" y="360">サウスカロライナ</text>
+	<rect id="43" class="state" x="1190" y="410" width="120" height="80"/><text x="1250" y="450">ジョージア</text>
+	<rect id="44" class="state" x="1190" y="500" width="120" height="80"/><text x="1250" y="540">フロリダ</text>
 
 	<!-- ディープサウス／内陸南部 -->
-	<rect id="kentucky" class="state" x="930" y="230" width="120" height="80"/><text x="990" y="270">ケンタッキー</text>
-	<rect id="tennessee" class="state" x="930" y="320" width="120" height="80"/><text x="990" y="360">テネシー</text>
-	<rect id="mississippi" class="state" x="1060" y="410" width="120" height="80"/><text x="1120" y="450">ミシシッピ</text>
-	<rect id="alabama" class="state" x="930" y="410" width="120" height="80"/><text x="990" y="450">アラバマ</text>
-	<rect id="louisiana" class="state" x="800" y="410" width="120" height="80"/><text x="860" y="450">ルイジアナ</text>
-	<rect id="arkansas" class="state" x="800" y="320" width="120" height="80"/><text x="860" y="360">アーカンソー</text>
+	<rect id="45" class="state" x="930" y="230" width="120" height="80"/><text x="990" y="270">ケンタッキー</text>
+	<rect id="46" class="state" x="930" y="320" width="120" height="80"/><text x="990" y="360">テネシー</text>
+	<rect id="47" class="state" x="1060" y="410" width="120" height="80"/><text x="1120" y="450">ミシシッピ</text>
+	<rect id="48" class="state" x="930" y="410" width="120" height="80"/><text x="990" y="450">アラバマ</text>
+	<rect id="49" class="state" x="800" y="410" width="120" height="80"/><text x="860" y="450">ルイジアナ</text>
+	<rect id="50" class="state" x="800" y="320" width="120" height="80"/><text x="860" y="360">アーカンソー</text>
   </g>
 
   <script><![CDATA[

@@ -28,21 +28,27 @@
     border: 1px solid #ddd;
     border-radius: 4px;
   }
-  .map .conquered {
-    fill: #ffc107; /* 制覇した国の色 (例: オレンジ) */
-    stroke: #d32f2f; /* 国境線 */
-    stroke-width: 1.5px;
-    transition: fill 0.3s ease-in-out;
-  }
-  .map path:not(.conquered) {
+  /* Default state for all paths */
+  .map path {
     fill: #e0e0e0; /* 未制覇の国の色 (例: グレー) */
     stroke: #fff;
     stroke-width: 1px;
+    transition: fill 0.3s ease-in-out;
   }
   .map path:hover {
     fill: #bdbdbd; /* ホバー時の色 */
     cursor: pointer;
   }
+  /* Conquered states have a common border */
+  .conquered {
+    stroke: #d32f2f !important; /* 国境線 */
+    stroke-width: 1.5px !important;
+  }
+  /* Tier colors based on attempts */
+  .attempt-tier-1 { fill: #ffc107; } /* 1-2 attempts */
+  .attempt-tier-2 { fill: #ffa000; } /* 3-4 attempts */
+  .attempt-tier-3 { fill: #ff8f00; } /* 5-6 attempts */
+  .attempt-tier-4 { fill: #ff6f00; } /* 7+ attempts */
 </style>
 {% endblock %}
 
@@ -78,7 +84,7 @@
         </object>
     </div>
 </div>
-<div id="conquered-data" data-conquered='{{ conquered_list|tojson }}' style="display: none;"></div>
+<div id="conquered-data" data-conquered='{{ conquered_quest_data|tojson }}' style="display: none;"></div>
 {% endblock %}
 
 {% block scripts %}

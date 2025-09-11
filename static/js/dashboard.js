@@ -2,14 +2,13 @@ document.addEventListener('DOMContentLoaded', function() {
   (function() {
     console.log("DOM fully loaded and script executing.");
 
-    // Defensive data acquisition from data attribute
     const dataElement = document.getElementById('conquered-data');
-    let student_conquered_list = []; // Default to an empty array
+    let conquered_quest_data = []; // Default to an empty array
     if (dataElement) {
       const conqueredJSON = dataElement.getAttribute('data-conquered');
       try {
         if (conqueredJSON) {
-          student_conquered_list = JSON.parse(conqueredJSON);
+          conquered_quest_data = JSON.parse(conqueredJSON);
         }
       } catch (e) {
         console.error("Error parsing conquered list JSON:", e, conqueredJSON);
@@ -20,6 +19,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentMapType = 'europe';
 
+    function getAttemptTierClass(attempts) {
+      if (attempts <= 2) {
+        return 'attempt-tier-1';
+      } else if (attempts <= 4) {
+        return 'attempt-tier-2';
+      } else if (attempts <= 6) {
+        return 'attempt-tier-3';
+      } else {
+        return 'attempt-tier-4';
+      }
+    }
+
     function highlightMap(mapType) {
         const svgObject = document.querySelector(`#map-${mapType} object`);
         if (!svgObject) return;
@@ -28,14 +39,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const svgDoc = svgObject.contentDocument;
             if (!svgDoc) return;
 
-            svgDoc.querySelectorAll('path, rect').forEach(p => p.classList.remove('conquered'));
+            // Reset all paths to default state
+            svgDoc.querySelectorAll('path, rect').forEach(p => {
+              p.classList.remove('conquered', 'attempt-tier-1', 'attempt-tier-2', 'attempt-tier-3', 'attempt-tier-4');
+            });
 
-            // Ensure student_conquered_list is an array before using forEach
-            if (Array.isArray(student_conquered_list)) {
-              student_conquered_list.forEach(id => {
-                  const element = svgDoc.getElementById(`${mapType}-${id}`);
+            if (Array.isArray(conquered_quest_data)) {
+              // Filter quests to only those that belong on the current map
+              const questsForThisMap = conquered_quest_data.filter(item => item.map_type === mapType);
+
+              questsForThisMap.forEach(item => {
+                  const element = svgDoc.getElementById(item.quest_id);
                   if (element) {
+                      const tierClass = getAttemptTierClass(item.attempts);
                       element.classList.add('conquered');
+                      element.classList.add(tierClass);
                   }
               });
             }

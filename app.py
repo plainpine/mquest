@@ -8,13 +8,22 @@ from models import QuestHistory, Quest, Question
 import json
 import logging
 
+# 科目キーと日本語名のマッピング
+SUBJECT_KEY_TO_JP = {
+    'math': '数学',
+    'english': '英語',
+    'japanese': '国語'
+}
+# 日本語名から英語キーへの逆引きマップ
+SUBJECT_JP_TO_KEY = {v: k for k, v in SUBJECT_KEY_TO_JP.items()}
+
 from models import db, User, Quest, UserProgress
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'  # セッション管理に必要
 
 # データベース設定（例: SQLite）
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mquest.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mquest.db?charset=utf8'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # DBとLoginManagerの初期化
@@ -125,14 +134,38 @@ def dashboard_student():
     if session.get('role') != 'student':
         return redirect(url_for('login'))
 
-    # ▼ 世界制覇機能：制覇済みのクエストIDリストを取得
+    # ▼ 世界制覇機能：制覇済みのクエストとその挑戦回数、マップタイプを取得
+    
+    # 1. ユーザーがクリアしたクエストの進捗情報を取得
     progress_records = UserProgress.query.filter_by(user_id=current_user.id, status='cleared').all()
-    conquered_list = [record.quest_id for record in progress_records]
+    cleared_quest_ids = [p.quest_id for p in progress_records]
+
+    if not cleared_quest_ids:
+        conquered_quest_data = []
+    else:
+        # 2. クリアしたクエストの詳細情報（world_nameを含む）を取得
+        cleared_quests_details = Quest.query.filter(Quest.id.in_(cleared_quest_ids)).all()
+        quest_map = {q.id: q for q in cleared_quests_details}
+
+        # 3. ユーザーの全クエスト挑戦履歴を取得
+        histories = QuestHistory.query.filter_by(user_id=current_user.id).all()
+        attempts_map = {h.quest_id: h.attempts for h in histories}
+
+        # 4. フロントエンドに渡すための最終的なデータ構造を構築
+        conquered_quest_data = []
+        for quest_id in cleared_quest_ids:
+            quest_detail = quest_map.get(quest_id)
+            if quest_detail:
+                conquered_quest_data.append({
+                    "quest_id": quest_id,
+                    "attempts": attempts_map.get(quest_id, 0),
+                    "map_type": quest_detail.world_name 
+                })
 
     return render_template(
         'dashboard_student.html',
         user_id=current_user.id, 
-        conquered_list=conquered_list # 制覇済みリストをテンプレートに渡す
+        conquered_quest_data=conquered_quest_data # 新しいデータをテンプレートに渡す
     )
 
 @app.route('/dashboard/parent')
@@ -154,21 +187,25 @@ def dashboard_admin():
 @login_required
 def select_title():
     titles = db.session.query(Quest.title).distinct().all()
-    return render_template('select_title.html', titles=[t[0] for t in titles])
+    # ユーザーに表示する際は、ここで日本語に変換
+    jp_titles = [SUBJECT_KEY_TO_JP.get(t[0], t[0]) for t in titles]
+    return render_template('select_title.html', titles=jp_titles)
 
 # レベル選択（ステップ2）
 @app.route('/select_level/<title>')
 @login_required
 def select_level(title):
     print(f"Title: {title}")
-    levels = db.session.query(Quest.level).filter_by(title=title).distinct().all()
+    title_key = SUBJECT_JP_TO_KEY.get(title, title)
+    levels = db.session.query(Quest.level).filter_by(title=title_key).distinct().all()
     print(f"Levels: {levels}")
     return render_template('select_level.html', title=title, levels=[l[0] for l in levels])
 
 @app.route('/select_quest/<title>/<level>')
 @login_required
 def select_quest_by_title_level(title, level):
-    quests = Quest.query.filter_by(title=title, level=level).all()
+    title_key = SUBJECT_JP_TO_KEY.get(title, title)
+    quests = Quest.query.filter_by(title=title_key, level=level).all()
     print(quests)
     return render_template(
         'select_quest.html',
@@ -206,7 +243,8 @@ def quest(quest_id):
 
 @app.route("/quest/select/<title>/<level>")
 def select_quest(title, level):
-    quests = Quest.query.filter_by(title=title, level=level).all()
+    title_key = SUBJECT_JP_TO_KEY.get(title, title)
+    quests = Quest.query.filter_by(title=title_key, level=level).all()
     print(quests)
     return render_template(
         'select_quest.html',
@@ -615,13 +653,15 @@ def select_title_admin():
 @app.route('/select_level_admin/<title>')
 @login_required
 def select_level_admin(title):
-    levels = db.session.query(Quest.level).filter_by(title=title).distinct().all()
+    title_key = SUBJECT_JP_TO_KEY.get(title, title)
+    levels = db.session.query(Quest.level).filter_by(title=title_key).distinct().all()
     return render_template('select_level_admin.html', title=title, levels=[l[0] for l in levels])
 
 @app.route('/select_quest_admin/<title>/<level>')
 @login_required
 def select_quest_by_title_level_admin(title, level):
-    quests = Quest.query.filter_by(title=title, level=level).all()
+    title_key = SUBJECT_JP_TO_KEY.get(title, title)
+    quests = Quest.query.filter_by(title=title_key, level=level).all()
     print(quests)
     return render_template(
         'select_quest_admin.html',
