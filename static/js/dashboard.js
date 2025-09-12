@@ -40,7 +40,24 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!svgDoc) return;
 
             // Reset all paths to default state
-            svgDoc.querySelectorAll('path, rect').forEach(p => {
+            let groupId;
+            let elementClass;
+
+            if (mapType === 'europe') {
+                groupId = 'europe-countries';
+                elementClass = 'country';
+            } else if (mapType === 'americus') {
+                groupId = 'americus-states';
+                elementClass = 'state';
+            } else {
+                // Default or error handling for other maps like Zipangu
+                // For now, let's assume a generic 'group' and 'area' class if not specified
+                groupId = `${mapType}-group`; // e.g., zipangu-group
+                elementClass = 'area'; // e.g., area
+                console.warn('Unknown map type, using generic selectors:', mapType);
+            }
+
+            svgDoc.querySelectorAll(`#${groupId} .${elementClass}`).forEach(p => {
               p.classList.remove('conquered', 'attempt-tier-1', 'attempt-tier-2', 'attempt-tier-3', 'attempt-tier-4');
             });
 

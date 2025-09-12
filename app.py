@@ -298,7 +298,7 @@ def quest_run(quest_id):
                 "answers": answer if q.type == "numeric" else None
             })
 
-    return render_template("quest_run.html", quest_id=quest_id, quest=quest, title=quest.title, level=quest.level, questions=questions)
+    return render_template("quest_run.html", quest_id=quest_id, quest=quest, title=SUBJECT_KEY_TO_JP.get(quest.title, quest.title), level=quest.level, questions=questions)
 
 # クエストの結果を処理するエンドポイント
 @app.route('/quest/<int:quest_id>/result', methods=['POST'])

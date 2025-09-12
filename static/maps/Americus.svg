@@ -16,13 +16,12 @@
       text-anchor: middle;
       dominant-baseline: middle; /* ← 中央揃え */
       pointer-events: none;
-      fill: #111;
+      fill: #111 !important;
     }
   </style>
 
-  <g id="2">
-    <!-- 西・太平洋＆非連結州 -->
-    <rect id="3" class="state" x="0" y="50" width="120" height="80"/><text x="60" y="90">アラスカ</text>
+    <g id="americus-states">
+    <rect id="1" class="state" x="0" y="50" width="120" height="80"/><text x="60" y="90">アラスカ</text>
     <rect id="2" class="state" x="0" y="500" width="120" height="80"/><text x="60" y="540">ハワイ</text>
     <rect id="3" class="state" x="150" y="50" width="120" height="80"/><text x="210" y="90">ワシントン</text>
     <rect id="4" class="state" x="150" y="140" width="120" height="80"/><text x="210" y="180">オレゴン</text>
@@ -69,37 +68,21 @@
     <rect id="37" class="state" x="1450" y="230" width="120" height="80"/><text x="1510" y="270">デラウェア</text>
     <rect id="38" class="state" x="1580" y="230" width="120" height="80"/><text x="1640" y="270">メリーランド</text>
 
-	<!-- アパラチア～南東部 -->
-	<rect id="39" class="state" x="1060" y="230" width="120" height="80"/><text x="1120" y="270">ウェストバージニア</text>
-	<rect id="40" class="state" x="1060" y="320" width="120" height="80"/><text x="1120" y="360">バージニア</text>
-	<rect id="41" class="state" x="1190" y="320" width="120" height="80"/><text x="1250" y="360">ノースカロライナ</text>
-	<rect id="42" class="state" x="1320" y="320" width="120" height="80"/><text x="1380" y="360">サウスカロライナ</text>
-	<rect id="43" class="state" x="1190" y="410" width="120" height="80"/><text x="1250" y="450">ジョージア</text>
-	<rect id="44" class="state" x="1190" y="500" width="120" height="80"/><text x="1250" y="540">フロリダ</text>
+    <!-- アパラチア～南東部 -->
+    <rect id="39" class="state" x="1060" y="230" width="120" height="80"/><text x="1120" y="270">ウェストバージニア</text>
+    <rect id="40" class="state" x="1060" y="320" width="120" height="80"/><text x="1120" y="360">バージニア</text>
+    <rect id="41" class="state" x="1190" y="320" width="120" height="80"/><text x="1250" y="360">ノースカロライナ</text>
+    <rect id="42" class="state" x="1320" y="320" width="120" height="80"/><text x="1380" y="360">サウスカロライナ</text>
+    <rect id="43" class="state" x="1190" y="410" width="120" height="80"/><text x="1250" y="450">ジョージア</text>
+    <rect id="44" class="state" x="1190" y="500" width="120" height="80"/><text x="1250" y="540">フロリダ</text>
 
-	<!-- ディープサウス／内陸南部 -->
-	<rect id="45" class="state" x="930" y="230" width="120" height="80"/><text x="990" y="270">ケンタッキー</text>
-	<rect id="46" class="state" x="930" y="320" width="120" height="80"/><text x="990" y="360">テネシー</text>
-	<rect id="47" class="state" x="1060" y="410" width="120" height="80"/><text x="1120" y="450">ミシシッピ</text>
-	<rect id="48" class="state" x="930" y="410" width="120" height="80"/><text x="990" y="450">アラバマ</text>
-	<rect id="49" class="state" x="800" y="410" width="120" height="80"/><text x="860" y="450">ルイジアナ</text>
-	<rect id="50" class="state" x="800" y="320" width="120" height="80"/><text x="860" y="360">アーカンソー</text>
+    <!-- ディープサウス／内陸南部 -->
+    <rect id="45" class="state" x="930" y="230" width="120" height="80"/><text x="990" y="270">ケンタッキー</text>
+    <rect id="46" class="state" x="930" y="320" width="120" height="80"/><text x="990" y="360">テネシー</text>
+    <rect id="47" class="state" x="1060" y="410" width="120" height="80"/><text x="1120" y="450">ミシシッピ</text>
+    <rect id="48" class="state" x="930" y="410" width="120" height="80"/><text x="990" y="450">アラバマ</text>
+    <rect id="49" class="state" x="800" y="410" width="120" height="80"/><text x="860" y="450">ルイジアナ</text>
+    <rect id="50" class="state" x="800" y="320" width="120" height="80"/><text x="860" y="360">アーカンソー</text>
   </g>
 
-  <script><![CDATA[
-    let conqueredStates = [];
-    function applyConquered() {
-      document.querySelectorAll('#us-states .state').forEach(el => el.classList.remove('conquered'));
-      conqueredStates.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('conquered');
-      });
-    }
-    window.updateConquered = function(list) {
-      conqueredStates = Array.isArray(list) ? list.slice() : [];
-      applyConquered();
-    };
-    applyConquered();
-  ]]></script>
-</svg>
-
+  </svg>

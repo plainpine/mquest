@@ -20,12 +20,12 @@
     }
   </style>
 
-  <g id="1">
+  <g id="europe-countries">
     <!-- 北欧 -->
-    <rect id="4" class="country" x="410" y="50" width="120" height="80"/><text x="470" y="90">アイスランド</text>
-    <rect id="5" class="country" x="800" y="50" width="120" height="80"/><text x="860" y="90">ノルウェー</text>
-    <rect id="6" class="country" x="930" y="50" width="120" height="80"/><text x="990" y="90">スウェーデン</text>
-    <rect id="7" class="country" x="1060" y="50" width="120" height="80"/><text x="1120" y="90">フィンランド</text>
+    <rect id="1" class="country" x="410" y="50" width="120" height="80"/><text x="470" y="90">アイスランド</text>
+    <rect id="2" class="country" x="800" y="50" width="120" height="80"/><text x="860" y="90">ノルウェー</text>
+    <rect id="3" class="country" x="930" y="50" width="120" height="80"/><text x="990" y="90">スウェーデン</text>
+    <rect id="4" class="country" x="1060" y="50" width="120" height="80"/><text x="1120" y="90">フィンランド</text>
     <rect id="5" class="country" x="670" y="230" width="120" height="80"/><text x="730" y="270">デンマーク</text>
 
     <!-- 西ヨーロッパ -->
@@ -85,16 +85,4 @@
     <rect id="50" class="country" x="1190" y="590" width="120" height="80"/><text x="1250" y="630">トルコ</text>
 
   </g>
-
-  <script><![CDATA[
-    // ★ 占領済みの国をここで制御 ★
-    const conqueredCountries = [
-      "france", "germany", "italy", "spain", "ukraine"
-    ];
-
-    conqueredCountries.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add("conquered");
-    });
-  ]]></script>
 </svg>

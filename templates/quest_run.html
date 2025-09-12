@@ -4,7 +4,7 @@
 {% block title %}クエスト実行{% endblock %}
 
 {% block content %}
-<h1>クエスト{{ quest_id }}: {{ quest.title }}</h1>
+<h1>クエスト{{ quest_id }}: {{ title }}</h1>
 
 <style>
   .choice-option {
@@ -20,8 +20,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .choice-option:hover,
-  .choice-option:active {
+  .choice-option:hover, .choice-option:active {
     background-color: #f7f7f7;
   }
 
@@ -171,7 +170,7 @@
                   border: none; border-radius: 6px; margin-right: 10px;">
 
     <!-- クエスト選択に戻る（フォーム外でもOKだがここに入れても動作に問題なし） -->
-    <a href="{{ url_for('select_quest_by_title_level', title=quest.title, level=quest.level) }}"
+    <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}"
       class="button secondary">クエスト選択に戻る</a>
   </div>
 </form>
