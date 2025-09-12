@@ -462,7 +462,13 @@ def medals():
     ).filter(QuestHistory.user_id == user_id
     ).group_by(QuestHistory.quest_id).all()
 
-    return render_template("medals.html", attempts=medal_data)
+    # Apply Japanese mapping to titles
+    processed_medal_data = []
+    for quest_id, title, attempts in medal_data:
+        jp_title = SUBJECT_KEY_TO_JP.get(title, title)
+        processed_medal_data.append((quest_id, jp_title, attempts))
+
+    return render_template("medals.html", attempts=processed_medal_data)
 
 # 進捗表示用ルート
 @app.route('/progress')
@@ -484,7 +490,14 @@ def progress():
         QuestHistory.correct == True
     ).group_by(Quest.title, Quest.level).all()
 
-    return render_template("progress.html", cleared=cleared)
+    # Apply Japanese mapping to titles and levels
+    processed_cleared_data = []
+    for title, level, count in cleared:
+        jp_title = SUBJECT_KEY_TO_JP.get(title, title)
+        jp_level = SUBJECT_KEY_TO_JP.get(level, level) # Assuming level might also need translation
+        processed_cleared_data.append((jp_title, jp_level, count))
+
+    return render_template("progress.html", cleared=processed_cleared_data)
 
 @app.route('/admin/students')
 def manage_students():
@@ -520,7 +533,7 @@ def manage_students():
             QuestHistory.quest_id,
             db.func.count(QuestHistory.id)
         ).filter_by(user_id=user.id) \
-         .group_by(QuestHistory.quest_id).all()
+         .group_by(QuestHistory.quest_id).all() 
 
         user_data['medals'] = [{'quest_id': m[0], 'count': m[1]} for m in medal_counts]
 
