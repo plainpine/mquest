@@ -1,6 +1,9 @@
 @echo off
 REM This script rebuilds the entire database.
 
+REM Change directory to the script's location to ensure python scripts are found
+cd /d "%~dp0"
+
 echo [1/3] Creating database schema...
 python ./create_db.py
 

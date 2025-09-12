@@ -127,6 +127,37 @@
             <button type="button" class="key-btn" data-num="del">⌫</button>
             <button type="button" class="key-btn" data-num="clear">C</button>
           </div>
+
+      {% elif question.type == 'svg_interactive' %}
+        <div class="svg-interactive-container" data-question-index="{{ q_index }}">
+          {{ question.svg_content | safe }}
+        </div>
+        <div class="sub-questions-container">
+          {% for sub_q in question.sub_questions %}
+            <div class="sub-question">
+              <p><strong>{{ loop.index }}. {{ sub_q.prompt }}</strong></p>
+              {% if sub_q.type == 'choice' %}
+                <input type="hidden" name="q{{ q_index }}_{{ sub_q.id }}" id="q{{ q_index }}_{{ sub_q.id }}_input" data-choices="{{ sub_q.choices | join(',') }}">
+              {% elif sub_q.type == 'numeric' %}
+                <input type="text"
+                       name="q{{ q_index }}_{{ sub_q.id }}"
+                       class="numeric-input"
+                       data-qid="{{ q_index }}"
+                       readonly>
+                <div style="height: 1rem;"></div>
+                <div class="keypad" data-qid="{{ q_index }}">
+                  {% for num in range(1, 10) %}
+                    <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
+                    {% if num % 3 == 0 %}<br>{% endif %}
+                  {% endfor %}
+                  <button type="button" class="key-btn" data-num="0">0</button>
+                  <button type="button" class="key-btn" data-num="del">⌫</button>
+                  <button type="button" class="key-btn" data-num="clear">C</button>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
 
     </div>
@@ -176,25 +207,8 @@
     }
   }
 
-  <!-- Markdown表示の部分に差分 -->
   document.addEventListener("DOMContentLoaded", () => {
     renderMarkdownAndMath();
-    // // Markdownの初期化
-    // marked.setOptions({ breaks: true });
-
-    // // Markdown表示
-    // document.querySelectorAll('.markdown').forEach(div => {
-    //   let md = div.getAttribute('data-content');
-    //   md = md.replace(/\\n/g, '\n'); // \\nを改行に変換
-
-    //   // MarkdownをパースしてからMathJaxで処理
-    //   div.innerHTML = marked.parse(md);
-
-    //   // MathJaxのレンダリングを遅延させて実行
-    //   // setTimeout(() => {
-    //   //   MathJax.typeset();
-    //   // }, 0); // 0msで遅延させる
-    // });
 
     // 選択肢のクリックイベント処理
     document.querySelectorAll('.choice-option').forEach(option => {
@@ -226,10 +240,6 @@
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
-        forceFallback: true, // 重要: タッチデバイスで確実に動作させる
-        fallbackTolerance: 3,
-        fallbackOnBody: true,
-        swapThreshold: 0.65,
         onEnd: () => {
           const order = Array.from(list.children).map(li => li.textContent.trim());
           hiddenInput.value = order.join(' ');
@@ -239,6 +249,43 @@
       // 初期化
       const initialOrder = Array.from(list.children).map(li => li.textContent.trim());
       hiddenInput.value = initialOrder.join(' ');
+    });
+
+    // SVGインタラクティブ問題の処理
+    document.querySelectorAll('.svg-interactive-container').forEach(container => {
+      const q_index = container.dataset.questionIndex;
+      const questionBlock = container.closest('.question-block');
+      
+      // choiceタイプのサブ問題に対する処理
+      questionBlock.querySelectorAll('input[type="hidden"][data-choices]').forEach(hiddenInput => {
+        const choices = hiddenInput.dataset.choices.split(',');
+        let selectedShape = null;
+
+        choices.forEach(choiceId => {
+          const shape = container.querySelector('#' + choiceId);
+          if (shape) {
+            shape.style.cursor = 'pointer';
+            shape.addEventListener('click', () => {
+              // 同じ問題グループの他の選択肢のハイライトを解除
+              choices.forEach(id => {
+                const otherShape = container.querySelector('#' + id);
+                if(otherShape) {
+                    otherShape.style.stroke = '';
+                    otherShape.style.strokeWidth = '';
+                }
+              });
+              
+              // クリックした図形をハイライト
+              shape.style.stroke = 'orange';
+              shape.style.strokeWidth = '5px';
+              
+              // 選択された図形と値を更新
+              selectedShape = shape;
+              hiddenInput.value = choiceId;
+            });
+          }
+        });
+      });
     });
 
     // 数値入力：テンキーの操作

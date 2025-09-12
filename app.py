@@ -282,13 +282,21 @@ def quest_run(quest_id):
             answer = q.answer  # パースできなければそのまま
 
         # すでに構造化されていないので、自前で構築
-        questions.append({
-            "type": q.type,  
-            "text": q.text,
-            "choices": choices,
-            "answer": answer if q.type != "numeric" else None,
-            "answers": answer if q.type == "numeric" else None
-        })
+        if q.type == 'svg_interactive':
+            questions.append({
+                "type": q.type,
+                "text": q.text,
+                "svg_content": json.loads(q.choices), # choicesにSVGコンテンツを格納
+                "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
+            })
+        else:
+            questions.append({
+                "type": q.type,  
+                "text": q.text,
+                "choices": choices,
+                "answer": answer if q.type != "numeric" else None,
+                "answers": answer if q.type == "numeric" else None
+            })
 
     return render_template("quest_run.html", quest_id=quest_id, quest=quest, title=quest.title, level=quest.level, questions=questions)
 
@@ -327,6 +335,28 @@ def quest_result(quest_id):
 
             correct = str(correct_answer) == user_answer
             expected = correct_answer
+
+        elif question_type == 'svg_interactive':
+            sub_questions = json.loads(q.answer)
+            all_sub_correct = True
+            user_answers_list = []
+            expected_answers_list = []
+
+            for sub_q in sub_questions:
+                sub_q_id = sub_q['id']
+                form_field_name = f"q{i}_{sub_q_id}"
+                user_val = request.form.get(form_field_name, '').strip()
+                expected_val = str(sub_q['answer'])
+
+                user_answers_list.append({sub_q['prompt']: user_val})
+                expected_answers_list.append({sub_q['prompt']: expected_val})
+
+                if user_val != expected_val:
+                    all_sub_correct = False
+            
+            correct = all_sub_correct
+            user_answer = user_answers_list
+            expected = expected_answers_list
 
         elif question_type == 'numeric':
             answer_list = json.loads(q.answer)
@@ -479,8 +509,8 @@ def manage_students():
             Quest.title,
             Quest.level,
             db.func.count(QuestHistory.id)
-        ).join(QuestHistory, Quest.id == QuestHistory.quest_id)\
-         .filter(QuestHistory.user_id == user.id, QuestHistory.correct == True)\
+        ).join(QuestHistory, Quest.id == QuestHistory.quest_id) \
+         .filter(QuestHistory.user_id == user.id, QuestHistory.correct == True) \
          .group_by(Quest.title, Quest.level).all()
 
         user_data['progress'] = [{'title': p[0], 'level': p[1], 'count': p[2]} for p in progress]
@@ -489,7 +519,7 @@ def manage_students():
         medal_counts = db.session.query(
             QuestHistory.quest_id,
             db.func.count(QuestHistory.id)
-        ).filter_by(user_id=user.id)\
+        ).filter_by(user_id=user.id) \
          .group_by(QuestHistory.quest_id).all()
 
         user_data['medals'] = [{'quest_id': m[0], 'count': m[1]} for m in medal_counts]
@@ -700,13 +730,21 @@ def quest_run_group(quest_id):
             answer = q.answer  # パースできなければそのまま
 
         # すでに構造化されていないので、自前で構築
-        questions.append({
-            "type": q.type,  
-            "text": q.text,
-            "choices": choices,
-            "answer": answer if q.type != "numeric" else None,
-            "answers": answer if q.type == "numeric" else None
-        })
+        if q.type == 'svg_interactive':
+            questions.append({
+                "type": q.type,
+                "text": q.text,
+                "svg_content": json.loads(q.choices), # choicesにSVGコンテンツを格納
+                "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
+            })
+        else:
+            questions.append({
+                "type": q.type,  
+                "text": q.text,
+                "choices": choices,
+                "answer": answer if q.type != "numeric" else None,
+                "answers": answer if q.type == "numeric" else None
+            })
 
     return render_template("group_learning.html", quest_id=quest_id, quest=quest, title=quest.title, level=quest.level, questions=questions)
 

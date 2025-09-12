@@ -167,5 +167,24 @@
                 "answer": 1
             }
         ]
+    },
+    "7": {
+        "title": "SVG図形問題",
+        "level": "Lv1",
+        "questions": [
+            {
+                "type": "svg_interactive",
+                "text": "下の図を見て、次の問いに答えなさい。",
+                "svg_content": "<svg width='200' height='150' xmlns='http://www.w3.org/2000/svg'><polygon points='60,10 60,90 120,90' style='fill:none; stroke:black; stroke-width:2;'/><line x1='60' y1='10' x2='60' y2='90' style='stroke:black;stroke-width:2'/><line x1='60' y1='10' x2='120' y2='90' style='stroke:black;stroke-width:2'/><line x1='60' y1='90' x2='120' y2='90' style='stroke:black;stroke-width:2'/><text x='50' y='50' font-size='15' text-anchor='middle' fill='black'>b</text><text x='90' y='40' font-size='15' text-anchor='middle' fill='black'>c</text><text x='90' y='105' font-size='15' text-anchor='middle' fill='black'>a</text></svg>",
+                "sub_questions": [
+                    {
+                        "id": "q1_hypotenuse_length",
+                        "type": "numeric",
+                        "prompt": "直角三角形の斜辺cの長さを計算しなさい（aの長さが60、bの長さが80の場合）。",
+                        "answer": 100
+                    }
+                ]
+            }
+        ]
     }
 }
