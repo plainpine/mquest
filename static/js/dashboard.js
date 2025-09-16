@@ -19,16 +19,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentMapType = 'europe';
 
-    function getAttemptTierClass(attempts) {
-      if (attempts <= 2) {
-        return 'attempt-tier-1';
-      } else if (attempts <= 4) {
-        return 'attempt-tier-2';
-      } else if (attempts <= 6) {
-        return 'attempt-tier-3';
-      } else {
-        return 'attempt-tier-4';
-      }
+    // 挑戦回数に応じた「色コード」を返す関数
+    function getAttemptTierColor(attempts) {
+      if (attempts >= 7) return '#ff6f00'; // tier-4
+      if (attempts >= 5) return '#ff8f00'; // tier-3
+      if (attempts >= 3) return '#ffa000'; // tier-2
+      if (attempts >= 1) return '#ffc107'; // tier-1
+      return '#e0e0e0'; // デフォルトの色（未制覇）
     }
 
     function highlightMap(mapType) {
@@ -39,38 +36,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const svgDoc = svgObject.contentDocument;
             if (!svgDoc) return;
 
-            // Reset all paths to default state
-            let groupId;
-            let elementClass;
-
-            if (mapType === 'europe') {
-                groupId = 'europe-countries';
-                elementClass = 'country';
-            } else if (mapType === 'americus') {
-                groupId = 'americus-states';
-                elementClass = 'state';
-            } else {
-                // Default or error handling for other maps like Zipangu
-                // For now, let's assume a generic 'group' and 'area' class if not specified
-                groupId = `${mapType}-group`; // e.g., zipangu-group
-                elementClass = 'area'; // e.g., area
-                console.warn('Unknown map type, using generic selectors:', mapType);
-            }
-
-            svgDoc.querySelectorAll(`#${groupId} .${elementClass}`).forEach(p => {
+            // いったんすべての色とクラスをリセット
+            svgDoc.querySelectorAll('path, rect').forEach(p => {
               p.classList.remove('conquered', 'attempt-tier-1', 'attempt-tier-2', 'attempt-tier-3', 'attempt-tier-4');
+              p.style.fill = ''; // 直接指定したfillをリセット
             });
 
             if (Array.isArray(conquered_quest_data)) {
-              // Filter quests to only those that belong on the current map
               const questsForThisMap = conquered_quest_data.filter(item => item.map_type === mapType);
 
               questsForThisMap.forEach(item => {
-                  const element = svgDoc.getElementById(item.quest_id);
+                  const element = svgDoc.getElementById(String(item.quest_id));
                   if (element) {
-                      const tierClass = getAttemptTierClass(item.attempts);
-                      element.classList.add('conquered');
-                      element.classList.add(tierClass);
+                      const fillColor = getAttemptTierColor(item.attempts);
+                      element.style.fill = fillColor; // 色を直接設定
+                      element.classList.add('conquered'); // 枠線用のクラスは引き続き使用
                   }
               });
             }

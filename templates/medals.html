@@ -22,9 +22,9 @@
             <td>{{ title }}</td>
             <td>{{ attempts }}</td>
             <td>
-                {% if attempts == 1 %}
+                {% if attempts >= 10 %}
                     🥇 金
-                {% elif attempts <= 3 %}
+                {% elif attempts >= 5 %}
                     🥈 銀
                 {% else %}
                     🥉 銅

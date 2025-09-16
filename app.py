@@ -413,21 +413,25 @@ def quest_result(quest_id):
                 db.session.add(progress)
         # ▲▲▲【ここまで】▲▲▲
 
-        # 履歴登録（既に全問正解があるなら重複しない）
-        existing = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id, correct=True).first()
+        # 履歴を user_id と quest_id で検索
+        history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
 
-        if existing:
-            # 更新処理（例：attemptsと正解状況を更新）
-            existing.attempts += 1
-            existing.correct = correct  # 新しい結果に応じて更新（必要であれば）
-            existing.last_attempt = datetime.now(timezone.utc)
+        if history:
+            # 既存の履歴があれば、挑戦回数を更新
+            history.attempts += 1
+            # 今回の結果を反映
+            history.correct = all_correct 
+            history.last_attempt = datetime.now(timezone.utc)
+            # 一度でもクリアしたら、is_clearedフラグをTrueにする
+            if all_correct:
+                history.is_cleared = True
         else:
-            # 新規追加
+            # 新しい履歴を作成
             history = QuestHistory(
                 user_id=user_id,
                 quest_id=quest_id,
-                correct=correct,
-                is_cleared=False,
+                correct=all_correct,
+                is_cleared=all_correct,
                 attempts=1,
                 last_attempt=datetime.now(timezone.utc)
             )
@@ -462,14 +466,13 @@ def medals():
     user_id = session.get('user_id')
     from models import QuestHistory, Quest
 
-    # quest_idごとの挑戦回数をカウント
+    # quest_idごとの挑戦回数を取得
     medal_data = db.session.query(
         QuestHistory.quest_id,
         Quest.title,
-        db.func.count(QuestHistory.id)
+        QuestHistory.attempts
     ).join(Quest, Quest.id == QuestHistory.quest_id
-    ).filter(QuestHistory.user_id == user_id
-    ).group_by(QuestHistory.quest_id).all()
+    ).filter(QuestHistory.user_id == user_id).all()
 
     # Apply Japanese mapping to titles
     processed_medal_data = []
@@ -527,7 +530,7 @@ def manage_students():
         }
 
         # 学習進捗状況の取得
-        progress = db.session.query(
+        progress_query_result = db.session.query(
             Quest.title,
             Quest.level,
             db.func.count(QuestHistory.id)
@@ -535,14 +538,18 @@ def manage_students():
          .filter(QuestHistory.user_id == user.id, QuestHistory.correct == True) \
          .group_by(Quest.title, Quest.level).all()
 
-        user_data['progress'] = [{'title': p[0], 'level': p[1], 'count': p[2]} for p in progress]
+        # タイトルを日本語に変換
+        processed_progress = []
+        for p in progress_query_result:
+            jp_title = SUBJECT_KEY_TO_JP.get(p[0], p[0])
+            processed_progress.append({'title': jp_title, 'level': p[1], 'count': p[2]})
+        user_data['progress'] = processed_progress
 
         # メダル取得状況の取得（挑戦回数の合計）
         medal_counts = db.session.query(
             QuestHistory.quest_id,
-            db.func.count(QuestHistory.id)
-        ).filter_by(user_id=user.id) \
-         .group_by(QuestHistory.quest_id).all() 
+            QuestHistory.attempts
+        ).filter_by(user_id=user.id).all()
 
         user_data['medals'] = [{'quest_id': m[0], 'count': m[1]} for m in medal_counts]
 

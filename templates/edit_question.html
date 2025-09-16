@@ -11,15 +11,18 @@
       margin: 0;
     }
     input[type=number] {
+      appearance: textfield;
       -moz-appearance: textfield;
     }
 </style>
 <form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new', choices=choices, answers=answers) }}">
   <label>タイプ:</label>
   <select name="type" id="type-select">
-    <option value="choice" {% if question and question.type == 'choice' %}selected{% endif %}>choice</option>
-    <option value="sort" {% if question and question.type == 'sort' %}selected{% endif %}>sort</option>
-    <option value="numeric" {% if question and question.type == 'numeric' %}selected{% endif %}>numeric</option>
+    <option value="choice" {% if question and question.type == 'choice' %}selected{% endif %}>4択問題</option>
+    <option value="sort" {% if question and question.type == 'sort' %}selected{% endif %}>並び替え</option>
+    <option value="numeric" {% if question and question.type == 'numeric' %}selected{% endif %}>数値入力</option>
+    <option value="fill_in_the_blank_en" {% if question and question.type == 'fill_in_the_blank_en' %}selected{% endif %}>英語穴埋め</option>
+    <option value="svg_interactive" {% if question and question.type == 'svg_interactive' %}selected{% endif %}>図形問題</option>
   </select>
 
   <label>問題文（Markdown）:</label>
