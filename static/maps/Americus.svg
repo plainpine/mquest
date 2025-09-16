@@ -20,9 +20,9 @@
     }
   </style>
 
-    <g id="2">
-    <rect id="3" class="state" x="0" y="50" width="120" height="80"/><text x="60" y="90">アラスカ</text>
-    <rect id="8" class="state" x="0" y="500" width="120" height="80"/><text x="60" y="540">ハワイ</text>
+    <g id="americus-states">
+    <rect id="1" class="state" x="0" y="50" width="120" height="80"/><text x="60" y="90">アラスカ</text>
+    <rect id="2" class="state" x="0" y="500" width="120" height="80"/><text x="60" y="540">ハワイ</text>
     <rect id="3" class="state" x="150" y="50" width="120" height="80"/><text x="210" y="90">ワシントン</text>
     <rect id="4" class="state" x="150" y="140" width="120" height="80"/><text x="210" y="180">オレゴン</text>
     <rect id="5" class="state" x="150" y="230" width="120" height="80"/><text x="210" y="270">カリフォルニア</text>
