@@ -186,5 +186,21 @@
                 ]
             }
         ]
+    },
+    "8": {
+        "title": "英語穴埋め",
+        "level": "Lv1",
+        "questions": [
+            {
+                "type": "fill_in_the_blank_en",
+                "text": "I have ___ pen.",
+                "answer": "a"
+            },
+            {
+                "type": "fill_in_the_blank_en",
+                "text": "This is ___ apple.",
+                "answer": "an"
+            }
+        ]
     }
 }

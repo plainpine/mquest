@@ -20,7 +20,8 @@ QUEST_MAP = {
     "英語文法":    {"subject_key": "english", "subject_jp": "英語", "world": "americus"},
     "英文並べ替え":  {"subject_key": "english", "subject_jp": "英語", "world": "americus"},
     "計算問題":    {"subject_key": "math", "subject_jp": "数学", "world": "europe"},
-    "SVG図形問題": {"subject_key": "math", "subject_jp": "数学", "world": "europe"}
+    "SVG図形問題": {"subject_key": "math", "subject_jp": "数学", "world": "europe"},
+    "英語穴埋め":  {"subject_key": "english", "subject_jp": "英語", "world": "americus"}
 }
 
 # どの科目がどのSVGファイルとクエストIDのプレフィックスに対応するかを定義

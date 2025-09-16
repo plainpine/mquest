@@ -70,6 +70,52 @@
     word-break: break-word;
     display: inline;
   }
+  /* 英語穴埋め問題用のスタイル */
+  .en-fill-in-the-blank-input {
+    font-size: 1.2rem;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    text-align: center;
+  }
+
+  .keypad {
+    margin-top: 1rem;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    display: inline-block;
+  }
+
+  .virtual-keyboard {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .keyboard-row {
+    margin-bottom: 5px;
+  }
+
+  .key-btn-en {
+    font-size: 1.1rem;
+    width: 40px;
+    height: 40px;
+    margin: 2px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    user-select: none;
+  }
+  .key-btn-en:active {
+    background-color: #e0e0e0;
+  }
 </style>
 
 <form method="post" action="{{ url_for('quest_result', quest_id=quest_id) }}">
@@ -124,8 +170,31 @@
             {% endfor %}
             <button type="button" class="key-btn" data-num="0">0</button>
             <button type="button" class="key-btn" data-num="del">⌫</button>
-            <button type="button" class="key-btn" data-num="clear">C</button>
+            <button type="button" class="key-btn" data-num="clear">CL</button>
           </div>
+
+      {% elif question.type == 'fill_in_the_blank_en' %}
+        <div class="en-fill-in-the-blank-block">
+          <input type="text"
+                 name="q{{ q_index }}"
+                 class="en-fill-in-the-blank-input"
+                 data-qid="{{ q_index }}"
+                 autocomplete="off"
+                 readonly>
+          <div class="virtual-keyboard" data-qid="{{ q_index }}">
+            <div class="keyboard-row">
+              {% for key in 'qwertyuiop' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+            </div>
+            <div class="keyboard-row">
+              {% for key in 'asdfghjkl' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+            </div>
+            <div class="keyboard-row">
+              {% for key in 'zxcvbnm' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+              <button type="button" class="key-btn-en" data-key="del">⌫</button>
+              <button type="button" class="key-btn-en" data-key="clear">CL</button>
+            </div>
+          </div>
+        </div>
 
       {% elif question.type == 'svg_interactive' %}
         <div class="svg-interactive-container" data-question-index="{{ q_index }}">
@@ -151,7 +220,7 @@
                   {% endfor %}
                   <button type="button" class="key-btn" data-num="0">0</button>
                   <button type="button" class="key-btn" data-num="del">⌫</button>
-                  <button type="button" class="key-btn" data-num="clear">C</button>
+                  <button type="button" class="key-btn" data-num="clear">CL</button>
                 </div>
               {% endif %}
             </div>
@@ -185,7 +254,7 @@
     tex: {
       inlineMath: [['$', '$'], ['\(', '\)']],
       displayMath: [['$$', '$$'], ['\[', '\]']]
-    },
+     },
     svg: {
       fontCache: 'global'
     }
@@ -287,24 +356,39 @@
       });
     });
 
-    // 数値入力：テンキーの操作
+    // 数値入力と英語入力のフォーカス管理
     let activeInput = null;
+    let activeEnInput = null;
+
     document.querySelectorAll('.numeric-input').forEach(input => {
       input.addEventListener('focus', () => {
         activeInput = input;
+        activeEnInput = null;
       });
       input.addEventListener('click', () => {
         activeInput = input;
+        activeEnInput = null;
       });
     });
 
+    document.querySelectorAll('.en-fill-in-the-blank-input').forEach(input => {
+      input.addEventListener('focus', () => {
+        activeEnInput = input;
+        activeInput = null;
+      });
+      input.addEventListener('click', () => {
+        activeEnInput = input;
+        activeInput = null;
+      });
+    });
+
+    // 数値入力用テンキーの操作
     document.querySelectorAll('.keypad').forEach(keypad => {
       const qid = keypad.dataset.qid;
 
       keypad.querySelectorAll('.key-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          if (!activeInput) return;
-          if (activeInput.dataset.qid !== qid) return;
+          if (!activeInput || activeInput.dataset.qid !== qid) return;
 
           const num = btn.dataset.num;
           if (num === 'del') {
@@ -318,14 +402,39 @@
       });
     });
 
-    // ハードウェアキーボードからの数値入力を処理
-    document.addEventListener('keydown', (event) => {
-      if (!activeInput) return;
+    // 英語穴埋め問題用仮想キーボードの操作
+    document.querySelectorAll('.virtual-keyboard').forEach(keyboard => {
+      const qid = keyboard.dataset.qid;
+      keyboard.querySelectorAll('.key-btn-en').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!activeEnInput || activeEnInput.dataset.qid !== qid) return;
 
-      if (event.key >= '0' && event.key <= '9') {
-        activeInput.value += event.key;
-      } else if (event.key === 'Backspace') {
-        activeInput.value = activeInput.value.slice(0, -1);
+          const key = btn.dataset.key;
+          if (key === 'del') {
+            activeEnInput.value = activeEnInput.value.slice(0, -1);
+          } else if (key === 'clear') {
+            activeEnInput.value = '';
+          } else {
+            activeEnInput.value += key;
+          }
+        });
+      });
+    });
+
+    // ハードウェアキーボードからの入力を処理
+    document.addEventListener('keydown', (event) => {
+      if (activeInput) { // Numeric input is active
+        if (event.key >= '0' && event.key <= '9') {
+          activeInput.value += event.key;
+        } else if (event.key === 'Backspace') {
+          activeInput.value = activeInput.value.slice(0, -1);
+        }
+      } else if (activeEnInput) { // English input is active
+        if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
+          activeEnInput.value += event.key.toLowerCase();
+        } else if (event.key === 'Backspace') {
+          activeEnInput.value = activeEnInput.value.slice(0, -1);
+        }
       }
     });
   });

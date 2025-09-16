@@ -336,6 +336,15 @@ def quest_result(quest_id):
             correct = str(correct_answer) == user_answer
             expected = correct_answer
 
+        elif question_type == 'fill_in_the_blank_en':
+            user_answer = request.form.get(f'q{i}', '').strip().lower()
+            try:
+                correct_answer = json.loads(q.answer)
+            except (json.JSONDecodeError, TypeError):
+                correct_answer = q.answer
+            correct = user_answer == correct_answer.lower()
+            expected = correct_answer
+
         elif question_type == 'svg_interactive':
             sub_questions = json.loads(q.answer)
             all_sub_correct = True
