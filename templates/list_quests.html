@@ -5,8 +5,8 @@
 <h2>Quest一覧</h2>
 <form method="post" action="{{ url_for('handle_quest_action') }}" onsubmit="return validateQuestSelection()">
   <div style="margin-bottom: 1rem;">
-    <button type="submit" name="action" value="add">追加</button>
     <button type="submit" name="action" value="edit">編集</button>
+    <button type="submit" name="action" value="add">追加</button>
     <button type="submit" name="action" value="delete" onclick="return confirm('本当に削除しますか？')">削除</button>
   </div>
   <table border="1" cellpadding="8">
