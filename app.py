@@ -734,7 +734,8 @@ def save_question(quest_id, question_id):
 @login_required
 def select_title_admin():
     titles = db.session.query(Quest.title).distinct().all()
-    return render_template('select_title_admin.html', titles=[t[0] for t in titles])
+    jp_titles = [SUBJECT_KEY_TO_JP.get(t[0], t[0]) for t in titles]
+    return render_template('select_title_admin.html', titles=jp_titles)
 
 # レベル選択（ステップ2）
 @app.route('/select_level_admin/<title>')

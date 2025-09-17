@@ -6,11 +6,10 @@
 {% block content %}
 <h1>{{ title }} / {{ level }} のクエストを選んでください</h1>
 
-<ul>
+<ul class="selectable-list">
   {% for quest in quests %}
-    <li>
+    <li data-url="{{ url_for('quest_run_group', quest_id=quest.id) }}" onclick="window.location.href=this.dataset.url">
       ID: {{ quest.id }}
-      <a class="button" href="{{ url_for('quest_run_group', quest_id=quest.id) }}">開始</a>
     </li>
   {% endfor %}
 </ul>

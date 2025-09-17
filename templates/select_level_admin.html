@@ -6,10 +6,10 @@
 {% block content %}
 <h1>「{{ title }}」のレベルを選んでください</h1>
 
-<ul>
+<ul class="selectable-list">
   {% for level in levels %}
-    <li>
-      <a class="button" href="{{ url_for('select_quest_by_title_level_admin', title=title, level=level) }}">{{ level }}</a>
+    <li data-url="{{ url_for('select_quest_by_title_level_admin', title=title, level=level) }}" onclick="window.location.href=this.dataset.url">
+      {{ level }}
     </li>
   {% endfor %}
 </ul>
