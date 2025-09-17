@@ -400,21 +400,23 @@ def quest_result(quest_id):
 
     user_id = session.get('user_id')
     if user_id:
-        # ▼▼▼【データベースへの保存処理】▼▼▼
         try:
-            # --- UserProgressの更新 ---
             if all_correct:
-                existing_progress = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
-                if not existing_progress:
-                    progress = UserProgress(
+                progress_record = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+
+                if progress_record:
+                    if progress_record.status != 'cleared':
+                        progress_record.status = 'cleared'
+                        progress_record.conquered_at = datetime.now(timezone.utc)
+                else:
+                    new_progress = UserProgress(
                         user_id=user_id,
                         quest_id=quest_id,
                         status='cleared',
                         conquered_at=datetime.now(timezone.utc)
                     )
-                    db.session.add(progress)
+                    db.session.add(new_progress)
 
-            # --- QuestHistoryの更新 ---
             history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
             if history:
                 history.attempts += 1
@@ -433,13 +435,11 @@ def quest_result(quest_id):
                 )
                 db.session.add(history)
             
-            # --- コミット ---
             db.session.commit()
 
         except IntegrityError as e:
             db.session.rollback()
-            print(f"データベース保存エラー: {e}")
-
+            app.logger.error(f"DATABASE SAVE ERROR: {e}")
 
     return render_template("quest_result.html",
                            quest_id=quest_id,
