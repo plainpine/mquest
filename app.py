@@ -441,11 +441,13 @@ def quest_result(quest_id):
             db.session.rollback()
             app.logger.error(f"DATABASE SAVE ERROR: {e}")
 
+    jp_title = SUBJECT_KEY_TO_JP.get(quest.title, quest.title)
     return render_template("quest_result.html",
                            quest_id=quest_id,
                            quest=quest,
                            results=results,
                            all_correct=all_correct,
+                           title=jp_title, # 日本語タイトルを渡す
                            level=quest.level)
 
 

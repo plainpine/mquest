@@ -21,7 +21,7 @@
     {% if all_correct %}
         <p style="color: green;">全問正解です！</p>
         <a href="{{ url_for('dashboard_student') }}" class="btn">ダッシュボードに戻る</a>
-        <a href="{{ url_for('select_quest_by_title_level', title=quest.title, level=quest.level) }}"
+        <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}"
             class="button secondary">クエスト選択に戻る</a>
     {% else %}
         <p style="color: red;">満点でないため、再挑戦が必要です。</p>
