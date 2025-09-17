@@ -90,6 +90,10 @@ document.addEventListener("DOMContentLoaded", () => {
       div.innerHTML = marked.parse(md);
     }
   });
+  // MathJax 3 の再レンダリングをトリガー
+  if (window.MathJax) {
+    MathJax.typesetPromise();
+  }
 
   // 並び替え
   document.querySelectorAll('.sortable').forEach(list => {
@@ -131,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- MathJax (LaTeX数式サポート) -->
 <script>
   window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },   
     svg: { fontCache: 'global' }
   };
 </script>
