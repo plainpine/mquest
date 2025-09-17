@@ -202,29 +202,25 @@
         </div>
         <div class="sub-questions-container">
           {% for sub_q in question.sub_questions %}
-            <div class="sub-question">
-              <p><strong>{{ loop.index }}. {{ sub_q.prompt }}</strong></p>
-              {% if sub_q.type == 'choice' %}
-                <input type="hidden" name="q{{ q_index }}_{{ sub_q.id }}" id="q{{ q_index }}_{{ sub_q.id }}_input" data-choices="{{ sub_q.choices | join(',') }}">
-              {% elif sub_q.type == 'numeric' %}
-                <input type="text"
-                       name="q{{ q_index }}_{{ sub_q.id }}"
-                       class="numeric-input"
-                       data-qid="{{ q_index }}"
-                       readonly>
-                <div style="height: 1rem;"></div>
-                <div class="keypad" data-qid="{{ q_index }}">
-                  {% for num in range(1, 10) %}
-                    <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
-                    {% if num % 3 == 0 %}<br>{% endif %}
-                  {% endfor %}
-                  <button type="button" class="key-btn" data-num="0">0</button>
-                  <button type="button" class="key-btn" data-num="del">⌫</button>
-                  <button type="button" class="key-btn" data-num="clear">CL</button>
-                </div>
-              {% endif %}
+            <div class="sub-question" style="margin-bottom: 1rem;">
+              <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+              <input type="text"
+                     name="q{{ q_index }}_{{ sub_q.id }}"
+                     class="numeric-input"
+                     data-qid="{{ q_index }}"
+                     readonly
+                     style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
             </div>
           {% endfor %}
+          <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem;">
+            {% for num in range(1, 10) %}
+              <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
+              {% if num % 3 == 0 %}<br>{% endif %}
+            {% endfor %}
+            <button type="button" class="key-btn" data-num="0">0</button>
+            <button type="button" class="key-btn" data-num="del">⌫</button>
+            <button type="button" class="key-btn" data-num="clear">CL</button>
+          </div>
         </div>
       {% endif %}
 
@@ -253,7 +249,7 @@
   window.MathJax = {
     tex: {
       inlineMath: [['$', '$'], ['\(', '\)']],
-      displayMath: [['$$', '$$'], ['\[', '\]']]
+      displayMath: [['$$', '$$'], ['\[', '\]']] 
      },
     svg: {
       fontCache: 'global'

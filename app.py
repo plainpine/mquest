@@ -499,7 +499,7 @@ def progress():
     ).join(Quest, Quest.id == QuestHistory.quest_id
     ).filter(
         QuestHistory.user_id == user_id,
-        QuestHistory.correct == True
+        QuestHistory.is_cleared == True  # is_cleared を使う
     ).group_by(Quest.title, Quest.level).all()
 
     # Apply Japanese mapping to titles and levels
