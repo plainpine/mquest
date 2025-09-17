@@ -10,12 +10,26 @@
       -webkit-appearance: none;
       margin: 0;
     }
+    
     input[type=number] {
-      appearance: textfield;
+      -webkit-appearance: none;
+      appearance: none;
       -moz-appearance: textfield;
     }
+    .sub-question {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+    .sub-question > div {
+      margin-bottom: 5px;
+    }
+    .sub-question label {
+      font-weight: bold;
+    }
 </style>
-<form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new', choices=choices, answers=answers) }}">
+<form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
   <label>タイプ:</label>
   <select name="type" id="type-select">
     <option value="choice" {% if question and question.type == 'choice' %}selected{% endif %}>4択問題</option>
@@ -53,15 +67,44 @@
     {% endfor %}
   </div>
 
+  <div id="fill-in-the-blank-en-section" style="display:none;">
+    <label>正解（英語）:</label>
+    <input type="text" name="answer_fill_in_the_blank_en" value="{{ question.answer if question and question.type == 'fill_in_the_blank_en' else '' }}">
+  </div>
+
+  <div id="svg-interactive-section" style="display:none;">
+    <label>SVGコンテンツ:</label>
+    <textarea name="svg_content" rows="10" cols="60">{{ question.choices if question and question.type == 'svg_interactive' else '' }}</textarea><br>
+    <label>追加文:</label>
+    <div id="sub-questions-container">
+      {% if question and question.type == 'svg_interactive' and answers %}
+        {% for sub_q in answers %}
+          <div class="sub-question">
+            <input type="hidden" name="sub_id" value="{{ sub_q.id }}">
+            <div>
+              <label>問題文 (Markdown):</label>
+              <textarea name="sub_prompt" rows="2" cols="50" class="sub-prompt-input">{{ sub_q.prompt }}</textarea>
+              <div class="markdown-preview sub-prompt-preview"></div>
+            </div>
+            <div>
+              <label>正答:</label>
+              <input type="text" name="sub_answer" placeholder="正答" value="{{ sub_q.answer }}">
+            </div>
+            <button type="button" class="remove-sub-question">削除</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <button type="button" id="add-sub-question">追加文を追加</button>
+  </div>
+
 <!-- 保存ボタン：上段 -->
 <br>
-<form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
-    <!-- 質問タイプ、テキストなど入力フィールド -->
-    <button type="submit" name="action" value="save_question">保存</button>
-</form>
+<button type="submit" name="action" value="save_question">保存</button>
 <!-- 戻るボタン：下段 -->
 <div style="margin-top: 1rem;">
   <a href="{{ url_for('edit_quest', quest_id=quest_id) }}" class="button">クエスト編集に戻る</a>
+</div>
 </form>
 
 <style>
@@ -78,8 +121,8 @@
 <script>
   window.MathJax = {
     tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      inlineMath: [['$', '$'], ['\(', '\)']],
+      displayMath: [['$$', '$$'], ['\[', '\]']]
     },
     svg: { fontCache: 'global' }
   };
@@ -91,12 +134,16 @@
   const choiceSection = document.getElementById('choice-section');
   const sortSection = document.getElementById('sort-section');
   const numericSection = document.getElementById('numeric-section');
+  const fillInTheBlankEnSection = document.getElementById('fill-in-the-blank-en-section');
+  const svgInteractiveSection = document.getElementById('svg-interactive-section');
 
   function updateSections() {
     const type = typeSelect.value;
     choiceSection.style.display = type === 'choice' ? 'block' : 'none';
     sortSection.style.display = type === 'sort' ? 'block' : 'none';
     numericSection.style.display = type === 'numeric' ? 'block' : 'none';
+    fillInTheBlankEnSection.style.display = type === 'fill_in_the_blank_en' ? 'block' : 'none';
+    svgInteractiveSection.style.display = type === 'svg_interactive' ? 'block' : 'none';
   }
 
   // 初期表示時に選択肢と問題文のMarkdownをプレビュー
@@ -115,6 +162,13 @@
       preview.innerHTML = marked.parse(md); // Markdownをプレビュー表示
       await MathJax.typesetPromise([preview]);
     }
+  }
+
+  // sub-questionのプレビューを更新する関数
+  async function updateSubQuestionPreview(inputElement) {
+    const preview = inputElement.nextElementSibling;
+    preview.innerHTML = marked.parse(inputElement.value);
+    await MathJax.typesetPromise([preview]);
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -136,6 +190,45 @@
         input.addEventListener("input", updatePreviews);
       }
     }
+
+    // 既存のsub-questionのプレビューを初期化
+    document.querySelectorAll('.sub-prompt-input').forEach(input => {
+      updateSubQuestionPreview(input);
+      input.addEventListener('input', () => updateSubQuestionPreview(input));
+    });
+
+    let subQuestionCounter = document.querySelectorAll('.sub-question').length;
+
+    document.getElementById('add-sub-question').addEventListener('click', () => {
+      subQuestionCounter++;
+      const container = document.getElementById('sub-questions-container');
+      const newSubQuestion = document.createElement('div');
+      newSubQuestion.classList.add('sub-question');
+      newSubQuestion.innerHTML = `
+        <input type="hidden" name="sub_id" value="sub${subQuestionCounter}">
+        <div>
+          <label>問題文 (Markdown):</label>
+          <textarea name="sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
+          <div class="markdown-preview sub-prompt-preview"></div>
+        </div>
+        <div>
+          <label>正答:</label>
+          <input type="text" name="sub_answer" placeholder="正答">
+        </div>
+        <button type="button" class="remove-sub-question">削除</button>
+      `;
+      container.appendChild(newSubQuestion);
+
+      const newInput = newSubQuestion.querySelector('.sub-prompt-input');
+      updateSubQuestionPreview(newInput); // 新しい要素のプレビューを初期化
+      newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
+    });
+
+    document.getElementById('sub-questions-container').addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-sub-question')) {
+        e.target.parentElement.remove();
+      }
+    });
   });
 </script>
 

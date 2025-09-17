@@ -650,8 +650,12 @@ def edit_question(quest_id, question_id):
         return render_template('edit_question.html', quest_id=quest.id, question=None)
     else:
         question = Question.query.get_or_404(int(question_id))
-        choices = json.loads(question.choices) if question.choices else None
-        answers = json.loads(question.answer) if question.type == 'numeric' else None
+        choices = json.loads(question.choices) if question.choices and question.type == 'choice' else None
+        answers = None
+        if question.type == 'numeric':
+            answers = json.loads(question.answer) if question.answer else None
+        elif question.type == 'svg_interactive':
+            answers = json.loads(question.answer) if question.answer else None
 
         # question.answers にセット（テンプレートで読みやすくする）
         if answers is not None:
@@ -685,6 +689,10 @@ def save_question(quest_id, question_id):
             question.choices = None
             question.answer = request.form['answer_sort']
 
+        elif q_type == 'fill_in_the_blank_en':
+            question.choices = None
+            question.answer = request.form['answer_fill_in_the_blank_en']
+
         elif q_type == 'numeric':
             answers = []
             for i in range(4):
@@ -694,6 +702,24 @@ def save_question(quest_id, question_id):
                     answers.append({'label': label, 'answer': int(value)})
             question.choices = None
             question.answer = json.dumps(answers)
+
+        elif q_type == 'svg_interactive':
+            svg_content = request.form.get('svg_content', '')
+            sub_ids = request.form.getlist('sub_id')
+            sub_prompts = request.form.getlist('sub_prompt')
+            sub_answers = request.form.getlist('sub_answer')
+
+            sub_questions = []
+            for i in range(len(sub_ids)):
+                if sub_ids[i] and sub_prompts[i] and sub_answers[i]:
+                    sub_questions.append({
+                        'id': sub_ids[i],
+                        'prompt': sub_prompts[i],
+                        'answer': sub_answers[i]
+                    })
+
+            question.choices = svg_content
+            question.answer = json.dumps(sub_questions)
 
         db.session.add(question)
         db.session.commit()
