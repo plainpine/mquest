@@ -400,48 +400,45 @@ def quest_result(quest_id):
 
     user_id = session.get('user_id')
     if user_id:
-        # ▼▼▼【世界制覇機能：クリア状況をUserProgressに保存】▼▼▼
-        if all_correct:
-            existing_progress = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
-            if not existing_progress:
-                progress = UserProgress(
+        # ▼▼▼【データベースへの保存処理】▼▼▼
+        try:
+            # --- UserProgressの更新 ---
+            if all_correct:
+                existing_progress = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+                if not existing_progress:
+                    progress = UserProgress(
+                        user_id=user_id,
+                        quest_id=quest_id,
+                        status='cleared',
+                        conquered_at=datetime.now(timezone.utc)
+                    )
+                    db.session.add(progress)
+
+            # --- QuestHistoryの更新 ---
+            history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+            if history:
+                history.attempts += 1
+                history.correct = all_correct
+                history.last_attempt = datetime.now(timezone.utc)
+                if all_correct:
+                    history.is_cleared = True
+            else:
+                history = QuestHistory(
                     user_id=user_id,
                     quest_id=quest_id,
-                    status='cleared',
-                    conquered_at=datetime.now(timezone.utc)
+                    correct=all_correct,
+                    is_cleared=all_correct,
+                    attempts=1,
+                    last_attempt=datetime.now(timezone.utc)
                 )
-                db.session.add(progress)
-        # ▲▲▲【ここまで】▲▲▲
-
-        # 履歴を user_id と quest_id で検索
-        history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
-
-        if history:
-            # 既存の履歴があれば、挑戦回数を更新
-            history.attempts += 1
-            # 今回の結果を反映
-            history.correct = all_correct 
-            history.last_attempt = datetime.now(timezone.utc)
-            # 一度でもクリアしたら、is_clearedフラグをTrueにする
-            if all_correct:
-                history.is_cleared = True
-        else:
-            # 新しい履歴を作成
-            history = QuestHistory(
-                user_id=user_id,
-                quest_id=quest_id,
-                correct=all_correct,
-                is_cleared=all_correct,
-                attempts=1,
-                last_attempt=datetime.now(timezone.utc)
-            )
-            db.session.add(history)
-        
-        try:
+                db.session.add(history)
+            
+            # --- コミット ---
             db.session.commit()
+
         except IntegrityError as e:
             db.session.rollback()
-            print("保存エラー:", e)
+            print(f"データベース保存エラー: {e}")
 
 
     return render_template("quest_result.html",
@@ -491,20 +488,23 @@ def progress():
 
     user_id = session.get('user_id')
 
-    # 各タイトル・レベルの全問正解数（1つの quest_id を1回のみカウント）
-    cleared = db.session.query(
+    # 各タイトル・レベルのクリア済みクエスト数を UserProgress からカウント
+    cleared_counts = db.session.query(
         Quest.title,
         Quest.level,
-        db.func.count(db.distinct(QuestHistory.quest_id))
-    ).join(Quest, Quest.id == QuestHistory.quest_id
+        db.func.count(Quest.id)
+    ).join(
+        UserProgress, Quest.id == UserProgress.quest_id
     ).filter(
-        QuestHistory.user_id == user_id,
-        QuestHistory.is_cleared == True  # is_cleared を使う
-    ).group_by(Quest.title, Quest.level).all()
+        UserProgress.user_id == user_id,
+        UserProgress.status == 'cleared'
+    ).group_by(
+        Quest.title, Quest.level
+    ).all()
 
     # Apply Japanese mapping to titles and levels
     processed_cleared_data = []
-    for title, level, count in cleared:
+    for title, level, count in cleared_counts:
         jp_title = SUBJECT_KEY_TO_JP.get(title, title)
         jp_level = SUBJECT_KEY_TO_JP.get(level, level) # Assuming level might also need translation
         processed_cleared_data.append((jp_title, jp_level, count))
@@ -529,13 +529,13 @@ def manage_students():
             'medals': []
         }
 
-        # 学習進捗状況の取得
+        # 学習進捗状況の取得（UserProgressから）
         progress_query_result = db.session.query(
             Quest.title,
             Quest.level,
-            db.func.count(QuestHistory.id)
-        ).join(QuestHistory, Quest.id == QuestHistory.quest_id) \
-         .filter(QuestHistory.user_id == user.id, QuestHistory.correct == True) \
+            db.func.count(Quest.id)
+        ).join(UserProgress, Quest.id == UserProgress.quest_id) \
+         .filter(UserProgress.user_id == user.id, UserProgress.status == 'cleared') \
          .group_by(Quest.title, Quest.level).all()
 
         # タイトルを日本語に変換
@@ -562,7 +562,7 @@ def manage_students():
 @login_required
 def manage_quests():
     if not current_user.is_admin():
-        return redirect(url_for('dashboard'))
+        return redirect(url_for("dashboard"))
 
     quests = Quest.query.all()
     return render_template('list_quests.html', quests=quests)
