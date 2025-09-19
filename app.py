@@ -804,7 +804,8 @@ def quest_run_group(quest_id):
                 "answers": answer if q.type == "numeric" else None
             })
 
-    return render_template("group_learning.html", quest_id=quest_id, quest=quest, title=quest.title, level=quest.level, questions=questions)
+    jp_title = SUBJECT_KEY_TO_JP.get(quest.title, quest.title)
+    return render_template("group_learning.html", quest_id=quest_id, quest=quest, title=jp_title, level=quest.level, questions=questions)
 
 @app.route("/parent/students")
 @login_required

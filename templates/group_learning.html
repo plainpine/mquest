@@ -4,7 +4,7 @@
 {% block title %}集合学習モード{% endblock %}
 
 {% block content %}
-<h2>集合学習モード - {{ quest.title }}（{{ quest.level }}）</h2>
+<h2>集合学習モード - {{ title }}（{{ quest.level }}）</h2>
 
 <form>
   {% for question in questions %}
@@ -17,6 +17,7 @@
         <div class="choice-block">
           {% for choice in question.choices %}
             <div class="choice-option">
+              <span>{{ loop.index }})&nbsp;&nbsp;&nbsp;</span>
               <span class="markdown" data-content="{{ choice | e }}"></span>
             </div>
           {% endfor %}
@@ -52,6 +53,18 @@
           <button type="button" class="key-btn" data-num="del">⌫</button>
           <button type="button" class="key-btn" data-num="clear">C</button>
         </div>
+
+      {% elif question.type == 'svg_interactive' %}
+        <div class="svg-interactive-container">
+          {{ question.svg_content | safe }}
+        </div>
+        <div class="sub-questions-container" style="margin-top: 1rem;">
+          {% for sub_q in question.sub_questions %}
+            <div class="sub-question" style="margin-bottom: 0.5rem;">
+              <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
 
       <!-- 答え表示・隠すボタン -->
@@ -61,11 +74,15 @@
           <strong>正解：</strong>
           {% if question.type == 'choice' %}
             <span>{{ question.answer + 1 }}</span>
-          {% elif question.type == 'sort' %}
+          {% elif question.type == 'sort' or question.type == 'fill_in_the_blank_en' %}
             <span>{{ question.answer }}</span>
           {% elif question.type == 'numeric' %}
             {% for ans in question.answers %}
               <div>{{ ans.label }}: {{ ans.answer }}</div>
+            {% endfor %}
+          {% elif question.type == 'svg_interactive' %}
+            {% for sub_q in question.sub_questions %}
+              <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
             {% endfor %}
           {% endif %}
         </div>
@@ -74,7 +91,7 @@
   {% endfor %}
 </form>
 
-<a href="{{ url_for('select_quest_by_title_level_admin', title=quest.title, level=quest.level) }}"
+<a href="{{ url_for('select_quest_by_title_level_admin', title=title, level=quest.level) }}"
    class="button secondary">クエスト選択に戻る</a>
 
 <!-- JS: Markdown・Sort・Numeric入力・答え表示 -->
@@ -92,7 +109,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   // MathJax 3 の再レンダリングをトリガー
   if (window.MathJax) {
-    MathJax.typesetPromise();
+    try {
+      MathJax.typesetPromise();
+    } catch (e) {
+      console.error('MathJax typesetting failed:', e);
+    }
   }
 
   // 並び替え
@@ -135,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- MathJax (LaTeX数式サポート) -->
 <script>
   window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },   
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },  
     svg: { fontCache: 'global' }
   };
 </script>
