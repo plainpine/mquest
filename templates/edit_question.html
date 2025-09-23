@@ -43,6 +43,10 @@
   <textarea name="text" id="text-input" rows="4" cols="60">{{ question.text if question else '' }}</textarea>
   <div id="text-preview" class="markdown-preview" style="margin-bottom: 1rem;"></div>
 
+  <label>解説（Markdown）:</label>
+  <textarea name="explanation" id="explanation-input" rows="4" cols="60">{{ question.explanation or '' }}</textarea>
+  <div id="explanation-preview" class="markdown-preview" style="margin-bottom: 1rem;"></div>
+
   <div id="choice-section" style="display:none;">
     <label>選択肢:</label><br>
     {% for i in range(4) %}
@@ -153,6 +157,11 @@
     previewDiv.innerHTML = marked.parse(mdText);
     await MathJax.typesetPromise([previewDiv]);
 
+    const mdExplanation = document.getElementById("explanation-input").value;
+    const explanationPreviewDiv = document.getElementById("explanation-preview");
+    explanationPreviewDiv.innerHTML = marked.parse(mdExplanation);
+    await MathJax.typesetPromise([explanationPreviewDiv]);
+
     // 初期状態で選択肢の内容も表示
     for (let i = 0; i < 4; i++) {
       const input = document.getElementById(`choice${i}`);
@@ -184,6 +193,7 @@
 
     // 入力内容が変更された場合にプレビューを更新
     document.getElementById("text-input").addEventListener("input", updatePreviews);
+    document.getElementById("explanation-input").addEventListener("input", updatePreviews);
     for (let i = 0; i < 4; i++) {
       const input = document.getElementById(`choice${i}`);
       if (input) {

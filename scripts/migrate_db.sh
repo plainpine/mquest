@@ -7,10 +7,10 @@ cd "$(dirname "$0")"
 echo "[1/3] Creating database schema..."
 python ./create_db.py
 
-echo "[2/3] Creating sample users..."
+echo "[2/3] Creating users..."
 python ./create_users.py
 
-echo "[3/3] Adding sample quests..."
+echo "[3/3] Adding quests..."
 python ./add_sample_quests.py
 
 echo

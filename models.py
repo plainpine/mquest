@@ -65,6 +65,7 @@ class Question(db.Model):
     text = db.Column(db.Text, nullable=False)
     choices = db.Column(db.Text)  # JSON文字列（list）として格納
     answer = db.Column(db.Text)   # JSON文字列（int, list, dictなど）
+    explanation = db.Column(db.Text, nullable=True)
 
     # Quest側と対になる明示的な関係
     quest = db.relationship('Quest', back_populates='questions')

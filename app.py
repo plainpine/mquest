@@ -286,7 +286,7 @@ def quest_run(quest_id):
             questions.append({
                 "type": q.type,
                 "text": q.text,
-                "svg_content": json.loads(q.choices), # choicesにSVGコンテンツを格納
+                "svg_content": q.choices, # choicesにSVGコンテンツを格納
                 "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
             })
         else:
@@ -301,153 +301,163 @@ def quest_run(quest_id):
     return render_template("quest_run.html", quest_id=quest_id, quest=quest, title=SUBJECT_KEY_TO_JP.get(quest.title, quest.title), level=quest.level, questions=questions)
 
 # クエストの結果を処理するエンドポイント
-@app.route('/quest/<int:quest_id>/result', methods=['POST'])
+@app.route('/quest/<int:quest_id>/result', methods=['GET', 'POST'])
 def quest_result(quest_id):
-    quest = db.session.get(Quest, quest_id)
-    if not quest:
-        return "Quest not found", 404
+    if request.method == 'POST':
+        quest = db.session.get(Quest, quest_id)
+        if not quest:
+            return "Quest not found", 404
 
-    results = []
-
-    for i, q in enumerate(quest.questions):  # Question オブジェクト
-        question_type = q.type
-        question_text = q.text
-        correct = False
-        user_answer = ''
-        expected = ''
-
-        if question_type == 'choice':
-            choices = json.loads(q.choices)
-            answer_index = int(q.answer)
-            user_answer = request.form.get(f'q{i}', '').strip()
-            correct = user_answer == str(answer_index)
-            expected = choices[answer_index]
-
-        elif question_type == 'sort':
-            user_answer = request.form.get(f'q{i}', '').strip()
-            try:
-                correct_answer = json.loads(q.answer)
-            except (json.JSONDecodeError, TypeError):
-                correct_answer = q.answer
-            
-            if isinstance(correct_answer, str):
-                correct_answer = correct_answer.strip()
-
-            correct = str(correct_answer) == user_answer
-            expected = correct_answer
-
-        elif question_type == 'fill_in_the_blank_en':
-            user_answer = request.form.get(f'q{i}', '').strip().lower()
-            try:
-                correct_answer = json.loads(q.answer)
-            except (json.JSONDecodeError, TypeError):
-                correct_answer = q.answer
-            correct = user_answer == correct_answer.lower()
-            expected = correct_answer
-
-        elif question_type == 'svg_interactive':
-            sub_questions = json.loads(q.answer)
-            all_sub_correct = True
-            user_answers_list = []
-            expected_answers_list = []
-
-            for sub_q in sub_questions:
-                sub_q_id = sub_q['id']
-                form_field_name = f"q{i}_{sub_q_id}"
-                user_val = request.form.get(form_field_name, '').strip()
-                expected_val = str(sub_q['answer'])
-
-                user_answers_list.append({sub_q['prompt']: user_val})
-                expected_answers_list.append({sub_q['prompt']: expected_val})
-
-                if user_val != expected_val:
-                    all_sub_correct = False
-            
-            correct = all_sub_correct
-            user_answer = user_answers_list
-            expected = expected_answers_list
-
-        elif question_type == 'numeric':
-            answer_list = json.loads(q.answer)
-            user_input = []
-            expected = []
-            correct = True
-            for j, ans in enumerate(answer_list):
-                field = f"q{i}_{j}"
-                user_val = request.form.get(field, '').strip()
-                expected_val = str(ans['answer'])
-                expected.append({ans['label']: expected_val})
-                user_input.append({ans['label']: user_val})
-                if user_val != expected_val:
-                    correct = False
-            user_answer = user_input  # 表示用
-
-        else:
-            user_answer = ''
+        results = []
+        for i, q in enumerate(quest.questions):
+            question_type = q.type
             correct = False
-            expected = '未対応の形式'
+            user_answer = ''
+            expected = ''
 
-        results.append({
-            'question': question_text,
-            'user_answer': user_answer,
-            'correct': correct,
-            'type': question_type,
-            'expected': expected
-        })
+            if question_type == 'choice':
+                choices = json.loads(q.choices)
+                answer_index = int(json.loads(q.answer))
+                user_answer = request.form.get(f'q{i}', '').strip()
+                correct = user_answer == str(answer_index)
+                expected = choices[answer_index]
 
-    all_correct = all(r['correct'] for r in results)
-    level = quest.level
+            elif question_type == 'sort':
+                user_answer = request.form.get(f'q{i}', '').strip()
+                try:
+                    correct_answer = json.loads(q.answer)
+                except (json.JSONDecodeError, TypeError):
+                    correct_answer = q.answer
+                if isinstance(correct_answer, str):
+                    correct_answer = correct_answer.strip()
+                correct = str(correct_answer) == user_answer
+                expected = correct_answer
 
-    user_id = session.get('user_id')
-    if user_id:
-        try:
-            if all_correct:
-                progress_record = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+            elif question_type == 'fill_in_the_blank_en':
+                user_answer = request.form.get(f'q{i}', '').strip().lower()
+                try:
+                    correct_answer = json.loads(q.answer)
+                except (json.JSONDecodeError, TypeError):
+                    correct_answer = q.answer
+                correct = user_answer == correct_answer.lower()
+                expected = correct_answer
 
-                if progress_record:
-                    if progress_record.status != 'cleared':
-                        progress_record.status = 'cleared'
-                        progress_record.conquered_at = datetime.now(timezone.utc)
+            elif question_type == 'svg_interactive':
+                sub_questions = json.loads(q.answer)
+                all_sub_correct = True
+                user_answers_list = []
+                expected_answers_list = []
+                for sub_q in sub_questions:
+                    sub_q_id = sub_q['id']
+                    form_field_name = f"q{i}_{sub_q_id}"
+                    user_val = request.form.get(form_field_name, '').strip()
+                    expected_val = str(sub_q['answer'])
+                    user_answers_list.append({sub_q['prompt']: user_val})
+                    expected_answers_list.append({sub_q['prompt']: expected_val})
+                    if user_val != expected_val:
+                        all_sub_correct = False
+                correct = all_sub_correct
+                user_answer = user_answers_list
+                expected = expected_answers_list
+
+            elif question_type == 'numeric':
+                answer_list = json.loads(q.answer)
+                user_input = []
+                expected = []
+                correct = True
+                for j, ans in enumerate(answer_list):
+                    field = f"q{i}_{j}"
+                    user_val = request.form.get(field, '').strip()
+                    expected_val = str(ans['answer'])
+                    expected.append({ans['label']: expected_val})
+                    user_input.append({ans['label']: user_val})
+                    if user_val != expected_val:
+                        correct = False
+                user_answer = user_input
+
+            results.append({
+                'question_id': q.id,
+                'user_answer': user_answer,
+                'correct': correct,
+                'type': question_type,
+                'expected': expected
+            })
+
+        all_correct = all(r['correct'] for r in results)
+
+        user_id = session.get('user_id')
+        if user_id:
+            try:
+                if all_correct:
+                    progress_record = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+                    if progress_record:
+                        if progress_record.status != 'cleared':
+                            progress_record.status = 'cleared'
+                            progress_record.conquered_at = datetime.now(timezone.utc)
+                    else:
+                        new_progress = UserProgress(
+                            user_id=user_id,
+                            quest_id=quest_id,
+                            status='cleared',
+                            conquered_at=datetime.now(timezone.utc)
+                        )
+                        db.session.add(new_progress)
+
+                history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+                if history:
+                    history.attempts += 1
+                    history.correct = all_correct
+                    history.last_attempt = datetime.now(timezone.utc)
+                    if all_correct:
+                        history.is_cleared = True
                 else:
-                    new_progress = UserProgress(
+                    history = QuestHistory(
                         user_id=user_id,
                         quest_id=quest_id,
-                        status='cleared',
-                        conquered_at=datetime.now(timezone.utc)
+                        correct=all_correct,
+                        is_cleared=all_correct,
+                        attempts=1,
+                        last_attempt=datetime.now(timezone.utc)
                     )
-                    db.session.add(new_progress)
+                    db.session.add(history)
+                
+                db.session.commit()
 
-            history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
-            if history:
-                history.attempts += 1
-                history.correct = all_correct
-                history.last_attempt = datetime.now(timezone.utc)
-                if all_correct:
-                    history.is_cleared = True
-            else:
-                history = QuestHistory(
-                    user_id=user_id,
-                    quest_id=quest_id,
-                    correct=all_correct,
-                    is_cleared=all_correct,
-                    attempts=1,
-                    last_attempt=datetime.now(timezone.utc)
-                )
-                db.session.add(history)
-            
-            db.session.commit()
+            except IntegrityError as e:
+                db.session.rollback()
+                app.logger.error(f"DATABASE SAVE ERROR: {e}")
 
-        except IntegrityError as e:
-            db.session.rollback()
-            app.logger.error(f"DATABASE SAVE ERROR: {e}")
+        session['last_result'] = {
+            'quest_id': quest_id,
+            'results': results,
+            'all_correct': all_correct
+        }
+        return redirect(url_for('quest_result', quest_id=quest_id))
 
+    # GET request
+    last_result = session.get('last_result')
+    if not last_result or last_result.get('quest_id') != quest_id:
+        # appropriate fallback, maybe redirect to dashboard
+        return redirect(url_for('dashboard_student'))
+
+    quest = db.session.get(Quest, quest_id)
     jp_title = SUBJECT_KEY_TO_JP.get(quest.title, quest.title)
+
+    # Re-fetch full question objects for the template
+    question_ids = [r['question_id'] for r in last_result['results']]
+    questions = Question.query.filter(Question.id.in_(question_ids)).all()
+    question_map = {q.id: q for q in questions}
+
+    # Add the full question object back into the results
+    for res in last_result['results']:
+        res['question'] = question_map.get(res['question_id'])
+
     return render_template("quest_result.html",
                            quest_id=quest_id,
                            quest=quest,
-                           results=results,
-                           all_correct=all_correct,
-                           title=jp_title, # 日本語タイトルを渡す
+                           results=last_result['results'],
+                           all_correct=last_result['all_correct'],
+                           title=jp_title,
                            level=quest.level)
 
 
@@ -680,6 +690,7 @@ def save_question(quest_id, question_id):
             question = Question.query.get_or_404(int(question_id))
             question.type = q_type
             question.text = text
+        question.explanation = request.form.get('explanation')
 
         if q_type == 'choice':
             choices = [request.form.get(f'choice{i}', '') for i in range(4)]
@@ -792,7 +803,7 @@ def quest_run_group(quest_id):
             questions.append({
                 "type": q.type,
                 "text": q.text,
-                "svg_content": json.loads(q.choices), # choicesにSVGコンテンツを格納
+                "svg_content": q.choices, # choicesにSVGコンテンツを格納
                 "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
             })
         else:

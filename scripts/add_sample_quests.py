@@ -21,7 +21,8 @@ QUEST_MAP = {
     "英文並べ替え":  {"subject_key": "english", "subject_jp": "英語", "world": "americus"},
     "計算問題":    {"subject_key": "math", "subject_jp": "数学", "world": "europe"},
     "SVG図形問題": {"subject_key": "math", "subject_jp": "数学", "world": "europe"},
-    "英語穴埋め":  {"subject_key": "english", "subject_jp": "英語", "world": "americus"}
+    "英語穴埋め":  {"subject_key": "english", "subject_jp": "英語", "world": "americus"},
+    "国語":      {"subject_key": "japanese", "subject_jp": "国語", "world": "zipangu"}
 }
 
 # どの科目がどのSVGファイルとクエストIDのプレフィックスに対応するかを定義
@@ -110,8 +111,9 @@ if __name__ == '__main__':
                     quest_id=quest.id,
                     type=q["type"],
                     text=q["text"],
-                    choices=json.dumps(q.get("choices")) if "choices" in q else (
-                        json.dumps(q.get("svg_content")) if q.get("type") == "svg_interactive" else None
+                    explanation=q.get("explanation"),
+                    choices=json.dumps(q.get("choices")) if q.get("type") == "choice" else (
+                        q.get("svg_content") if q.get("type") == "svg_interactive" else None
                     ),
                     answer=json.dumps(q.get("answers") if q.get("type") == "numeric" else (
                         q.get("sub_questions") if q.get("type") == "svg_interactive" else q.get("answer")

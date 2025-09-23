@@ -1,31 +1,164 @@
-<!-- templates/quest_result.html -->
 {% extends "base.html" %}
 
 {% block title %}クエスト結果{% endblock %}
 
+{% block styles %}
+<style>
+    .answer-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.5rem 1rem;
+        align-items: center;
+        margin-left: 1rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-    <ul class="result-list">
+<div class="container mt-4">
+    <h2>クエスト結果: {{ title }} - Level {{ level }}</h2>
+
+    {% if all_correct %}
+        <div class="alert alert-success" role="alert">
+            <h4><i class="fas fa-crown"></i> 全問正解です！おめでとうございます！</h4>
+        </div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">
+            <h4><i class="fas fa-times-circle"></i> 不正解の問題がありました。</h4>
+            <p>満点でないため、再挑戦が必要です。</p>
+        </div>
+    {% endif %}
+
+    <ul class="list-group">
         {% for res in results %}
-            <li>
-                問題 {{ loop.index }}：
-                <!-- {% print(res.get("correct")) %} -->
-                {% if res.get("correct") is true %}
-                    <span class="correct">〇 正解</span>
-                {% else %}
-                    <span class="incorrect">× 不正解</span>
+        <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-1">問題 {{ loop.index }}</h5>
+                <div>
+                    {% if res.correct %}
+                        <span class="badge bg-success">正解</span>
+                    {% else %}
+                        <span class="badge bg-danger">不正解</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="mt-2">
+                <p><strong>問題文:</strong></p>
+                <div class="p-2 border rounded bg-light">
+                    {{ res.question.text | safe }}
+                </div>
+            </div>
+            <div class="mt-3">
+                {% if not res.correct %}
+                    <p class="mb-1">あなたの解答:</p>
+                    {% if res.type == 'numeric' or res.type == 'svg_interactive' %}
+                        <div class="answer-grid">
+                        {% for ans in res.user_answer %}
+                            {% for key, value in ans.items() %}
+                                <span>{{ key }}:</span> <code class="text-danger">{{ value }}</code>
+                            {% endfor %}
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <code class="text-danger">{{ res.user_answer }}</code>
+                    {% endif %}
+
+                    <p class="mb-1 mt-2">正解:</p>
+                    {% if res.type == 'numeric' or res.type == 'svg_interactive' %}
+                        <div class="answer-grid">
+                        {% for ans in res.expected %}
+                            {% for key, value in ans.items() %}
+                                <span>{{ key }}:</span> <span class="text-success" style="font-weight: bold;">{{ value }}</span>
+                            {% endfor %}
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <span class="text-success" style="font-weight: bold;">{{ res.expected }}</span>
+                    {% endif %}
                 {% endif %}
-            </li>
+            </div>
+
+            {% if res.question.explanation %}
+            <div class="mt-3 text-end">
+                <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#explanationModal-{{ loop.index }}">
+                    <i class="fas fa-book-open"></i> 解説を見る
+                </button>
+            </div>
+            {% endif %}
+        </li>
+
+        <!-- Modal for Explanation -->
+        {% if res.question.explanation %}
+        <div class="modal fade" id="explanationModal-{{ loop.index }}" tabindex="-1" aria-labelledby="explanationModalLabel-{{ loop.index }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="explanationModalLabel-{{ loop.index }}">問題 {{ loop.index }} の解説</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body explanation-modal-body" data-explanation="{{ res.question.explanation | e }}">
+                        <!-- Explanation will be rendered here by JavaScript -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         {% endfor %}
     </ul>
 
-    {% if all_correct %}
-        <p style="color: green;">全問正解です！</p>
-        <a href="{{ url_for('dashboard_student') }}" class="btn">ダッシュボードに戻る</a>
-        <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}"
-            class="button secondary">クエスト選択に戻る</a>
-    {% else %}
-        <p style="color: red;">満点でないため、再挑戦が必要です。</p>
-        <a href="{{ url_for('quest_run', quest_id=quest_id) }}" class="btn">再挑戦する</a>
-        <a href="{{ url_for('dashboard_student') }}" class="btn">ダッシュボードに戻る</a>
-    {% endif %}
+    <div class="mt-4">
+        {% if all_correct %}
+            <a href="{{ url_for('dashboard_student') }}" class="btn btn-primary">ダッシュボードに戻る</a>
+            <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="btn btn-secondary">クエスト選択に戻る</a>
+        {% else %}
+            <a href="{{ url_for('quest_run', quest_id=quest_id) }}" class="btn btn-warning">再挑戦する</a>
+            <a href="{{ url_for('dashboard_student') }}" class="btn btn-primary">ダッシュボードに戻る</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  // Default MathJax config - this will auto-render the page.
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\(', '\)']],
+      displayMath: [['$$', '$$'], ['\[', '\]']]
+    },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // This script only handles the explanation modal, 
+    // as MathJax will handle the rest of the page automatically.
+    var explanationModals = document.querySelectorAll('.modal');
+    explanationModals.forEach(function (modal) {
+        modal.addEventListener('show.bs.modal', function (event) {
+            var modalBody = modal.querySelector('.explanation-modal-body');
+
+            // Render only if it has not been rendered before
+            if (modalBody && !modalBody.hasAttribute('data-rendered')) {
+                const markdownSource = modalBody.getAttribute('data-explanation');
+                if (markdownSource) {
+                    // 1. Parse markdown to HTML
+                    modalBody.innerHTML = marked.parse(markdownSource);
+                    // 2. Ask MathJax to render math in the new content
+                    MathJax.typesetPromise([modalBody]).then(() => {
+                        modalBody.setAttribute('data-rendered', 'true');
+                    });
+                }
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
