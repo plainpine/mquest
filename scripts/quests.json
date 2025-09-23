@@ -7,7 +7,8 @@
                 "type": "choice",
                 "text": "$-8 + 5 = ?$",
                 "choices": ["$-13$", "$3$", "$-3$", "$13$"],
-                "answer": 2
+                "answer": 2,
+                "explanation": "負の数と正の数の足し算です。数直線をイメージしてみましょう。-8から右に5つ進むと-3になります。"
             },
             {
                 "type": "choice",
@@ -73,7 +74,8 @@
                 "type": "choice",
                 "text": "次のうち正しい英文はどれ？",
                 "choices": ["He go to school.", "He goes to school.", "He going school.", "He go school."],
-                "answer": 1
+                "answer": 1,
+                "explanation": "主語が三人称単数（He, She, Itなど）の場合、現在の時制の動詞には 's' または 'es' がつきます。したがって、'go' は 'goes' になります。"
             },
             {
                 "type": "choice",
@@ -180,10 +182,17 @@
                     {
                         "id": "q1_hypotenuse_length",
                         "type": "numeric",
-                        "prompt": "直角三角形の斜辺cの長さを計算しなさい（aの長さが60、bの長さが80の場合）。",
-                        "answer": 100
+                        "prompt": "直角三角形の斜辺cの長さを計算しなさい（aの長さが6、bの長さが8の場合）。",
+                        "answer": 10
+                    },
+                    {
+                        "id": "q2_hypotenuse_length",
+                        "type": "numeric",
+                        "prompt": "直角三角形の辺aの長さを計算しなさい（bの長さが4、cの長さが5の場合）。",
+                        "answer": 3
                     }
-                ]
+                ],
+                "explanation": "三平方の定理（ピタゴラスの定理）を使います。直角三角形の斜辺の長さをc、他の2辺の長さをa、bとすると、次の関係が成り立ちます。\\n\\n$a^2 + b^2 = c^2$\\n\\nこの問題では、$a=60$, $b=80$ なので、\\n\\n$60^2 + 80^2 = c^2$\\n$3600 + 6400 = c^2$\\n$10000 = c^2$\\n$c = \\sqrt{10000} = 100$\\n\\nよって、斜辺cの長さは100です。"
             }
         ]
     },
@@ -200,6 +209,19 @@
                 "type": "fill_in_the_blank_en",
                 "text": "This is ___ apple.",
                 "answer": "an"
+            }
+        ]
+    },
+    "9": {
+        "title": "国語",
+        "level": "Lv1",
+        "questions": [
+            {
+                "type": "choice",
+                "text": "次のうち、ひらがなではないものはどれ？",
+                "choices": ["あ", "い", "ウ", "え"],
+                "answer": 2,
+                "explanation": "「ウ」はカタカナです。"
             }
         ]
     }
