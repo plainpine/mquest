@@ -169,6 +169,10 @@
               {% if num % 3 == 0 %}<br>{% endif %}
             {% endfor %}
             <button type="button" class="key-btn" data-num="0">0</button>
+            <button type="button" class="key-btn" data-num=".">.</button>
+            <button type="button" class="key-btn" data-num="-">-</button>
+            <button type="button" class="key-btn" data-num="/">/</button>
+            <br>
             <button type="button" class="key-btn" data-num="del">⌫</button>
             <button type="button" class="key-btn" data-num="clear">CL</button>
           </div>
@@ -218,6 +222,10 @@
               {% if num % 3 == 0 %}<br>{% endif %}
             {% endfor %}
             <button type="button" class="key-btn" data-num="0">0</button>
+            <button type="button" class="key-btn" data-num=".">.</button>
+            <button type="button" class="key-btn" data-num="-">-</button>
+            <button type="button" class="key-btn" data-num="/">/</button>
+            <br>
             <button type="button" class="key-btn" data-num="del">⌫</button>
             <button type="button" class="key-btn" data-num="clear">CL</button>
           </div>
@@ -386,13 +394,27 @@
         btn.addEventListener('click', () => {
           if (!activeInput || activeInput.dataset.qid !== qid) return;
 
-          const num = btn.dataset.num;
-          if (num === 'del') {
-            activeInput.value = activeInput.value.slice(0, -1);
-          } else if (num === 'clear') {
+          const char = btn.dataset.num;
+          const currentValue = activeInput.value;
+
+          if (char === 'del') {
+            activeInput.value = currentValue.slice(0, -1);
+          } else if (char === 'clear') {
             activeInput.value = '';
-          } else {
-            activeInput.value += num;
+          } else if (char === '-') {
+            if (currentValue.length === 0) {
+              activeInput.value += char;
+            }
+          } else if (char === '.') {
+            if (!currentValue.includes('.')) {
+              activeInput.value += char;
+            }
+          } else if (char === '/') {
+            if (!currentValue.includes('/')) {
+              activeInput.value += char;
+            }
+          } else { // Is a number
+            activeInput.value += char;
           }
         });
       });
