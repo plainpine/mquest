@@ -9,7 +9,7 @@
 <ul class="selectable-list">
   {% for quest in quests %}
     <li data-url="{{ url_for('quest_run', quest_id=quest.id) }}" onclick="window.location.href=this.dataset.url">
-      ID: {{ quest.id }}
+      {{ quest.questname }}
     </li>
   {% endfor %}
 </ul>
