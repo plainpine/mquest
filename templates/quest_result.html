@@ -47,6 +47,11 @@
                 <div class="p-2 border rounded bg-light">
                     {{ res.question.text | safe }}
                 </div>
+                {% if res.question.type == 'svg_interactive' and res.question.svg_content %}
+                <div class="mt-3 text-center">
+                    {{ res.question.svg_content | safe }}
+                </div>
+                {% endif %}
             </div>
             <div class="mt-3">
                 {% if not res.correct %}
