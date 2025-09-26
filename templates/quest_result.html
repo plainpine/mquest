@@ -101,8 +101,8 @@
                         <h5 class="modal-title" id="explanationModalLabel-{{ loop.index }}">問題 {{ loop.index }} の解説</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body explanation-modal-body" data-explanation="{{ res.question.explanation | e }}">
-                        <!-- Explanation will be rendered here by JavaScript -->
+                    <div class="modal-body explanation-modal-body">
+                        {{ res.question.explanation | safe }}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
@@ -143,24 +143,17 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // This script only handles the explanation modal, 
-    // as MathJax will handle the rest of the page automatically.
     var explanationModals = document.querySelectorAll('.modal');
     explanationModals.forEach(function (modal) {
         modal.addEventListener('show.bs.modal', function (event) {
             var modalBody = modal.querySelector('.explanation-modal-body');
 
-            // Render only if it has not been rendered before
+            // Re-run MathJax typesetting on the modal body when it's shown,
+            // but only if it hasn't been rendered before.
             if (modalBody && !modalBody.hasAttribute('data-rendered')) {
-                const markdownSource = modalBody.getAttribute('data-explanation');
-                if (markdownSource) {
-                    // 1. Parse markdown to HTML
-                    modalBody.innerHTML = marked.parse(markdownSource);
-                    // 2. Ask MathJax to render math in the new content
-                    MathJax.typesetPromise([modalBody]).then(() => {
-                        modalBody.setAttribute('data-rendered', 'true');
-                    });
-                }
+                MathJax.typesetPromise([modalBody]).then(() => {
+                    modalBody.setAttribute('data-rendered', 'true');
+                });
             }
         });
     });

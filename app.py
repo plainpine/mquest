@@ -460,6 +460,10 @@ def quest_result(quest_id):
             }
             if q.type == 'svg_interactive':
                 question_view_model['svg_content'] = q.choices
+            # Convert newlines in explanation to <br> tags for HTML rendering
+            if q.explanation:
+                question_view_model['explanation'] = q.explanation.replace('\\n', '<br>')
+
             res['question'] = question_view_model
 
     return render_template("quest_result.html",
