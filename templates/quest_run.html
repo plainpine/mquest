@@ -6,118 +6,6 @@
 {% block content %}
 <h1>{{ quest.questname }}</h1>
 
-<style>
-  .choice-option {
-    padding: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    margin: 0.5rem 0;
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
-    display: flex;
-    align-items: center;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .choice-option:hover, .choice-option:active {
-    background-color: #f7f7f7;
-  }
-
-  .choice-option.selected {
-    background-color: #d0ebff;
-    border-color: #339af0;
-  }
-
-  .choice-option .markdown {
-    display: inline-block;
-    white-space: normal;     /* 自動改行を許可 */
-    word-break: break-word;  /* 単語途中でも改行可能 */
-    margin-left: 0.5rem;     /* ボタンと選択肢の間に余白 */
-    flex: 1;                 /* 幅いっぱい使う（任意） */
-  }
-
-  .markdown p {
-    margin: 0;
-    display: inline;         /* pタグがブロック要素だとレイアウトが崩れるため、インラインに */
-  }
-
-  .sortable-item {
-    padding: 8px;
-    border: 1px solid #ccc;
-    margin-bottom: 4px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
-    user-select: none;
-    touch-action: none;
-    -webkit-user-drag: element;
-  }
-
-  .sortable-ghost {
-    opacity: 0.4;
-  }
-
-  label {
-    display: flex;
-    align-items: flex-start; /* 上寄せ：テキストが複数行でもボタンとずれない */
-    gap: 0.5rem;
-    flex-wrap: wrap;         /* 長文が折り返される */
-    max-width: 100%;
-  }
-
-  label .markdown {
-    white-space: normal;
-    word-break: break-word;
-    display: inline;
-  }
-  /* 英語穴埋め問題用のスタイル */
-  .en-fill-in-the-blank-input {
-    font-size: 1.2rem;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-top: 0.5rem;
-    text-align: center;
-  }
-
-  .keypad {
-    margin-top: 1rem;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    display: inline-block;
-  }
-
-  .virtual-keyboard {
-    margin-top: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  .keyboard-row {
-    margin-bottom: 5px;
-  }
-
-  .key-btn-en {
-    font-size: 1.1rem;
-    width: 40px;
-    height: 40px;
-    margin: 2px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    cursor: pointer;
-    user-select: none;
-  }
-  .key-btn-en:active {
-    background-color: #e0e0e0;
-  }
-</style>
-
 <form method="post" action="{{ url_for('quest_result', quest_id=quest_id) }}">
   {% for question in questions %}
     <div class="question-block" style="margin-bottom: 2rem;">
@@ -127,8 +15,7 @@
 
       {% if question.type == 'choice' %}
         <div class="choice-block">
-          <div style="height: 0.5rem;"></div> <!-- 問題文との間に余白 -->
-
+          <div style="height: 0.5rem;"></div>
           {% for choice in question.choices %}
             <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ loop.index0 }}">
               <input type="radio" name="q{{ q_index }}" value="{{ loop.index0 }}" style="display: none;">
@@ -136,11 +23,9 @@
             </div>
           {% endfor %}
         </div>
-
       {% elif question.type == 'sort' %}
-        {% set parts = question.text.split('/') %}
         <ul class="sortable" id="q{{ q_index }}_sortable" data-name="q{{ q_index }}">
-          {% for part in parts %}
+          {% for part in question.text.split('/') %}
             {% set cleaned = part.strip() %}
             {% if cleaned %}
               <li class="sortable-item" data-id="item{{ loop.index0 }}">{{ cleaned }}</li>
@@ -148,43 +33,30 @@
           {% endfor %}
         </ul>
         <input type="hidden" name="q{{ q_index }}" id="q{{ q_index }}_input">
-
       {% elif question.type == 'numeric' %}
         {% for ans in question.answers %}
           <div class="numeric-block">
             <label>{{ ans.label }}：</label>
-            <input type="text"
-                   name="q{{ q_index }}_{{ loop.index0 }}"
-                   class="numeric-input"
-                   data-qid="{{ q_index }}"
-                   readonly>
+            <input type="text" name="q{{ q_index }}_{{ loop.index0 }}" class="numeric-input" data-qid="{{ q_index }}" readonly>
           </div>
         {% endfor %}
-
-          <div style="height: 1rem;"></div>  <!-- 空白行（余白） -->
-
-          <div class="keypad" data-qid="{{ q_index }}">
-            {% for num in range(1, 10) %}
-              <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
-              {% if num % 3 == 0 %}<br>{% endif %}
-            {% endfor %}
-            <button type="button" class="key-btn" data-num="0">0</button>
-            <button type="button" class="key-btn" data-num=".">.</button>
-            <button type="button" class="key-btn" data-num="-">-</button>
-            <button type="button" class="key-btn" data-num="/">/</button>
-            <br>
-            <button type="button" class="key-btn" data-num="del">⌫</button>
-            <button type="button" class="key-btn" data-num="clear">CL</button>
-          </div>
-
+        <div style="height: 1rem;"></div>
+        <div class="keypad" data-qid="{{ q_index }}">
+          {% for num in range(1, 10) %}
+            <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
+            {% if num % 3 == 0 %}<br>{% endif %}
+          {% endfor %}
+          <button type="button" class="key-btn" data-num="0">0</button>
+          <button type="button" class="key-btn" data-num=".">.</button>
+          <button type="button" class="key-btn" data-num="-">-</button>
+          <button type="button" class="key-btn" data-num="/">/</button>
+          <br>
+          <button type="button" class="key-btn" data-num="del">⌫</button>
+          <button type="button" class="key-btn" data-num="clear">CL</button>
+        </div>
       {% elif question.type == 'fill_in_the_blank_en' %}
         <div class="en-fill-in-the-blank-block">
-          <input type="text"
-                 name="q{{ q_index }}"
-                 class="en-fill-in-the-blank-input"
-                 data-qid="{{ q_index }}"
-                 autocomplete="off"
-                 readonly>
+          <input type="text" name="q{{ q_index }}" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" autocomplete="off" readonly>
           <div class="virtual-keyboard" data-qid="{{ q_index }}">
             <div class="keyboard-row">
               {% for key in 'qwertyuiop' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
@@ -199,7 +71,6 @@
             </div>
           </div>
         </div>
-
       {% elif question.type == 'svg_interactive' %}
         <div class="svg-interactive-container" data-question-index="{{ q_index }}">
           {{ question.svg_content | safe }}
@@ -208,12 +79,7 @@
           {% for sub_q in question.sub_questions %}
             <div class="sub-question" style="margin-bottom: 1rem;">
               <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
-              <input type="text"
-                     name="q{{ q_index }}_{{ sub_q.id }}"
-                     class="numeric-input"
-                     data-qid="{{ q_index }}"
-                     readonly
-                     style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+              <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" readonly style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
             </div>
           {% endfor %}
           <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem;">
@@ -231,22 +97,140 @@
           </div>
         </div>
       {% endif %}
-
     </div>
   {% endfor %}
 
-  <!-- ボタンを横並びに配置 -->
   <div style="margin-top: 1rem; display: flex; align-items: center;">
-    <!-- 回答を提出 -->
-    <input type="submit" value="回答を提出"
-           style="padding: 0.5rem 1rem; background-color: #4CAF50; color: white;
-                  border: none; border-radius: 6px; margin-right: 10px;">
-
-    <!-- クエスト選択に戻る（フォーム外でもOKだがここに入れても動作に問題なし） -->
-    <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}"
-      class="button secondary">クエスト選択に戻る</a>
+    <input type="submit" value="回答を提出" style="padding: 0.5rem 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 6px; margin-right: 10px;">
+    <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="button secondary">クエスト選択に戻る</a>
   </div>
 </form>
+
+<!-- Memo Pad Modal -->
+<button id="open-memo-btn"><i class="fas fa-pencil-alt"></i> メモ</button>
+
+<div id="memo-modal-backdrop" style="display: none;">
+  <div id="memo-modal-content">
+    <div id="memo-modal-header">
+      <h5>メモ帳</h5>
+      <button id="close-memo-btn">&times;</button>
+    </div>
+    <div id="memo-modal-body">
+      <canvas id="memo-canvas"></canvas>
+    </div>
+    <div id="memo-modal-footer">
+      <button id="clear-memo-btn">クリア</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Styles from previous steps */
+  .choice-option { padding: 1rem; border: 1px solid #ccc; border-radius: 8px; margin: 0.5rem 0; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; display: flex; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .choice-option:hover, .choice-option:active { background-color: #f7f7f7; }
+  .choice-option.selected { background-color: #d0ebff; border-color: #339af0; }
+  .choice-option .markdown { display: inline-block; white-space: normal; word-break: break-word; margin-left: 0.5rem; flex: 1; }
+  .markdown p { margin: 0; display: inline; }
+  .sortable-item { padding: 8px; border: 1px solid #ccc; margin-bottom: 4px; background-color: #f9f9f9; border-radius: 4px; user-select: none; touch-action: none; -webkit-user-drag: element; }
+  .sortable-ghost { opacity: 0.4; }
+  label { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; max-width: 100%; }
+  label .markdown { white-space: normal; word-break: break-word; display: inline; }
+  .en-fill-in-the-blank-input { font-size: 1.2rem; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 0.5rem; text-align: center; }
+  .keypad { margin-top: 1rem; padding: 10px; border: 1px solid #ccc; border-radius: 8px; display: inline-block; }
+  .virtual-keyboard { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
+  .keyboard-row { margin-bottom: 5px; }
+  .key-btn-en { font-size: 1.1rem; width: 40px; height: 40px; margin: 2px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9; cursor: pointer; user-select: none; }
+  .key-btn-en:active { background-color: #e0e0e0; }
+
+  /* Memo Pad Styles */
+  #open-memo-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 100px;
+    height: 50px;
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+    font-size: 1rem;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  #open-memo-btn:hover { background-color: #303f9f; }
+
+  #memo-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1051;
+    display: none; /* Initially hidden */
+    align-items: center;
+    justify-content: center;
+  }
+
+  #memo-modal-content {
+    position: absolute; /* Make it absolutely positioned for dragging */
+    top: 50%; /* Initial vertical centering */
+    left: 50%; /* Initial horizontal centering */
+    transform: translate(-50%, -50%); /* Adjust for true centering */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    z-index: 1052; /* Ensure it's above the backdrop */
+  }
+
+  #memo-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    cursor: grab; /* Indicate draggable */
+  }
+  #memo-modal-header h5 { margin: 0; }
+  #close-memo-btn {
+    background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem;
+  }
+
+  #memo-modal-body {
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  #memo-canvas {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: crosshair;
+    touch-action: none;
+    width: 100%;
+  }
+
+  #memo-modal-footer {
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+    text-align: right;
+  }
+  #clear-memo-btn {
+    padding: 0.5rem 1rem;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  #clear-memo-btn:hover { background-color: #d0d0d0; }
+</style>
 
 <!-- JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -257,7 +241,7 @@
   window.MathJax = {
     tex: {
       inlineMath: [['$', '$'], ['\(', '\)']],
-      displayMath: [['$$', '$$'], ['\[', '\]']] 
+      displayMath: [['$$', '$$'], ['\[', '\]']]
      },
     svg: {
       fontCache: 'global'
@@ -266,14 +250,12 @@
 
   function renderMarkdownAndMath() {
     marked.setOptions({ breaks: true });
-
     document.querySelectorAll('.markdown').forEach(div => {
       let md = div.getAttribute('data-content');
       if (!md) return;
       md = md.replace(/\\n/g, '\n');
       div.innerHTML = marked.parse(md);
     });
-
     if (window.MathJax && MathJax.typesetPromise) {
       MathJax.typesetPromise();
     }
@@ -282,77 +264,177 @@
   document.addEventListener("DOMContentLoaded", () => {
     renderMarkdownAndMath();
 
-    // 選択肢のクリックイベント処理
+    // --- Memo Pad Modal Logic ---
+    const openBtn = document.getElementById('open-memo-btn');
+    const closeBtn = document.getElementById('close-memo-btn');
+    const modalBackdrop = document.getElementById('memo-modal-backdrop');
+    const canvas = document.getElementById('memo-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let hasBeenResized = false;
+
+    function resizeCanvas() {
+        const bodyRect = document.getElementById('memo-modal-body').getBoundingClientRect();
+        canvas.width = bodyRect.width - 2 * 16; // body padding
+        canvas.height = 400; // Fixed height
+        hasBeenResized = true;
+    }
+
+    function openModal() {
+        modalBackdrop.style.display = 'flex';
+        if (!hasBeenResized) {
+            resizeCanvas();
+        }
+    }
+
+    function closeModal() {
+        modalBackdrop.style.display = 'none';
+    }
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        if (e.touches && e.touches.length > 0) {
+            return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+        }
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    function startDrawing(e) {
+        drawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        // Add document-level listeners for mousemove and mouseup
+        document.addEventListener('mousemove', draw);
+        document.addEventListener('mouseup', stopDrawing);
+        e.preventDefault(); // Prevent default browser actions like text selection
+    }
+
+    function draw(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+    }
+
+    function stopDrawing() {
+        drawing = false;
+        ctx.closePath();
+        // Remove document-level listeners when drawing stops
+        document.removeEventListener('mousemove', draw);
+        document.removeEventListener('mouseup', stopDrawing);
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeModal();
+    });
+
+    canvas.addEventListener('mousedown', startDrawing);
+    // Removed: canvas.addEventListener('mousemove', draw);
+    // Removed: canvas.addEventListener('mouseup', stopDrawing);
+    // Removed: canvas.addEventListener('mouseout', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing);
+
+    document.getElementById('clear-memo-btn').addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    window.addEventListener('resize', () => { if(modalBackdrop.style.display === 'flex') resizeCanvas(); });
+
+    // --- Draggable Memo Modal Logic ---
+    const memoModalContent = document.getElementById('memo-modal-content');
+    const memoModalHeader = document.getElementById('memo-modal-header');
+
+    let isDragging = false;
+    let offsetX, offsetY;
+
+    memoModalHeader.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - memoModalContent.getBoundingClientRect().left;
+        offsetY = e.clientY - memoModalContent.getBoundingClientRect().top;
+        memoModalContent.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault(); // Prevent text selection during drag
+
+        const newX = e.clientX - offsetX;
+        const newY = e.clientY - offsetY;
+
+        // Boundary checks to keep the modal within the viewport
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const modalWidth = memoModalContent.offsetWidth;
+        const modalHeight = memoModalContent.offsetHeight;
+
+        const maxX = viewportWidth - modalWidth;
+        const maxY = viewportHeight - modalHeight;
+
+        memoModalContent.style.left = `${Math.min(Math.max(0, newX), maxX)}px`;
+        memoModalContent.style.top = `${Math.min(Math.max(0, newY), maxY)}px`;
+        memoModalContent.style.transform = 'none'; // Remove transform for dragging
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        memoModalContent.style.cursor = 'grab';
+    });
+
+    // --- Existing JS logic ---
     document.querySelectorAll('.choice-option').forEach(option => {
       option.addEventListener('click', () => {
         const qname = option.dataset.qname;
-
-        // 他の選択肢の選択解除
         document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => {
           el.classList.remove('selected');
           const input = el.querySelector('input[type="radio"]');
           if (input) input.checked = false;
         });
-
-        // この選択肢を選択状態にする
         option.classList.add('selected');
         const input = option.querySelector('input[type="radio"]');
         if (input) input.checked = true;
       });
     });
 
-    // 並び替え問題のSortable設定
     document.querySelectorAll('.sortable').forEach(list => {
       const name = list.dataset.name;
       const hiddenInput = document.getElementById(`${name}_input`);
-
       Sortable.create(list, {
-        animation: 150,
-        touchStartThreshold: 0, // タッチ判定を早める
-        ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen',
-        dragClass: 'sortable-drag',
+        animation: 150, touchStartThreshold: 0, ghostClass: 'sortable-ghost',
         onEnd: () => {
           const order = Array.from(list.children).map(li => li.textContent.trim());
           hiddenInput.value = order.join(' ');
         }
       });
-
-      // 初期化
       const initialOrder = Array.from(list.children).map(li => li.textContent.trim());
       hiddenInput.value = initialOrder.join(' ');
     });
 
-    // SVGインタラクティブ問題の処理
     document.querySelectorAll('.svg-interactive-container').forEach(container => {
       const q_index = container.dataset.questionIndex;
       const questionBlock = container.closest('.question-block');
-      
-      // choiceタイプのサブ問題に対する処理
       questionBlock.querySelectorAll('input[type="hidden"][data-choices]').forEach(hiddenInput => {
         const choices = hiddenInput.dataset.choices.split(',');
-        let selectedShape = null;
-
         choices.forEach(choiceId => {
           const shape = container.querySelector('#' + choiceId);
           if (shape) {
             shape.style.cursor = 'pointer';
             shape.addEventListener('click', () => {
-              // 同じ問題グループの他の選択肢のハイライトを解除
               choices.forEach(id => {
                 const otherShape = container.querySelector('#' + id);
-                if(otherShape) {
-                    otherShape.style.stroke = '';
-                    otherShape.style.strokeWidth = '';
-                }
+                if(otherShape) { otherShape.style.stroke = ''; otherShape.style.strokeWidth = ''; }
               });
-              
-              // クリックした図形をハイライト
               shape.style.stroke = 'orange';
               shape.style.strokeWidth = '5px';
-              
-              // 選択された図形と値を更新
-              selectedShape = shape;
               hiddenInput.value = choiceId;
             });
           }
@@ -360,99 +442,53 @@
       });
     });
 
-    // 数値入力と英語入力のフォーカス管理
-    let activeInput = null;
-    let activeEnInput = null;
-
+    let activeInput = null, activeEnInput = null;
     document.querySelectorAll('.numeric-input').forEach(input => {
-      input.addEventListener('focus', () => {
-        activeInput = input;
-        activeEnInput = null;
-      });
-      input.addEventListener('click', () => {
-        activeInput = input;
-        activeEnInput = null;
-      });
+      input.addEventListener('focus', () => { activeInput = input; activeEnInput = null; });
+      input.addEventListener('click', () => { activeInput = input; activeEnInput = null; });
     });
-
     document.querySelectorAll('.en-fill-in-the-blank-input').forEach(input => {
-      input.addEventListener('focus', () => {
-        activeEnInput = input;
-        activeInput = null;
-      });
-      input.addEventListener('click', () => {
-        activeEnInput = input;
-        activeInput = null;
-      });
+      input.addEventListener('focus', () => { activeEnInput = input; activeInput = null; });
+      input.addEventListener('click', () => { activeEnInput = input; activeInput = null; });
     });
 
-    // 数値入力用テンキーの操作
     document.querySelectorAll('.keypad').forEach(keypad => {
       const qid = keypad.dataset.qid;
-
       keypad.querySelectorAll('.key-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           if (!activeInput || activeInput.dataset.qid !== qid) return;
-
           const char = btn.dataset.num;
           const currentValue = activeInput.value;
-
-          if (char === 'del') {
-            activeInput.value = currentValue.slice(0, -1);
-          } else if (char === 'clear') {
-            activeInput.value = '';
-          } else if (char === '-') {
-            if (currentValue.length === 0) {
-              activeInput.value += char;
-            }
-          } else if (char === '.') {
-            if (!currentValue.includes('.')) {
-              activeInput.value += char;
-            }
-          } else if (char === '/') {
-            if (!currentValue.includes('/')) {
-              activeInput.value += char;
-            }
-          } else { // Is a number
-            activeInput.value += char;
-          }
+          if (char === 'del') activeInput.value = currentValue.slice(0, -1);
+          else if (char === 'clear') activeInput.value = '';
+          else if (char === '-') { if (currentValue.length === 0) activeInput.value += char; }
+          else if (char === '.') { if (!currentValue.includes('.')) activeInput.value += char; }
+          else if (char === '/') { if (!currentValue.includes('/')) activeInput.value += char; }
+          else activeInput.value += char;
         });
       });
     });
 
-    // 英語穴埋め問題用仮想キーボードの操作
     document.querySelectorAll('.virtual-keyboard').forEach(keyboard => {
       const qid = keyboard.dataset.qid;
       keyboard.querySelectorAll('.key-btn-en').forEach(btn => {
         btn.addEventListener('click', () => {
           if (!activeEnInput || activeEnInput.dataset.qid !== qid) return;
-
           const key = btn.dataset.key;
-          if (key === 'del') {
-            activeEnInput.value = activeEnInput.value.slice(0, -1);
-          } else if (key === 'clear') {
-            activeEnInput.value = '';
-          } else {
-            activeEnInput.value += key;
-          }
+          if (key === 'del') activeEnInput.value = activeEnInput.value.slice(0, -1);
+          else if (key === 'clear') activeEnInput.value = '';
+          else activeEnInput.value += key;
         });
       });
     });
 
-    // ハードウェアキーボードからの入力を処理
     document.addEventListener('keydown', (event) => {
-      if (activeInput) { // Numeric input is active
-        if (event.key >= '0' && event.key <= '9') {
-          activeInput.value += event.key;
-        } else if (event.key === 'Backspace') {
-          activeInput.value = activeInput.value.slice(0, -1);
-        }
-      } else if (activeEnInput) { // English input is active
-        if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
-          activeEnInput.value += event.key.toLowerCase();
-        } else if (event.key === 'Backspace') {
-          activeEnInput.value = activeEnInput.value.slice(0, -1);
-        }
+      if (activeInput) {
+        if (event.key >= '0' && event.key <= '9') activeInput.value += event.key;
+        else if (event.key === 'Backspace') activeInput.value = activeInput.value.slice(0, -1);
+      } else if (activeEnInput) {
+        if (event.key.length === 1 && event.key.match(/[a-z]/i)) activeEnInput.value += event.key.toLowerCase();
+        else if (event.key === 'Backspace') activeEnInput.value = activeEnInput.value.slice(0, -1);
       }
     });
   });
