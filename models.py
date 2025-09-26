@@ -48,13 +48,15 @@ class Quest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     level = db.Column(db.String(10), nullable=False)
+    questname = db.Column(db.String(100), nullable=False)
 
     # ▼ 世界制覇機能用のカラム
     world_name = db.Column(db.String(100))
-    fantasy_name = db.Column(db.String(100))
 
     # 明示的に one-to-many の関係を定義
     questions = db.relationship('Question', back_populates='quest', cascade="all, delete-orphan")
+
+
 
 
 class Question(db.Model):

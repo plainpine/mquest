@@ -1,93 +1,113 @@
 {
     "1": {
-        "title": "計算選択問題",
+        "questname": "正負の数（0を含む）に関する練習問題",
         "level": "Lv1",
+        "subject": "数学",
+        "world_name": "europe",
         "questions": [
             {
                 "type": "choice",
-                "text": "$-8 + 5 = ?$",
-                "choices": ["$-13$", "$3$", "$-3$", "$13$"],
+                "text": "次の中で、0に関する説明として正しいものはどれですか。",
+                "choices": ["$0は正の数である$","$0は負の数である$","$0は正の数でも負の数でもない$","$0はどちらでもよい$"],
                 "answer": 2,
-                "explanation": "負の数と正の数の足し算です。数直線をイメージしてみましょう。-8から右に5つ進むと-3になります。"
+                "explanation": "$0は正の数でも負の数でもなく、数直線上で正の数と負の数の境界を示す特別な数です。$"
             },
             {
                 "type": "choice",
-                "text": "$(6 + 4) \\div 2 = ?$",
-                "choices": ["$5$", "$2$", "$20$", "$8$"],
-                "answer": 0
+                "text": "次の中で最も大きい数はどれですか。",
+                "choices": ["$-3$","$0$","$-1$","$-5$"],
+                "answer": 1,
+                "explanation": "$数直線では右に行くほど大きい。負の数よりも0のほうが大きい。$"
             },
             {
                 "type": "choice",
-                "text": "$\\frac{2}{3} + \\frac{1}{6} = ?$",
-                "choices": ["$\\frac{3}{6}$", "$\\frac{4}{9}$", "$\\frac{5}{6}$", "$\\frac{1}{2}$"],
-                "answer": 2
+                "text": "次の中で最も小さい数はどれですか。",
+                "choices": ["$2$","$0$","$-4$","$-1$"],
+                "answer": 2,
+                "explanation": "$数直線では右に行くほど大きい。負の数よりも0のほうが大きい。$"
             },
             {
                 "type": "choice",
-                "text": "$-2 \\times (-6) = ?$",
-                "choices": ["$-12$", "$12$", "$-4$", "$4$"],
-                "answer": 1
+                "text": "$-5 + 3 = ?$",
+                "choices": ["$-8$","$-2$","$2$","$8$"],
+                "answer": 1,
+                "explanation": "$-5に3を足すので、数直線上で-5から右に3つ進むと-2になる。$"
             },
             {
                 "type": "choice",
-                "text": "$7 - (-5) = ?$",
-                "choices": ["$2$", "$12$", "$-2$", "$7$"],
-                "answer": 1
+                "text": "$-7 - (-4) = ? $ ",
+                "choices": ["$-11$","$-3$","$-7$","$-4$"],
+                "answer": 1,
+                "explanation": "「引く負の数」は「足す正の数」と同じ。したがって \\n\\n $-7 - (-4) = -7 + 4 = -3$"
             },
             {
-                "type": "choice",
-                "text": "$\\frac{5}{8} - \\frac{1}{4} = ?$",
-                "choices": ["$\\frac{3}{8}$", "$\\frac{4}{8}$", "$\\frac{1}{2}$", "$\\frac{5}{4}$"],
-                "answer": 0
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$-2 + 5 = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": 3}
+                ],
+                "explanation": "$-2$に$5$を足すので、数直線上で右に$5$進むと$3$になる。"
             },
             {
-                "type": "choice",
-                "text": "$(-4) \\div 2 = ?$",
-                "choices": ["$2$", "$-2$", "$-6$", "$8$"],
-                "answer": 1
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$-8 + (-3) = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": -11}
+                ],
+                "explanation": "負の数どうしを足すので、絶対値を足して$-11$となる。"
             },
             {
-                "type": "choice",
-                "text": "$3 \\times (-5) + 2 = ?$",
-                "choices": ["$-15$", "$-17$", "$-13$", "$13$"],
-                "answer": 2
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$6 - 9 = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": -3}
+                ],
+                "explanation": "$6$から$9$を引くと負の数になる。$9 - 6 = 3$なので符号をつけて$-3$。"
             },
             {
-                "type": "choice",
-                "text": "$(-10) + (-3) = ?$",
-                "choices": ["$13$", "$-7$", "$-13$", "$7$"],
-                "answer": 2
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$(-4) \\times 3 = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": -12}
+                ],
+                "explanation": "正の数と負の数の積は負の数になる。$4 \\times 3 = 12$なので$-12$。"
             },
             {
-                "type": "choice",
-                "text": "$(4 + 6) \\times (-2) = ?$",
-                "choices": ["$-20$", "$-12$", "$20$", "$12$"],
-                "answer": 0
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$(-6) \\div (-2) = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": 3}
+                ],
+                "explanation": "負の数 $\\div$ 負の数は正の数になる。$6 \\div 2 = 3$なので答えは$3$。"
             }
         ]
     },
     "2": {
-        "title": "英語文法",
+        "questname": "英語文法",
         "level": "Lv1",
+        "subject": "英語",
+        "world_name": "americus",
         "questions": [
             {
                 "type": "choice",
                 "text": "次のうち正しい英文はどれ？",
-                "choices": ["He go to school.", "He goes to school.", "He going school.", "He go school."],
+                "choices": ["He go to school.","He goes to school.","He going school.","He go school."],
                 "answer": 1,
                 "explanation": "主語が三人称単数（He, She, Itなど）の場合、現在の時制の動詞には 's' または 'es' がつきます。したがって、'go' は 'goes' になります。"
             },
             {
                 "type": "choice",
                 "text": "主語はどれ？「I like apples.」",
-                "choices": ["I", "like", "apples", "."],
+                "choices": ["I","like","apples","."],
                 "answer": 0
             }
         ]
     },
     "3": {
-        "title": "英文並べ替え",
+        "questname": "英文並べ替え",
         "level": "Lv1",
+        "subject": "英語",
+        "world_name": "americus",
         "questions": [
             {
                 "type": "sort",
@@ -97,82 +117,90 @@
         ]
     },
     "4": {
-        "title": "計算問題",
+        "questname": "計算問題",
         "level": "Lv1",
+        "subject": "数学",
+        "world_name": "europe",
         "questions": [
             {
                 "type": "numeric",
                 "text": "以下の方程式を解け<br>x + y = 10<br>2x + y = 12",
                 "answers": [
-                    {"label": "x", "answer": 2},
-                    {"label": "y", "answer": 8}
+                    {"label": "x","answer": 2},
+                    {"label": "y","answer": 8}
                 ]
             }
         ]
     },
     "5": {
-        "title": "計算選択問題",
+        "questname": "計算選択問題",
         "level": "Lv1",
+        "subject": "数学",
+        "world_name": "europe",
         "questions": [
             {
                 "type": "choice",
                 "text": "2 + 2 = ?",
-                "choices": ["3", "4", "5", "6"],
+                "choices": ["3","4","5","6"],
                 "answer": 1
             },
             {
                 "type": "choice",
                 "text": "3 * 3 = ?",
-                "choices": ["6", "7", "8", "9"],
+                "choices": ["6","7","8","9"],
                 "answer": 3
             },
             {
                 "type": "choice",
                 "text": "**次の式を解いてください：**\n\n$x^2 + 2x + 1 = 0$",
-                "choices": ["$x = -1$", "$x = 0$", "$x = 1$", "$x = 2$"],
+                "choices": ["$x = -1$","$x = 0$","$x = 1$","$x = 2$"],
                 "answer": 0
             },
             {
                 "type": "choice",
                 "text": "**次の式を展開してください：**\n\n$(x + y)^2$",
-                "choices": ["$x^2 + y^2$", "$x^2 + 2xy + y^2$", "$x^2 + xy + y^2$", "$x + y$"],
+                "choices": ["$x^2 + y^2$","$x^2 + 2xy + y^2$","$x^2 + xy + y^2$","$x + y$"],
                 "answer": 1
             }
         ]
     },
     "6": {
-        "title": "計算選択問題",
+        "questname": "計算選択問題",
         "level": "Lv1",
+        "subject": "数学",
+        "world_name": "europe",
         "questions": [
             {
                 "type": "choice",
                 "text": "2 + 2 = ?",
-                "choices": ["3", "4", "5", "6"],
+                "choices": ["3","4","5","6"],
                 "answer": 1
             },
             {
                 "type": "choice",
                 "text": "3 * 3 = ?",
-                "choices": ["6", "7", "8", "9"],
+                "choices": ["6","7","8","9"],
                 "answer": 3
             },
             {
                 "type": "choice",
                 "text": "**次の式を解いてください：**\n\n$x^2 + 2x + 1 = 0$",
-                "choices": ["$x = -1$", "$x = 0$", "$x = 1$", "$x = 2$"],
+                "choices": ["$x = -1$","$x = 0$","$x = 1$","$x = 2$"],
                 "answer": 0
             },
             {
                 "type": "choice",
                 "text": "**次の式を展開してください：**\n\n$(x + y)^2$",
-                "choices": ["$x^2 + y^2$", "$x^2 + 2xy + y^2$", "$x^2 + xy + y^2$", "$x + y$"],
+                "choices": ["$x^2 + y^2$","$x^2 + 2xy + y^2$","$x^2 + xy + y^2$","$x + y$"],
                 "answer": 1
             }
         ]
     },
     "7": {
-        "title": "SVG図形問題",
+        "questname": "SVG図形問題",
         "level": "Lv1",
+        "subject": "数学",
+        "world_name": "europe",
         "questions": [
             {
                 "type": "svg_interactive",
@@ -192,13 +220,15 @@
                         "answer": 3
                     }
                 ],
-                "explanation": "三平方の定理（ピタゴラスの定理）を使います。直角三角形の斜辺の長さをc、他の2辺の長さをa、bとすると、次の関係が成り立ちます。\\n\\n$a^2 + b^2 = c^2$\\n\\nこの問題では、$a=6$, $b=8$ なので、\\n\\n$6^2 + 8^2 = c^2$\\n$36 + 64 = c^2$\\n$100 = c^2$\\n$c = \\sqrt{100} = 10$\\n\\nよって、斜辺cの長さは10です。"
+                "explanation": "三平方の定理（ピタゴラスの定理）を使います。直角三角形の斜辺の長さをc、他の2辺の長さをa、bとすると、次の関係が成り立ちます。<br>$a^2 + b^2 = c^2$<br>この問題では、$a=6$, $b=8$ なので、<br>$6^2 + 8^2 = c^2$<br>$36 + 64 = c^2$<br>$100 = c^2$<br>$c = \\sqrt{100} = 10$<br>よって、斜辺cの長さは$10$です。"
             }
         ]
     },
     "8": {
-        "title": "英語穴埋め",
+        "questname": "英語穴埋め",
         "level": "Lv1",
+        "subject": "英語",
+        "world_name": "americus",
         "questions": [
             {
                 "type": "fill_in_the_blank_en",
@@ -213,13 +243,15 @@
         ]
     },
     "9": {
-        "title": "国語",
+        "questname": "国語",
         "level": "Lv1",
+        "subject": "国語",
+        "world_name": "zipangu",
         "questions": [
             {
                 "type": "choice",
                 "text": "次のうち、ひらがなではないものはどれ？",
-                "choices": ["あ", "い", "ウ", "え"],
+                "choices": ["あ","い","ウ","え"],
                 "answer": 2,
                 "explanation": "「ウ」はカタカナです。"
             }
