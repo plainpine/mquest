@@ -450,7 +450,17 @@ def quest_result(quest_id):
 
     # Add the full question object back into the results
     for res in last_result['results']:
-        res['question'] = question_map.get(res['question_id'])
+        q = question_map.get(res['question_id'])
+        if q:
+            question_view_model = {
+                'id': q.id,
+                'type': q.type,
+                'text': q.text,
+                'explanation': q.explanation
+            }
+            if q.type == 'svg_interactive':
+                question_view_model['svg_content'] = q.choices
+            res['question'] = question_view_model
 
     return render_template("quest_result.html",
                            quest_id=quest_id,
