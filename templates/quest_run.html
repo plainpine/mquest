@@ -17,8 +17,8 @@
         <div class="choice-block">
           <div style="height: 0.5rem;"></div>
           {% for choice in question.choices %}
-            <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ loop.index0 }}">
-              <input type="radio" name="q{{ q_index }}" value="{{ loop.index0 }}" style="display: none;">
+            <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
+              <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
               <span class="markdown" data-content="{{ choice | e }}"></span>
             </div>
           {% endfor %}

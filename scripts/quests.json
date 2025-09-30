@@ -1,46 +1,52 @@
 {
-    "1": {
-        "questname": "正負の数（0を含む）に関する練習問題",
+    "101": {
+        "questname": "正負の数（0を含む）",
         "level": "Lv1",
         "subject": "数学",
         "world_name": "europe",
         "questions": [
             {
+                "#": 1,
                 "type": "choice",
                 "text": "次の中で、0に関する説明として正しいものはどれですか。",
                 "choices": ["$0は正の数である$","$0は負の数である$","$0は正の数でも負の数でもない$","$0はどちらでもよい$"],
-                "answer": 2,
+                "answer": "$0は正の数でも負の数でもない$",
                 "explanation": "$0は正の数でも負の数でもなく、数直線上で正の数と負の数の境界を示す特別な数です。$"
             },
             {
+                "#": 2,
                 "type": "choice",
                 "text": "次の中で最も大きい数はどれですか。",
                 "choices": ["$-3$","$0$","$-1$","$-5$"],
-                "answer": 1,
+                "answer": "$0$",
                 "explanation": "$数直線では右に行くほど大きい。負の数よりも0のほうが大きい。$"
             },
             {
+                "#": 3,
                 "type": "choice",
                 "text": "次の中で最も小さい数はどれですか。",
                 "choices": ["$2$","$0$","$-4$","$-1$"],
-                "answer": 2,
+                "answer": "$-4$",
                 "explanation": "$数直線では右に行くほど大きい。負の数よりも0のほうが大きい。$"
             },
             {
+                "#": 4,
                 "type": "choice",
                 "text": "$-5 + 3 = ?$",
                 "choices": ["$-8$","$-2$","$2$","$8$"],
-                "answer": 1,
+                "answer": "$-2$",
                 "explanation": "$-5に3を足すので、数直線上で-5から右に3つ進むと-2になる。$"
             },
             {
+                "#": 5,
                 "type": "choice",
                 "text": "$-7 - (-4) = ? $ ",
                 "choices": ["$-11$","$-3$","$-7$","$-4$"],
-                "answer": 1,
+                "answer": "$-3$",
                 "explanation": "「引く負の数」は「足す正の数」と同じ。したがって \\n\\n $-7 - (-4) = -7 + 4 = -3$"
             },
             {
+                "#": 6,
                 "type": "numeric",
                 "text": "次の計算をしなさい。<br>$-2 + 5 = ?$ ",
                 "answers": [
@@ -49,6 +55,7 @@
                 "explanation": "$-2$に$5$を足すので、数直線上で右に$5$進むと$3$になる。"
             },
             {
+                "#": 7,
                 "type": "numeric",
                 "text": "次の計算をしなさい。<br>$-8 + (-3) = ?$ ",
                 "answers": [
@@ -57,6 +64,7 @@
                 "explanation": "負の数どうしを足すので、絶対値を足して$-11$となる。"
             },
             {
+                "#": 8,
                 "type": "numeric",
                 "text": "次の計算をしなさい。<br>$6 - 9 = ?$ ",
                 "answers": [
@@ -65,6 +73,7 @@
                 "explanation": "$6$から$9$を引くと負の数になる。$9 - 6 = 3$なので符号をつけて$-3$。"
             },
             {
+                "#": 9,
                 "type": "numeric",
                 "text": "次の計算をしなさい。<br>$(-4) \\times 3 = ?$ ",
                 "answers": [
@@ -73,6 +82,7 @@
                 "explanation": "正の数と負の数の積は負の数になる。$4 \\times 3 = 12$なので$-12$。"
             },
             {
+                "#": 10,
                 "type": "numeric",
                 "text": "次の計算をしなさい。<br>$(-6) \\div (-2) = ?$ ",
                 "answers": [
@@ -82,121 +92,509 @@
             }
         ]
     },
-    "2": {
+    "201": {
         "questname": "英語文法",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
         "questions": [
             {
+                "#": 1,
                 "type": "choice",
                 "text": "次のうち正しい英文はどれ？",
                 "choices": ["He go to school.","He goes to school.","He going school.","He go school."],
-                "answer": 1,
+                "answer": "He goes to school.",
                 "explanation": "主語が三人称単数（He, She, Itなど）の場合、現在の時制の動詞には 's' または 'es' がつきます。したがって、'go' は 'goes' になります。"
             },
             {
+                "#": 2,
                 "type": "choice",
                 "text": "主語はどれ？「I like apples.」",
                 "choices": ["I","like","apples","."],
-                "answer": 0
+                "answer": "I"
             }
         ]
     },
-    "3": {
+    "202": {
         "questname": "英文並べ替え",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
         "questions": [
             {
-                "type": "sort",
+               "#": 1,
+               "type": "sort",
                 "text": "am / I / not / boy / a / .",
                 "answer": "I am not a boy ."
             }
         ]
     },
-    "4": {
-        "questname": "計算問題",
+    "102": {
+        "questname": "符号と演算子",
         "level": "Lv1",
         "subject": "数学",
         "world_name": "europe",
         "questions": [
             {
+                "#": 1,
+                "type": "choice",
+                "text": "次の計算の結果はどれですか。 <br>$(+3) + (+5) = ?$",
+                "choices": ["$+2$","$+8$","$-2$","$-8$"],
+                "answer": "$+8$",
+                "explanation": "$プラスの数どうしの足し算は、そのまま数をたす。3 + 5 = 8 なので +8。$"
+            },
+            {
+                "#": 2,
+                "type": "choice",
+                "text": "次の計算の結果はどれですか。 <br>$(+7) + (-4) = ?$",
+                "choices": ["$+3$","$-3$","$+11$","$-11$"],
+                "answer": "$+3$",
+                "explanation": "$7 から 4 を引くと 3。大きい数の符号（+）を付けるので +3。$"
+            },
+            {
+                "#": 3,
+                "type": "choice",
+                "text": "次の計算の結果はどれですか。 <br>$(-6) + (+2) = ?$",
+                "choices": ["$-4$","$+4$","$-8$","$+8$"],
+                "answer": "$-4$",
+                "explanation": "$-6 と +2 は符号が異なるので引き算。6 - 2 = 4。大きい数は -6 なので符号はマイナス。$"
+            },
+            {
+                "#": 4,
+                "type": "choice",
+                "text": "次の計算の結果はどれですか。 <br>$(-5) - (-3) = ?$",
+                "choices": ["$-8$","$-2$","$2$","$8$"],
+                "answer": "$-2$",
+                "explanation": "$-5に3を足すので、数直線上で-5から右に3つ進むと-2になる。$"
+            },
+            {
+                "#": 5,
+                "type": "choice",
+                "text": "次の計算の結果はどれですか。 <br>$\\lbrace -2 - (+5) \\rbrace + \\lbrace +4 - (-3) \\rbrace = ? $ ",
+                "choices": ["$0$","$-10$","$-1$","$0 ではない$"],
+                "answer": "$0$",
+                "explanation": "前半：$-2 - (+5) = -7$ <br>後半：$+4 - (-3) = +7$ <br>合計：-7 + 7 = 0 $"
+            },
+            {
+                "#": 6,
                 "type": "numeric",
-                "text": "以下の方程式を解け<br>x + y = 10<br>2x + y = 12",
+                "text": "次の計算をしなさい。<br>$(+6) + (-2) = ?$ ",
                 "answers": [
-                    {"label": "x","answer": 2},
-                    {"label": "y","answer": 8}
-                ]
+                    {"label": "回答","answer": 4}
+                ],
+                "explanation": "$-6 - 2 = 4$。大きい数の符号はプラスなので $4$"
+            },
+            {
+                "#": 7,
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$(-8) + (+5) = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": -3}
+                ],
+                "explanation": "$8 - 5 = 3。大きい数は -8 なので符号はマイナス。$"
+            },
+            {
+                "#": 8,
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$(-10) - (+6) = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": -16}
+                ],
+                "explanation": "$ -10 - (+6) = -10 - 6 = -16$"
+            },
+            {
+                "#": 9,
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$(+12) - (-9) = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": 21}
+                ],
+                "explanation": "$- (-9)$は $+9$ に変わる。したがって $12 + 9 = 21$。"
+            },
+            {
+                "#": 10,
+                "type": "numeric",
+                "text": "次の計算をしなさい。<br>$\\lbrace (-7) - (-4) \\rbrace+ \\lbrace (-3) + (-5) \\rbrace = ?$ ",
+                "answers": [
+                    {"label": "回答","answer": -11}
+                ],
+                "explanation": "前半：$-7 - (-4) = -7 + 4 = -3$ <br>後半：$-3 + (-5) = -8$ <br>合計：$-3 + (-8) = -11$"
             }
         ]
     },
-    "5": {
-        "questname": "計算選択問題",
+    "103": {
+        "questname": "文字の意味（変数）",
         "level": "Lv1",
         "subject": "数学",
         "world_name": "europe",
         "questions": [
             {
+                "#": 1,
                 "type": "choice",
-                "text": "2 + 2 = ?",
-                "choices": ["3","4","5","6"],
-                "answer": 1
+                "text": "$x$ はある数を表す記号です。$x = 5$ のとき、$x + 3$ の値はどれですか。",
+                "choices": ["$7$","$8$","$9$","$10$"],
+                "answer": "$8$",
+                "explanation": "$x = 5$ を代入すると、$x + 3 = 5 + 3 = 8$です。"
             },
             {
+                "#": 2,
                 "type": "choice",
-                "text": "3 * 3 = ?",
-                "choices": ["6","7","8","9"],
-                "answer": 3
+                "text": "「ある数」を $a$ とします。 <br>「その数の2倍」を式で表したものはどれですか。",
+                "choices": ["$a + 2$","$a - 2$","$2a$","$a \\div 2$"],
+                "answer": "$2a$",
+                "explanation": "「倍」は掛け算を意味します。$a$ の2倍は $2 \times a = 2a$ です。"
             },
             {
+                "#": 3,
                 "type": "choice",
-                "text": "**次の式を解いてください：**\n\n$x^2 + 2x + 1 = 0$",
-                "choices": ["$x = -1$","$x = 0$","$x = 1$","$x = 2$"],
-                "answer": 0
+                "text": "「ある数を $y$ とする。その数より$3$大きい数」を式で表すとどれですか。 ",
+                "choices": ["$y - 3$","$y + 3$","$3y$","$y \\div 3$ "],
+                "answer": "$y + 3$",
+                "explanation": "「より$3$大きい」は「$+3$」を意味します。$y$ の3倍ではないので注意。"
             },
             {
+                "#": 4,
                 "type": "choice",
-                "text": "**次の式を展開してください：**\n\n$(x + y)^2$",
-                "choices": ["$x^2 + y^2$","$x^2 + 2xy + y^2$","$x^2 + xy + y^2$","$x + y$"],
-                "answer": 1
+                "text": "$x = 4$ のとき、$2x + 5$ の値はどれですか。 ",
+                "choices": ["$9$","$10$","$11$","$13$"],
+                "answer": "$13$",
+                "explanation": "$2x + 5 = 2 \times 4 + 5 = 8 + 5 = 13$ です。"
+            },
+            {
+                "#": 5,
+                "type": "choice",
+                "text": "「ある数 $m$ の$3$倍から$4$を引いた数」を式で表したものはどれですか。 ",
+                "choices": ["$3m + 4$ ","$m - 3 - 4$","$3m - 4$","$m \\div 3 - 4$ "],
+                "answer": "$3m - 4$",
+                "explanation": "「$3$倍」は $3m$、「そこから$4$を引く」ので $3m - 4$ です。"
+            },
+            {
+                "#": 6,
+                "type": "numeric",
+                "text": "$x = 7$ のとき、$x - 2$ の値を答えなさい。 ",
+                "answers": [
+                    {"label": "回答","answer": 5}
+                ],
+                "explanation": "$7 - 2 = 5$ です"
+            },
+            {
+                "#": 7,
+                "type": "numeric",
+                "text": "「ある数 $n$ の半分」を式で表すと $\\dfrac{n}{2}$ です。 <br>$n = 12$ のときの値を答えなさい。",
+                "answers": [
+                    {"label": "回答","answer": 6}
+                ],
+                "explanation": "$n = 12$ を代入して $\\dfrac{12}{2} = 6$ です。"
+            },
+            {
+                "#": 8,
+                "type": "numeric",
+                "text": "$a = 3$ のとき、$5a + 2$ の値を答えなさい。",
+                "answers": [
+                    {"label": "回答","answer": 17}
+                ],
+                "explanation": "$5a + 2 = 5 \\times 3 + 2 = 15 + 2 = 17$ です。"
+            },
+            {
+                "#": 9,
+                "type": "numeric",
+                "text": "「ある数 $x$ の$3$倍に$2$を足した数」は $3x + 2$ です。 <br>$x = 10$ のときの値を答えなさい。",
+                "answers": [
+                    {"label": "回答","answer": 32}
+                ],
+                "explanation": "$3 \\times 10 + 2 = 30 + 2 = 32$ です。"
+            },
+            {
+                "#": 10,
+                "type": "numeric",
+                "text": "「ある数 $y$ の4倍から7を引いた数」は $4y - 7$ です。 <br>$y = 15$ のときの値を答えなさい。 ",
+                "answers": [
+                    {"label": "回答","answer": 53}
+                ],
+                "explanation": "$4 \\times 15 - 7 = 60 - 7 = 53$ です。"
             }
         ]
     },
-    "6": {
-        "questname": "計算選択問題",
+    "104": {
+        "questname": "文字を使った式",
         "level": "Lv1",
         "subject": "数学",
         "world_name": "europe",
         "questions": [
             {
+                "#": 1,
                 "type": "choice",
-                "text": "2 + 2 = ?",
-                "choices": ["3","4","5","6"],
-                "answer": 1
+                "text": "次の式について考えましょう。 「$3x$」で、$x$ を $2$ としたときの値はどれですか。",
+                "choices": ["$3$","$6$","$5$","$9$"],
+                "answer": "$6$",
+                "explanation": "「$3x$」とは「$3 \\times x$」を意味します。$x = 2$ のとき、$3 \\times 2 = 6$ となります。"
             },
             {
+                "#": 2,
                 "type": "choice",
-                "text": "3 * 3 = ?",
-                "choices": ["6","7","8","9"],
-                "answer": 3
+                "text": "「$5a + 2$」で、$a = 3$のときの値はどれですか。",
+                "choices": ["$17$","$11$","$13$","$21$"],
+                "answer": "$17$",
+                "explanation": "$5a + 2 = 5 \\times 3 + 2 = 15 + 2 = 17 です。 "
             },
             {
+                "#": 3,
                 "type": "choice",
-                "text": "**次の式を解いてください：**\n\n$x^2 + 2x + 1 = 0$",
-                "choices": ["$x = -1$","$x = 0$","$x = 1$","$x = 2$"],
-                "answer": 0
+                "text": "「$2x + 3x$」をまとめると、どの式になりますか。 ",
+                "choices": ["$5x$","$6x$","$2x^2 + 3c^2$","$23x$ "],
+                "answer": "$5x$",
+                "explanation": "同じ文字を含む項は、係数を足し合わせます。$2x + 3x = 5x$ です。"
             },
             {
+                "#": 4,
                 "type": "choice",
-                "text": "**次の式を展開してください：**\n\n$(x + y)^2$",
-                "choices": ["$x^2 + y^2$","$x^2 + 2xy + y^2$","$x^2 + xy + y^2$","$x + y$"],
-                "answer": 1
+                "text": "「$4x - 2x + 5$」を整理すると、どの式になりますか。",
+                "choices": ["$2x + 5$","$2x - 5$","$6x + 5$","$2x + 10$"],
+                "answer": "$2x + 5$",
+                "explanation": "文字の部分だけ計算すると、$4x - 2x = 2x$ となり、式は $2x + 5$ になります。 "
+            },
+            {
+                "#": 5,
+                "type": "choice",
+                "text": "「$3(x + 2) - 2(x + 1)$」を整理すると、どの式になりますか。 ",
+                "choices": ["$x + 4$","$x + 2$","$x + 6$","$5x + 4$ "],
+                "answer": "$x + 4$",
+                "explanation": "「分配法則で展開します。<br>$3(x + 2) = 3x + 6、-2(x + 1) = -2x - 2$ <br>まとめると $(3x - 2x) + (6 - 2) = x + 4$ です。"
+            },
+            {
+                "#": 6,
+                "type": "numeric",
+                "text": "「$7x$」で、$x = 4$ のときの値を求めなさい。  ",
+                "answers": [
+                    {"label": "回答","answer": 28}
+                ],
+                "explanation": "$7 \\times 4 = 28$ です。"
+            },
+            {
+                "#": 7,
+                "type": "numeric",
+                "text": "「$2a + 3$」で、$a = 5$ のときの値を求めなさい。",
+                "answers": [
+                    {"label": "回答","answer": 13}
+                ],
+                "explanation": "$2 \\times 5 + 3 = 10 + 3 = 13$ です。 "
+            },
+            {
+                "#": 8,
+                "type": "numeric",
+                "text": "「$5x - 2$」で、$x = 7$ のときの値を求めなさい。 ",
+                "answers": [
+                    {"label": "回答","answer": 33}
+                ],
+                "explanation": "$5 \\times 7 - 2 = 35 - 2 = 33$ です。"
+            },
+            {
+                "#": 9,
+                "type": "numeric",
+                "text": "「$ 2(x + 3) + 4$」で、$x = 6$ のときの値を求めなさい。",
+                "answers": [
+                    {"label": "回答","answer": 22}
+                ],
+                "explanation": "まず括弧を計算。$2(6 + 3) + 4 = 2 \\times 9 + 4 = 18 + 4 = 22$ です。 "
+            },
+            {
+                "#": 10,
+                "type": "numeric",
+                "text": "「$3x + 2y$」で、$x = 4$, $y = 5$ のときの値を求めなさい。 ",
+                "answers": [
+                    {"label": "回答","answer": 22}
+                ],
+                "explanation": "$3 \\times 2 \\times 5 = 12 + 10 = 22$ です。"
             }
         ]
     },
-    "7": {
+    "105": {
+        "questname": "代入",
+        "level": "Lv1",
+        "subject": "数学",
+        "world_name": "europe",
+        "questions": [
+            {
+                "#": 1,
+                "type": "choice",
+                "text": "次の式に $x = 3$ を代入したときの値を求めなさい。<br>$x + 5$",
+                "choices": ["$7$","$8$","$9$","$10$"],
+                "answer": "$8$",
+                "explanation": "$x = 3$ を代入すると $3 + 5 = 8$になる。"
+            },
+            {
+                "#": 2,
+                "type": "choice",
+                "text": "次の式に $x = 2$, $y = 4$ を代入したときの値を求めなさい。<br>$2x + y$",
+                "choices": ["$6$","$8$","$10$","$12$"],
+                "answer": "$8$",
+                "explanation": "$2 \\times 2 + 4 = 4 + 4 = 8$"
+            },
+            {
+                "#": 3,
+                "type": "choice",
+                "text": "次の式に $x = 5$ を代入したときの値を求めなさい。<br>$3x - 7$",
+                "choices": ["$7$","$8$","$10$","$12$"],
+                "answer": "$8$",
+                "explanation": "$3 \\times 5 - 7 = 15 - 7 = 8$"
+            },
+            {
+                "#": 4,
+                "type": "choice",
+                "text": "次の式に $a = 2$, $b = 3$ を代入したときの値を求めなさい。 <br>$a^2 + 2b$",
+                "choices": ["$7$ ","$8$","$10$","$13$"],
+                "answer": "$10$",
+                "explanation": "$2^2 + 2 \\times 3 = 4 + 6 = 10$"
+            },
+            {
+                "#": 5,
+                "type": "choice",
+                "text": "次の式に $x = 4$, $y = 2$ を代入したときの値を求めなさい。<br>$\\frac{x^2}{y} + 3y",
+                "choices": ["$8$ ","$10$","$11$","$14$"],
+                "answer": "$14$",
+                "explanation": "$\\frac{4^2}{2} + 3 \\times 2 = \\frac{16}{2} + 6 = 8 + 6= 14$"
+            },
+            {
+                "#": 6,
+                "type": "numeric",
+                "text": "次の式に $x = 7$ を代入したときの値を答えなさい。<br>$x - 4$",
+                "answers": [
+                    {"label": "回答","answer": 3}
+                ],
+                "explanation": "$x - 4 = 3$"
+            },
+            {
+                "#": 7,
+                "type": "numeric",
+                "text": "次の式に $x = 3$, $y = 5$ を代入したときの値を答えなさい。  <br>$2x + 3y$",
+                "answers": [
+                    {"label": "回答","answer": 21}
+                ],
+                "explanation": "$2 \\times 3 + 3 \\times 5 = 6 + 15 = 21$"
+            },
+            {
+                "#": 8,
+                "type": "numeric",
+                "text": "次の式に $a = 6$, $b = 2$ を代入したときの値を答えなさい。  <br>$ab - b^2$",
+                "answers": [
+                    {"label": "回答","answer": 8}
+                ],
+                "explanation": "$6 \\times 2 -2^2 = 12 - 4 = 8$"
+            },
+            {
+                "#": 9,
+                "type": "numeric",
+                "text": "次の式に $x = 3$, $y = 4$ を代入したときの値を答えなさい。  <br>$x^2 + y^2$",
+                "answers": [
+                    {"label": "回答","answer": 25}
+                ],
+                "explanation": "$3^2 + 4^2 = 9 + 16 = 25$"
+            },
+            {
+                "#": 10,
+                "type": "numeric",
+                "text": "次の式に $x = 2$, $y = 3$, $z = 4$ を代入したときの値を答えなさい。  <br>$2x + 3y - z^2$",
+                "answers": [
+                    {"label": "回答","answer": -3}
+                ],
+                "explanation": "$2 \\times 2 + 3 \\times 3- 4^2 = 4 + 9 - 16 = 13 - 16 = -3$"
+            }
+        ]
+    },
+    "106": {
+        "questname": "分配法則",
+        "level": "Lv1",
+        "subject": "数学",
+        "world_name": "europe",
+        "questions": [
+            {
+                "#": 1,
+                "type": "choice",
+                "text": "次の式を展開してください。<br>$3(2x + 4)$",
+                "choices": ["$2x + 4$","$3x + 4$","$6x + 12$","$6x + 4$"],
+                "answer": "$6x + 12$",
+                "explanation": "分配法則を使って、$3 \\times 2x + 3 \\times 4 = 6x + 12$"
+            },
+            {
+                "#": 2,
+                "type": "choice",
+                "text": "次の式を展開してください。<br$5(x + 3)$",
+                "choices": ["$5x + 3$","$5x + 15$","$5x + 5$","$5x + 8$"],
+                "answer": "$5x + 15$",
+                "explanation": "分配法則を使って、$5 \\times x + 5 \\times 3 = 5x + 15$"
+            },
+            {
+                "#": 3,
+                "type": "choice",
+                "text": "次の式を展開してください。<br>$4(2x + 5)$",
+                "choices": ["$8x + 20$","$10x + 20$","$10x + 15$","$8x + 15$"],
+                "answer": "$8x + 20$",
+                "explanation": "分配法則を使って、$4 \\times 2x + 4 \\times 5 = 8x + 20$"
+            },
+            {
+                "#": 4,
+                "type": "choice",
+                "text": "次の式を展開してください。<br>$2(3x + 4y)$",
+                "choices": ["$6x + 8y$ ","$6x + 4y$","$6x + 12y$","$12x + 8y$"],
+                "answer": "$6x + 12y$",
+                "explanation": "分配法則を使って、$2 \\times 3x + 2 \\times 4y = 6x + 8y$"
+            },
+            {
+                "#": 5,
+                "type": "choice",
+                "text": "次の式を展開してください。<br>$3(2x + 5) + 4(3x + 2)$",
+                "choices": ["$21x + 22$ ","$19x + 22$","$18x + 22$","$21x + 20$"],
+                "answer": "$21x + 20$",
+                "explanation": "分配法則を使って、$3 \\times 2x + 3 \\times 5 + 4 \\times 3x + 4 \\times 2 = 6x + 15 + 12x + 8 = 21x + 23$"
+            },
+            {
+                "#": 6,
+                "type": "numeric",
+                "text": "次の式に $x = 7$ を代入したときの値を答えなさい。<br>$x - 4$",
+                "answers": [
+                    {"label": "回答","answer": 3}
+                ],
+                "explanation": "$x - 4 = 3$"
+            },
+            {
+                "#": 7,
+                "type": "numeric",
+                "text": "次の式に $x = 3$, $y = 5$ を代入したときの値を答えなさい。  <br>$2x + 3y$",
+                "answers": [
+                    {"label": "回答","answer": 21}
+                ],
+                "explanation": "$2 \\times 3 + 3 \\times 5 = 6 + 15 = 21$"
+            },
+            {
+                "#": 8,
+                "type": "numeric",
+                "text": "次の式に $a = 6$, $b = 2$ を代入したときの値を答えなさい。  <br>$ab - b^2$",
+                "answers": [
+                    {"label": "回答","answer": 8}
+                ],
+                "explanation": "$6 \\times 2 -2^2 = 12 - 4 = 8$"
+            },
+            {
+                "#": 9,
+                "type": "numeric",
+                "text": "次の式に $x = 3$, $y = 4$ を代入したときの値を答えなさい。  <br>$x^2 + y^2$",
+                "answers": [
+                    {"label": "回答","answer": 25}
+                ],
+                "explanation": "$3^2 + 4^2 = 9 + 16 = 25$"
+            },
+            {
+                "#": 10,
+                "type": "numeric",
+                "text": "次の式に $x = 2$, $y = 3$, $z = 4$ を代入したときの値を答えなさい。  <br>$2x + 3y - z^2$",
+                "answers": [
+                    {"label": "回答","answer": -3}
+                ],
+                "explanation": "$2 \\times 2 + 3 \\times 3- 4^2 = 4 + 9 - 16 = 13 - 16 = -3$"
+            }
+        ]
+    },
+    "125": {
         "questname": "SVG図形問題",
         "level": "Lv1",
         "subject": "数学",
@@ -224,7 +622,7 @@
             }
         ]
     },
-    "8": {
+    "203": {
         "questname": "英語穴埋め",
         "level": "Lv1",
         "subject": "英語",
@@ -242,7 +640,7 @@
             }
         ]
     },
-    "9": {
+    "301": {
         "questname": "国語",
         "level": "Lv1",
         "subject": "国語",

@@ -53,8 +53,8 @@
       <input type="text" name="choice{{ i }}" id="choice{{ i }}" value="{{ choices[i] if question and question.type == 'choice' and question.choices|length > i else '' }}"><br>
       <div id="choice{{ i }}_preview" class="markdown-preview" style="margin-bottom: 0.5rem;"></div>
     {% endfor %}
-    <label>正解のインデックス（0-3）:</label>
-    <input type="number" name="answer" value="{{ question.answer if question and question.type == 'choice' else '' }}">
+    <label>正解:</label>
+    <input type="text" name="answer" value="{{ question.answer if question and question.type == 'choice' else '' }}">
   </div>
 
   <div id="sort-section" style="display:none;">

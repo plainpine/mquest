@@ -17,7 +17,6 @@
         <div class="choice-block">
           {% for choice in question.choices %}
             <div class="choice-option">
-              <span>{{ loop.index }})&nbsp;&nbsp;&nbsp;</span>
               <span class="markdown" data-content="{{ choice | e }}"></span>
             </div>
           {% endfor %}
@@ -73,7 +72,7 @@
         <div class="answer" id="answer-{{ q_index }}" style="display: none; margin-top: 0.5rem;">
           <strong>正解：</strong>
           {% if question.type == 'choice' %}
-            <span>{{ question.answer + 1 }}</span>
+            <span>{{ question.answer }}</span>
           {% elif question.type == 'sort' or question.type == 'fill_in_the_blank_en' %}
             <span>{{ question.answer }}</span>
           {% elif question.type == 'numeric' %}

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from models import QuestHistory, Quest, Question
 import json
 import logging
+import random
 
 # 科目キーと日本語名のマッピング
 SUBJECT_KEY_TO_JP = {
@@ -269,11 +270,19 @@ def quest_run(quest_id):
     questions = []
 
     for q in all_questions:
-        # q.choicesが文字列のJSONならパースする
-        try:
-            choices = json.loads(q.choices)
-        except Exception:
-            choices = q.choices  # パースできなければそのまま
+        choices = None
+        if q.type == 'choice':
+            # q.choicesが文字列のJSONならパースする
+            try:
+                choices = json.loads(q.choices)
+                random.shuffle(choices)  # 選択肢をシャッフル
+            except Exception:
+                choices = q.choices  # パースできなければそのまま
+        else:
+            try:
+                choices = json.loads(q.choices)
+            except Exception:
+                choices = q.choices
 
         # q.answerが文字列のJSONならパースする
         try:
@@ -316,11 +325,14 @@ def quest_result(quest_id):
             expected = ''
 
             if question_type == 'choice':
-                choices = json.loads(q.choices)
-                answer_index = int(json.loads(q.answer))
                 user_answer = request.form.get(f'q{i}', '').strip()
-                correct = user_answer == str(answer_index)
-                expected = choices[answer_index]
+                try:
+                    correct_answer = json.loads(q.answer)
+                except (json.JSONDecodeError, TypeError):
+                    correct_answer = q.answer
+                
+                correct = user_answer == correct_answer
+                expected = correct_answer
 
             elif question_type == 'sort':
                 user_answer = request.form.get(f'q{i}', '').strip()
@@ -676,9 +688,15 @@ def edit_question(quest_id, question_id):
         return render_template('edit_question.html', quest_id=quest.id, question=None)
     else:
         question = Question.query.get_or_404(int(question_id))
-        choices = json.loads(question.choices) if question.choices and question.type == 'choice' else None
+        choices = None
         answers = None
-        if question.type == 'numeric':
+        if question.type == 'choice':
+            choices = json.loads(question.choices) if question.choices else None
+            try:
+                question.answer = json.loads(question.answer)
+            except (json.JSONDecodeError, TypeError):
+                pass
+        elif question.type == 'numeric':
             answers = json.loads(question.answer) if question.answer else None
         elif question.type == 'svg_interactive':
             answers = json.loads(question.answer) if question.answer else None
@@ -708,9 +726,9 @@ def save_question(quest_id, question_id):
 
         if q_type == 'choice':
             choices = [request.form.get(f'choice{i}', '') for i in range(4)]
-            answer = int(request.form['answer'])
+            answer = request.form['answer']
             question.choices = json.dumps(choices)
-            question.answer = json.dumps(answer)
+            question.answer = answer
 
         elif q_type == 'sort':
             question.choices = None
@@ -800,11 +818,19 @@ def quest_run_group(quest_id):
     questions = []
 
     for q in all_questions:
-        # q.choicesが文字列のJSONならパースする
-        try:
-            choices = json.loads(q.choices)
-        except Exception:
-            choices = q.choices  # パースできなければそのまま
+        choices = None
+        if q.type == 'choice':
+            # q.choicesが文字列のJSONならパースする
+            try:
+                choices = json.loads(q.choices)
+                random.shuffle(choices)  # 選択肢をシャッフル
+            except Exception:
+                choices = q.choices  # パースできなければそのまま
+        else:
+            try:
+                choices = json.loads(q.choices)
+            except Exception:
+                choices = q.choices
 
         # q.answerが文字列のJSONならパースする
         try:

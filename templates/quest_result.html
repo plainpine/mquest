@@ -65,7 +65,7 @@
                         {% endfor %}
                         </div>
                     {% else %}
-                        <code class="text-danger">{{ res.user_answer }}</code>
+                        <span class="text-danger">{{ res.user_answer | safe }}</span>
                     {% endif %}
 
                     <p class="mb-1 mt-2">正解:</p>
@@ -78,7 +78,7 @@
                         {% endfor %}
                         </div>
                     {% else %}
-                        <span class="text-success" style="font-weight: bold;">{{ res.expected }}</span>
+                        <span class="text-success" style="font-weight: bold;">{{ res.expected | safe }}</span>
                     {% endif %}
                 {% endif %}
             </div>
