@@ -41,7 +41,7 @@
           </div>
         {% endfor %}
         <div style="height: 1rem;"></div>
-        <div class="keypad" data-qid="{{ q_index }}">
+        <div class="keypad" data-qid="{{ q_index }}" style="display: none;">
           {% for num in range(1, 10) %}
             <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
             {% if num % 3 == 0 %}<br>{% endif %}
@@ -57,17 +57,21 @@
       {% elif question.type == 'fill_in_the_blank_en' %}
         <div class="en-fill-in-the-blank-block">
           <input type="text" name="q{{ q_index }}" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" autocomplete="off" readonly>
-          <div class="virtual-keyboard" data-qid="{{ q_index }}">
+          <div class="virtual-keyboard" data-qid="{{ q_index }}" style="display: none;">
             <div class="keyboard-row">
               {% for key in 'qwertyuiop' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
             </div>
             <div class="keyboard-row">
               {% for key in 'asdfghjkl' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+              <button type="button" class="key-btn-en" data-key="'">'</button>
             </div>
             <div class="keyboard-row">
               {% for key in 'zxcvbnm' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
               <button type="button" class="key-btn-en" data-key="del">⌫</button>
               <button type="button" class="key-btn-en" data-key="clear">CL</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn-en" data-key=" " style="width: 200px;">space</button>
             </div>
           </div>
         </div>
@@ -82,7 +86,7 @@
               <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" readonly style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
             </div>
           {% endfor %}
-          <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem;">
+          <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
             {% for num in range(1, 10) %}
               <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
               {% if num % 3 == 0 %}<br>{% endif %}
@@ -443,13 +447,57 @@
     });
 
     let activeInput = null, activeEnInput = null;
-    document.querySelectorAll('.numeric-input').forEach(input => {
-      input.addEventListener('focus', () => { activeInput = input; activeEnInput = null; });
-      input.addEventListener('click', () => { activeInput = input; activeEnInput = null; });
+
+    const showKeyboard = (input) => {
+      const isNumeric = input.classList.contains('numeric-input');
+      const isEn = input.classList.contains('en-fill-in-the-blank-input');
+
+      if (!isNumeric && !isEn) return;
+
+      // Check if the correct keyboard is already visible for this input
+      const qid = input.dataset.qid;
+      const questionBlock = input.closest('.question-block, .sub-questions-container');
+      if (!questionBlock) return;
+
+      const selector = isNumeric ? `.keypad[data-qid="${qid}"]` : `.virtual-keyboard[data-qid="${qid}"]`;
+      const keyboard = questionBlock.querySelector(selector);
+
+      if (keyboard && keyboard.style.display !== 'none' && ((isNumeric && activeInput === input) || (isEn && activeEnInput === input))) {
+          // If the correct keyboard for the active input is already visible, do nothing.
+          return;
+      }
+
+      // Hide all keyboards first
+      document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
+
+      // Show the target keyboard
+      if (keyboard) {
+        if (isNumeric) {
+          activeInput = input;
+          activeEnInput = null;
+          keyboard.style.display = 'inline-block';
+        } else if (isEn) {
+          activeInput = null;
+          activeEnInput = input;
+          keyboard.style.display = 'flex';
+        }
+      }
+    };
+
+    document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input').forEach(input => {
+        input.addEventListener('click', (event) => {
+            event.stopPropagation();
+            showKeyboard(input);
+        });
     });
-    document.querySelectorAll('.en-fill-in-the-blank-input').forEach(input => {
-      input.addEventListener('focus', () => { activeEnInput = input; activeInput = null; });
-      input.addEventListener('click', () => { activeEnInput = input; activeInput = null; });
+
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!target.closest('.numeric-input, .en-fill-in-the-blank-input, .keypad, .virtual-keyboard')) {
+        document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
+        activeInput = null;
+        activeEnInput = null;
+      }
     });
 
     document.querySelectorAll('.keypad').forEach(keypad => {
@@ -498,7 +546,7 @@
         }
       } else if (activeEnInput) {
         const key = event.key;
-        if (key.length === 1 && key.match(/[a-z]/i)) {
+        if ((key.length === 1 && key.match(/[a-z']/i)) || key === ' ') {
           event.preventDefault();
           activeEnInput.value += key.toLowerCase();
         } else if (key === 'Backspace') {

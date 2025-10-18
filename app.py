@@ -335,14 +335,14 @@ def quest_result(quest_id):
                 expected = correct_answer
 
             elif question_type == 'sort':
-                user_answer = request.form.get(f'q{i}', '').strip()
+                user_answer = request.form.get(f'q{i}', '').strip().lower()
                 try:
                     correct_answer = json.loads(q.answer)
                 except (json.JSONDecodeError, TypeError):
                     correct_answer = q.answer
                 if isinstance(correct_answer, str):
                     correct_answer = correct_answer.strip()
-                correct = str(correct_answer) == user_answer
+                correct = str(correct_answer).lower() == user_answer
                 expected = correct_answer
 
             elif question_type == 'fill_in_the_blank_en':
