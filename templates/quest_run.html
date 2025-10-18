@@ -42,17 +42,31 @@
         {% endfor %}
         <div style="height: 1rem;"></div>
         <div class="keypad" data-qid="{{ q_index }}" style="display: none;">
-          {% for num in range(1, 10) %}
-            <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
-            {% if num % 3 == 0 %}<br>{% endif %}
-          {% endfor %}
-          <button type="button" class="key-btn" data-num="0">0</button>
-          <button type="button" class="key-btn" data-num=".">.</button>
-          <button type="button" class="key-btn" data-num="-">-</button>
-          <button type="button" class="key-btn" data-num="/">/</button>
-          <br>
-          <button type="button" class="key-btn" data-num="del">⌫</button>
-          <button type="button" class="key-btn" data-num="clear">CL</button>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="1">1</button>
+            <button type="button" class="key-btn" data-num="2">2</button>
+            <button type="button" class="key-btn" data-num="3">3</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="4">4</button>
+            <button type="button" class="key-btn" data-num="5">5</button>
+            <button type="button" class="key-btn" data-num="6">6</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="7">7</button>
+            <button type="button" class="key-btn" data-num="8">8</button>
+            <button type="button" class="key-btn" data-num="9">9</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="0">0</button>
+            <button type="button" class="key-btn" data-num=".">.</button>
+            <button type="button" class="key-btn" data-num="-">-</button>
+            <button type="button" class="key-btn" data-num="/">/</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="del">⌫</button>
+            <button type="button" class="key-btn" data-num="clear">CL</button>
+          </div>
         </div>
       {% elif question.type == 'fill_in_the_blank_en' %}
         <div class="en-fill-in-the-blank-block">
@@ -71,7 +85,7 @@
               <button type="button" class="key-btn-en" data-key="clear">CL</button>
             </div>
             <div class="keyboard-row">
-              <button type="button" class="key-btn-en" data-key=" " style="width: 200px;">space</button>
+              <button type="button" class="key-btn-en" data-key=" ">space</button>
             </div>
           </div>
         </div>
@@ -87,17 +101,31 @@
             </div>
           {% endfor %}
           <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
-            {% for num in range(1, 10) %}
-              <button type="button" class="key-btn" data-num="{{ num }}">{{ num }}</button>
-              {% if num % 3 == 0 %}<br>{% endif %}
-            {% endfor %}
-            <button type="button" class="key-btn" data-num="0">0</button>
-            <button type="button" class="key-btn" data-num=".">.</button>
-            <button type="button" class="key-btn" data-num="-">-</button>
-            <button type="button" class="key-btn" data-num="/">/</button>
-            <br>
-            <button type="button" class="key-btn" data-num="del">⌫</button>
-            <button type="button" class="key-btn" data-num="clear">CL</button>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="1">1</button>
+              <button type="button" class="key-btn" data-num="2">2</button>
+              <button type="button" class="key-btn" data-num="3">3</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="4">4</button>
+              <button type="button" class="key-btn" data-num="5">5</button>
+              <button type="button" class="key-btn" data-num="6">6</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="7">7</button>
+              <button type="button" class="key-btn" data-num="8">8</button>
+              <button type="button" class="key-btn" data-num="9">9</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="0">0</button>
+              <button type="button" class="key-btn" data-num=".">.</button>
+              <button type="button" class="key-btn" data-num="-">-</button>
+              <button type="button" class="key-btn" data-num="/">/</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="del">⌫</button>
+              <button type="button" class="key-btn" data-num="clear">CL</button>
+            </div>
           </div>
         </div>
       {% endif %}
