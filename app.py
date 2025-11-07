@@ -348,11 +348,18 @@ def quest_result(quest_id):
             elif question_type == 'fill_in_the_blank_en':
                 user_answer = request.form.get(f'q{i}', '').strip().lower()
                 try:
-                    correct_answer = json.loads(q.answer)
+                    # Load answer which might be a JSON string
+                    correct_answers_raw = json.loads(q.answer)
                 except (json.JSONDecodeError, TypeError):
-                    correct_answer = q.answer
-                correct = user_answer == correct_answer.lower()
-                expected = correct_answer
+                    # Or a plain string
+                    correct_answers_raw = q.answer
+
+                # Split the string by comma to get multiple answers, and trim whitespace from each
+                correct_answer_list = [ans.strip().lower() for ans in correct_answers_raw.split(',')]
+                
+                # Check if the user's answer is in the list of correct answers
+                correct = user_answer in correct_answer_list
+                expected = correct_answers_raw # Show all possible answers in the result
 
             elif question_type == 'svg_interactive':
                 sub_questions = json.loads(q.answer)

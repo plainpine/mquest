@@ -1304,7 +1304,7 @@
         ]
     },
     "201": {
-        "questname": "be動詞（現在・過去）",
+        "questname": "be動詞",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
@@ -1312,117 +1312,118 @@
             {
                 "#": 1,
                 "type": "choice",
-                "text": "My father __ busy now.（今、父は忙しいです。）",
-                "choices": ["is", "are", "am", "were"],
-                "answer": "is",
-                "explanation": "主語'My father'は三人称単数で、文末の'now'から現在形と判断できるため、be動詞は'is'を使います。"
+                "text": "This is __ egg. （これは卵です）の __ に入る正しい単語はどれ？",
+                "choices": ["a", "an", "is", "it"],
+                "answer": "an",
+                "explanation": "名詞が母音（a, i, u, e, o）の音で始まる場合、その前に 'an' をつけます。'egg' は母音で始まるので 'an' が正解です。"
             },
             {
                 "#": 2,
                 "type": "choice",
-                "text": "Ken and I __ in the same class last year.（ケンと私は去年同じクラスにいました。）",
-                "choices": ["were", "was", "is", "are"],
-                "answer": "were",
-                "explanation": "主語'Ken and I'は複数形で、文末の'last year'から過去形と判断できるため、be動詞は'were'を使います。"
+                "text": "「あれは机ではありません」を意味する正しい英文はどれ？",
+                "choices": ["That not is a desk.", "That is a not desk.", "That is not a desk.", "Is that not a desk."],
+                "answer": "That is not a desk.",
+                "explanation": "be動詞 'is' を使った文を否定文にするには、'is' の直後に 'not' を置きます。したがって、「主語 + is + not ~ .」の語順になります。"
             },
             {
                 "#": 3,
                 "type": "choice",
-                "text": "She __ tired yesterday.（彼女は昨日疲れていませんでした。）",
-                "choices": ["wasn't", "isn't", "aren't", "weren't"],
-                "answer": "wasn't",
-                "explanation": "主語'She'は三人称単数で、'yesterday'から過去形と判断できます。否定文なのでbe動詞の過去形'was'に'not'をつけた短縮形'wasn't'が正解です。"
+                "text": "「これは鉛筆ですか」を意味する正しい英文はどれ？",
+                "choices": ["This a pencil is?", "Is this a pencil?", "Does this is a pencil?", "This is a pencil."],
+                "answer": "Is this a pencil?",
+                "explanation": "be動詞 'is' を使った文を疑問文にするには、'is' を主語の前に移動させ、文末にクエスチョンマーク '?' をつけます。"
             },
             {
                 "#": 4,
                 "type": "choice",
-                "text": "__ you hungry now?（あなたは今お腹が空いていますか？）",
-                "choices": ["are", "is", "am", "was"],
-                "answer": "are",
-                "explanation": "主語が'you'の現在の疑問文では、文頭に'Are'を置きます。"
+                "text": "What is __? （これは何ですか？）の __ に入る正しい単語はどれ？",
+                "choices": ["it", "that", "this", "a"],
+                "answer": "this",
+                "explanation": "「これ」と近くのものを指して尋ねる場合は 'this' を使います。'it' は主に質問に答えるときに使います。"
             },
             {
                 "#": 5,
                 "type": "choice",
-                "text": "These rackets __ his.（これらのラケットは彼のものです。）",
-                "choices": ["are", "is", "am", "was"],
-                "answer": "are",
-                "explanation": "主語'These rackets'は複数形なので、be動詞は'are'を使います。"
+                "text": "「What is that?」に対する正しい答えはどれ？",
+                "choices": ["It is a bike.", "This is a bike.", "That is a bike.", "Yes, it is."],
+                "answer": "It is a bike.",
+                "explanation": "'What is this?' や 'What is that?' という質問には、主語を代名詞 'it' に置き換えて 'It is ~.' と答えるのが基本です。"
             },
             {
                 "#": 6,
-                "type": "sort",
-                "text": "tired / she / was / yesterday / .",
-                "answer": "she was tired yesterday .",
-                "explanation": "肯定文の基本構造である「主語 + be動詞」の順に並べます。'She'が主語、'was'がbe動詞です。"
+                "type": "choice",
+                "text": "This is __ China. （これは中国です）の __ に入る正しい単語はどれ？",
+                "choices": ["a", "an", "the", "（なし）"],
+                "answer": "（なし）",
+                "explanation": "国名や人名などの固有名詞は数えられない名詞（U）なので、原則として a や an をつけません。そのまま This is China. となります。"
             },
             {
                 "#": 7,
                 "type": "sort",
-                "text": "not / hungry / we / are / .",
-                "answer": "we are not hungry .",
-                "explanation": "否定文は「主語 + be動詞 + not」の語順になります。'We'が主語、'are'がbe動詞です。"
+                "text": "not / a / car / is / that / .",
+                "answer": "That is not a car.",
+                "explanation": "「主語 + is + not + ...」の語順で否定文を作ります。また、英文のルールとして、文の始めは大文字にし、文の終わりにはピリオド（.）をつけます。したがって、正しくは \"That is not a car.\" となります。"
             },
             {
                 "#": 8,
                 "type": "sort",
-                "text": "in / were / the gym / you / ?",
-                "answer": "were you in the gym ?",
-                "explanation": "疑問文は「Be動詞 + 主語」の語順で始まります。'Were'がbe動詞、'you'が主語です。"
+                "text": "an / ant / is / this / ?",
+                "answer": "Is this an ant?",
+                "explanation": "be動詞の疑問文は、be動詞 'is' を文の最初に置き、「is + 主語 + ... ?」の語順になります。"
             },
             {
                 "#": 9,
                 "type": "sort",
-                "text": "a / am / soccer / i / fan / .",
-                "answer": "i am a soccer fan .",
-                "explanation": "肯定文の基本構造である「主語 + be動詞」の順に並べます。'I'が主語、'am'がbe動詞です。"
+                "text": "is / what / that / ?",
+                "answer": "What is that?",
+                "explanation": "「何」を尋ねる疑問詞 'what' は文の最初に置きます。語順は「what + is + 主語 ?」となります。"
             },
             {
                 "#": 10,
                 "type": "sort",
-                "text": "busy / they / last year / weren't / .",
-                "answer": "they weren't busy last year .",
-                "explanation": "否定文では「主語 + be動詞の短縮形」の順になります。'they'が主語、'weren't'がbe動詞です。"
+                "text": "orange / an / is / it / .",
+                "answer": "It is an orange.",
+                "explanation": "「主語 + 動詞」の語順なので、'it is' となります。'orange' は母音で始まるので、冠詞は 'an' を使います。"
             },
             {
                 "#": 11,
                 "type": "fill_in_the_blank_en",
-                "text": "I ___ busy now.（私は今忙しいです。）",
-                "answer": "am",
-                "explanation": "主語が'I'で、'now'があるので現在形です。したがって、'am'が入ります。"
+                "text": "\"That's a book.\" は \"That ___ a book.\" と同じ意味です。",
+                "answer": "is",
+                "explanation": "「～です」を意味するbe動詞が必要です。主語が 'That' なので、動詞は 'is' が入ります。"
             },
             {
                 "#": 12,
                 "type": "fill_in_the_blank_en",
-                "text": "He ___ tired yesterday.（彼は昨日疲れていました。）",
-                "answer": "was",
-                "explanation": "主語が'He'で、'yesterday'があるので過去形です。したがって、'was'が入ります。"
+                "text": "Is that a desk? --- No, ___ is not. （あれは机ですか？ --- いいえ、違います）",
+                "answer": "it",
+                "explanation": "疑問文の主語 'that' を受けて答える場合、代名詞の 'it' を使います。"
             },
             {
                 "#": 13,
                 "type": "fill_in_the_blank_en",
-                "text": "We ___ hungry.（私たちはお腹が空いています。）",
-                "answer": "are",
-                "explanation": "主語が'We'（複数形）の現在形の文なので、'are'が入ります。"
+                "text": "This ___ a piano. （これはピアノではありません）",
+                "answer": "is not,isn't",
+                "explanation": "否定文にするには be動詞 'is' の後に 'not' を置きます。'is not' は 'isn't' と短縮することができます。"
             },
             {
                 "#": 14,
                 "type": "fill_in_the_blank_en",
-                "text": "___ you in the gym two hours ago?（あなたは2時間前に体育館にいましたか？）",
-                "answer": "were",
-                "explanation": "主語が'you'で、'two hours ago'があるので過去の疑問文です。したがって'were'が入りますが、文頭なので'Were'と大文字で始めます。"
+                "text": "___ is this? （これは何ですか？）",
+                "answer": "What,What's",
+                "explanation": "「何」と尋ねる文なので、文頭には疑問詞の 'What' を使います。'What is' は 'What's' と短縮することができます。"
             },
             {
                 "#": 15,
                 "type": "fill_in_the_blank_en",
-                "text": "My father ___ busy now.（私の父は今忙しくありません。）",
-                "answer": "isn't",
-                "explanation": "主語が'My father'（三人称単数）の現在の否定文なので、'is not'の短縮形である'isn't'が入ります。"
+                "text": "That is ___ eraser. （あれは消しゴムです）",
+                "answer": "an",
+                "explanation": "名詞 'eraser' は母音の音で始まるので、不定冠詞は 'a' ではなく 'an' を使います。"
             }
         ]
     },
     "202": {
-        "questname": "一般動詞（現在形）",
+        "questname": "代名詞（所有格）",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
@@ -1431,117 +1432,117 @@
             {
                 "#": 1,
                 "type": "choice",
-                "text": "My brother __ tennis every weekend.（私の兄は毎週末テニスをします。）",
-                "choices": ["play", "plays", "playing", "is play"],
-                "answer": "plays",
-                "explanation": "主語が三人称単数（My brother）なので、現在の文では一般動詞に 's' がつきます。"
+                "text": "This house is __ . （この家は私たちのものです。）",
+                "choices": ["our", "ours", "us", "we"],
+                "answer": "ours",
+                "explanation": "「〜のもの」という意味を表す所有代名詞を使います。ourは「私たちの」という意味の所有格で、後ろに名詞が必要です。oursは「私たちのもの」という意味で、後ろに名詞は不要です。"
             },
             {
                 "#": 2,
                 "type": "choice",
-                "text": "She __ like coffee.（彼女はコーヒーが好きではありません。）",
-                "choices": ["don't", "is not", "doesn't", "not"],
-                "answer": "doesn't",
-                "explanation": "主語が三人称単数（She）の否定文なので、動詞の前に doesn't を置きます。"
+                "text": "This pen is Mr. Kato's. It is __ . （このペンはカトウさんのものです。それは彼のです。）",
+                "choices": ["he", "him", "his", "he's"],
+                "answer": "his",
+                "explanation": "「彼のもの」を意味する所有代名詞はhisです。所有格の「彼の」もhisですが、文脈から所有代名詞だと判断します。heは主格、himは目的格です。"
             },
             {
                 "#": 3,
                 "type": "choice",
-                "text": "__ your parents speak English?（あなたの両親は英語を話しますか？）",
-                "choices": ["do", "does", "are", "is"],
-                "answer": "do",
-                "explanation": "主語が複数（your parents）なので、疑問文は Do で始めます。"
+                "text": "This guitar is your sister's. It's __ . （このギターはあなたの妹のものです。それは彼女のものです。）",
+                "choices": ["she", "her", "hers", "she's"],
+                "answer": "hers",
+                "explanation": "「彼女のもの」を意味する所有代名詞はhersです。herは所有格「彼女の」または目的格「彼女を」です。"
             },
             {
                 "#": 4,
                 "type": "choice",
-                "text": "Does Kenta __ the guitar?（ケンタはギターを弾きますか？）",
-                "choices": ["play", "plays", "playing", "played"],
-                "answer": "play",
-                "explanation": "主語が三人称単数（Kenta）で Does を使った疑問文では、動詞はいつでも原形（sのつかないもとの形）を使います。"
+                "text": "__ computer is that? （あれはだれのコンピュータですか？）",
+                "choices": ["who", "what", "whose", "which"],
+                "answer": "whose",
+                "explanation": "「だれの〜」と所有者を聞く場合は、疑問詞whoseを使います。"
             },
             {
                 "#": 5,
                 "type": "choice",
-                "text": "次のうち正しい英文はどれですか？",
-                "choices": ["They plays soccer.", "He don't have a car.", "We doesn't watch TV.", "I play the guitar."],
-                "answer": "I play the guitar.",
-                "explanation": "主語がI, you, 複数のときは動詞はそのままの形を使います。'They plays' は誤りです。'He don't' や 'We doesn't' も主語と合わないため誤りです。"
+                "text": "My bag is small. Your bag is big. My bag is different from __ . （私のカバンは小さいです。あなたのカバンは大きいです。私のカバンはあなたのものとは違います。）",
+                "choices": ["you", "your", "yours", "you're"],
+                "answer": "yours",
+                "explanation": "「あなたのもの」という意味の所有代名詞はyoursです。fromの後に置くことで、「あなたのカバンと」という意味になります。"
             },
             {
                 "#": 6,
                 "type": "sort",
-                "text": "english / he / studies / hard / .",
-                "answer": "He studies english hard .",
-                "explanation": "主語が三人称単数（he）なので、動詞 study は studies になります。"
+                "text": "books / are / theirs / those / .",
+                "answer": "those books are theirs .",
+                "explanation": "「あれらの本は彼らのものです」という文です。主語はThose books、動詞はare、補語がtheirsという語順になります。"
             },
             {
                 "#": 7,
                 "type": "sort",
-                "text": "we / have / breakfast / don't / .",
-                "answer": "We don't have breakfast .",
-                "explanation": "主語が複数（we）の否定文なので、動詞の前に don't を置きます。"
+                "text": "is / bike / whose / this / ?",
+                "answer": "whose is this bike ?",
+                "explanation": "「この自転車はだれのものですか」という疑問文です。疑問詞whoseを文頭に置き、「Whose is + 名詞?」の語順にします。"
             },
             {
                 "#": 8,
                 "type": "sort",
-                "text": "the / piano / play / she / doesn't / .",
-                "answer": "She doesn't play the piano .",
-                "explanation": "主語が三人称単数（she）の否定文なので、doesn't を使い、動詞は原形 play になります。"
+                "text": "father's / it / my / is / .",
+                "answer": "it is my father's .",
+                "explanation": "「それは私の父のものです」という文です。主語It、動詞is、補語my father'sの語順になります。名詞に'sをつけると「〜のもの」という意味になります。"
             },
             {
                 "#": 9,
                 "type": "sort",
-                "text": "you / do / dogs / like / ?",
-                "answer": "Do you like dogs ?",
-                "explanation": "主語が you なので、疑問文は Do で始めます。"
+                "text": "sister's / car / is / this / my / .",
+                "answer": "this car is my sister's .",
+                "explanation": "「この車は私の姉のものです」という文です。主語はThis car、動詞はis、補語がmy sister'sという語順になります。"
             },
             {
                 "#": 10,
                 "type": "sort",
-                "text": "to / school / kenta / does / go / ?",
-                "answer": "Does kenta go to school ?",
-                "explanation": "主語が三人称単数（Kenta）なので、疑問文は Does で始めます。Does のうしろの動詞は原形（go）になります。"
+                "text": "are / these / pencils / whose / ?",
+                "answer": "whose pencils are these ?",
+                "explanation": "「これらはだれの鉛筆ですか」という疑問文です。疑問詞whoseが名詞pencilsを修飾して文頭に立ち、「Whose + 名詞 + are these?」の語順になります。"
             },
             {
                 "#": 11,
                 "type": "fill_in_the_blank_en",
-                "text": "My grandmother ___ a cat.（私の祖母は猫を飼っています。）",
-                "answer": "has",
-                "explanation": "主語が三人称単数（My grandmother）の場合、have は has になります。"
+                "text": "This is not your pen. It is ___. （これはあなたのペンではありません。それは私のものです。）",
+                "answer": "mine",
+                "explanation": "「私のもの」という意味の所有代名詞mineが入ります。my penを1語で言い換えた形です。"
             },
             {
                 "#": 12,
                 "type": "fill_in_the_blank_en",
-                "text": "You and Ken ___ soccer well.（あなたとケンはサッカーが上手です。）",
-                "answer": "play",
-                "explanation": "主語が複数（You and Ken）なので、動詞は原形（sのつかないもとの形）を使います。"
+                "text": "That is their book. That book is ___. （あれは彼らの本です。あの本は彼らのものです。）",
+                "answer": "theirs",
+                "explanation": "「彼らのもの」という意味の所有代名詞theirsが入ります。their bookを1語で言い換えた形です。"
             },
             {
                 "#": 13,
                 "type": "fill_in_the_blank_en",
-                "text": "I ___ know his name.（私は彼の名前を知りません。）",
-                "answer": "don't",
-                "explanation": "主語が I の否定文なので、動詞の前に don't を置きます。"
+                "text": "My name is Tom. What's ___? （私の名前はトムです。あなたの名前は何ですか？）",
+                "answer": "yours",
+                "explanation": "「あなたのものは何ですか？」、つまり「あなたの名前は何ですか？」と聞き返す表現です。yoursはyour nameを意味します。"
             },
             {
                 "#": 14,
                 "type": "fill_in_the_blank_en",
-                "text": "He ___ live here.（彼はここに住んでいません。）",
-                "answer": "doesn't",
-                "explanation": "主語が三人称単数（He）の否定文なので、動詞の前に doesn't を置きます。"
+                "text": "A: Whose bike is this? （これはだれの自転車ですか？） B: It is Ken's. It is ___. （それはケンのです。それは彼のです。）",
+                "answer": "his",
+                "explanation": "男性の名前 Ken's （ケンのもの） を受けて、「彼のもの」という意味の所有代名詞hisを使います。"
             },
             {
                 "#": 15,
                 "type": "fill_in_the_blank_en",
-                "text": "___ they play rugby at school?（彼らは学校でラグビーをしますか？）",
-                "answer": "Do",
-                "explanation": "主語が複数（they）の疑問文なので、文の始めには Do を置きます。"
-            }        
+                "text": "Is this Emi's notebook? Yes, it is ___. （これはエミのノートですか？ はい、それは彼女のものです。）",
+                "answer": "hers",
+                "explanation": "女性の名前 Emi's （エミのもの） を受けて、「彼女のもの」という意味の所有代名詞hersを使います。"
+            }
         ]
     },
     "203": {
-        "questname": "一般動詞（過去形）",
+        "questname": "形容詞",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
@@ -1550,117 +1551,142 @@
             {
                 "#": 1,
                 "type": "choice",
-                "text": "I __ my room last Sunday.（私は先週の日曜日に自分の部屋を掃除しました。）",
-                "choices": ["clean", "cleaned", "cleaning", "cleans"],
-                "answer": "cleaned",
-                "explanation": "「last Sunday」とあるため過去の文です。動詞 'clean' は規則動詞なので、語尾に 'ed' をつけて過去形の 'cleaned' にします。"
+                "text": "This is __ old book.（これは古い本です）",
+                "choices": [
+                    "a",
+                    "an",
+                    "the",
+                    "my"
+                ],
+                "answer": "an",
+                "explanation": "形容詞 'old' は母音で始まるため、不定冠詞は 'an' を使います。"
             },
             {
                 "#": 2,
                 "type": "choice",
-                "text": "He __ to the park yesterday.（彼は昨日公園に行きました。）",
-                "choices": ["go", "goes", "went", "gone"],
-                "answer": "went",
-                "explanation": "「yesterday」とあるため過去の文です。動詞 'go' は不規則動詞であり、過去形は 'went' となります。これは暗記が必要です。"
+                "text": "次のうち正しい英文はどれ？",
+                "choices": [
+                    "This is a pen new.",
+                    "This is new a pen.",
+                    "This is a new pen.",
+                    "This is new pen."
+                ],
+                "answer": "This is a new pen.",
+                "explanation": "形容詞は名詞の前に置きます。語順は「冠詞（a） + 形容詞（new） + 名詞（pen）」となります。"
             },
             {
                 "#": 3,
                 "type": "choice",
-                "text": "She __ come to school because she was sick.（彼女は病気だったので学校に来ませんでした。）",
-                "choices": ["don't", "doesn't", "isn't", "didn't"],
-                "answer": "didn't",
-                "explanation": "過去の否定文では、動詞の前に'didn't'を置き、動詞は原形を使います。'didn't'は'did not'の短縮形です。"
+                "text": "That cat __ white.（あのネコは白いです）",
+                "choices": [
+                    "is",
+                    "are",
+                    "am",
+                    "be"
+                ],
+                "answer": "is",
+                "explanation": "主語 'That cat' は三人称単数なので、be動詞は 'is' を使います。"
             },
             {
                 "#": 4,
                 "type": "choice",
-                "text": "次のうち正しい英文はどれですか？",
-                "choices": ["Emma didn't went to the park.", "Emma not go to the park.", "Emma didn't go to the park.", "Emma doesn't go to the park yesterday."],
-                "answer": "Emma didn't go to the park.",
-                "explanation": "過去の否定文は「didn't + 動詞の原形」の形をとります。したがって、'went'ではなく原形の'go'を使う'Emma didn't go to the park.'が正解です。"
+                "text": "次のうち間違っている英文はどれ？",
+                "choices": [
+                    "My pen is red.",
+                    "That big tree is nice.",
+                    "This is an American book.",
+                    "This Ken's book is interesting."
+                ],
+                "answer": "This Ken's book is interesting.",
+                "explanation": "限定詞である 'this' と 'Ken's' は、1つの名詞 'book' の前に同時に使うことはできません。"
             },
             {
                 "#": 5,
                 "type": "choice",
-                "text": "Did you __ TV last night?（あなたは昨夜テレビを見ましたか？）",
-                "choices": ["watch", "watched", "watching", "watches"],
-                "answer": "watch",
-                "explanation": "過去の疑問文では、文頭に'Did'を置き、動詞は原形を使います。したがって'watched'ではなく'watch'が正解です。"
+                "text": "__ book is interesting.（この本はおもしろいです）",
+                "choices": [
+                    "this",
+                    "it",
+                    "a",
+                    "is"
+                ],
+                "answer": "this",
+                "explanation": "「この～」という意味で名詞を修飾する形容詞として 'this' を使います。'This book' で主語のかたまりになります。"
             },
             {
                 "#": 6,
                 "type": "sort",
-                "text": "my / used / father / this / car / yesterday.",
-                "answer": "my father used this car yesterday.",
-                "explanation": "主語の'my father'の次に、動詞の過去形'used'、目的語の'this car'、最後に時を表す'yesterday'を置きます。"
+                "text": "is / a / this / table / big / .",
+                "answer": "this is a big table .",
+                "explanation": "'This' が主語、'is' が動詞です。'a big table' は「冠詞＋形容詞＋名詞」の語順で補語になります。"
             },
             {
                 "#": 7,
                 "type": "sort",
-                "text": "a / took / he / lot / of / pictures.",
-                "answer": "he took a lot of pictures.",
-                "explanation": "まず主語の'he'を置き、次に'take'の過去形である'took'、最後に目的語の'a lot of pictures'を置きます。"
+                "text": "is / red / pen / my / .",
+                "answer": "my pen is red .",
+                "explanation": "'my pen' が主語のかたまりです。be動詞 'is' の後に、状態を表す形容詞 'red' が続きます。"
             },
             {
                 "#": 8,
                 "type": "sort",
-                "text": "wrote / she / a / letter.",
-                "answer": "she wrote a letter.",
-                "explanation": "主語の'she'の次に、'write'の過去形である'wrote'を置き、最後に目的語の'a letter'を置きます。"
+                "text": "beautiful / small / is / glass / that / .",
+                "answer": "that small glass is beautiful .",
+                "explanation": "主語は「限定詞（that）＋形容詞（small）＋名詞（glass）」のかたまりです。動詞 'is' の後に形容詞 'beautiful' が続きます。"
             },
             {
                 "#": 9,
                 "type": "sort",
-                "text": "i / school / yesterday / go / didn't / to.",
-                "answer": "i didn't go to school yesterday.",
-                "explanation": "まず主語の'i'を置き、次に過去の否定を表す'didn't'、動詞の原形'go'、場所を表す'to school'、最後に時を表す'yesterday'を置きます。"
+                "text": "question / is / an / this / easy / ?",
+                "answer": "is this an easy question ?",
+                "explanation": "be動詞の疑問文なので、'is' を文頭に置きます。'an easy question' は「冠詞＋形容詞＋名詞」の語順です。"
             },
             {
                 "#": 10,
                 "type": "sort",
-                "text": "night? / you / last / watch / tv / did",
-                "answer": "did you watch tv last night?",
-                "explanation": "過去の疑問文なので'Did'で文を始め、次に主語の'you'、動詞の原形'watch'、目的語の'tv'、最後に時を表す'last night'を置きます。文末には'?'をつけます。"
+                "text": "is / guitar / new / your / this / .",
+                "answer": "this is your new guitar .",
+                "explanation": "'This' が主語、'is' が動詞です。'your new guitar' は「所有格＋形容詞＋名詞」の語順で補語になります。"
             },
             {
                 "#": 11,
                 "type": "fill_in_the_blank_en",
-                "text": "I didn't ___ to school yesterday. （私は昨日学校に行きませんでした。）",
-                "answer": "go",
-                "explanation": "過去の否定文で'didn't'を使った場合、うしろに続く動詞は原形になります。"
+                "text": "That tall man ___ a math teacher. （あの背の高い男の人は、数学の先生ではありません）",
+                "answer": "isn't,is not",
+                "explanation": "否定文にするため、be動詞 'is' の後に 'not' を置きます。短縮形は 'isn't' です。"
             },
             {
                 "#": 12,
                 "type": "fill_in_the_blank_en",
-                "text": "Did your father ___ this car yesterday? （あなたの父は昨日この車を使いましたか？）",
-                "answer": "use",
-                "explanation": "過去の疑問文で'Did'を使った場合、うしろに続く動詞は原形になります。"
+                "text": "That big tree is ___. （あの大きな木はすてきです）",
+                "answer": "nice",
+                "explanation": "主語 'That big tree' を説明する補語として、形容詞 'nice' が入ります。"
             },
             {
                 "#": 13,
                 "type": "fill_in_the_blank_en",
-                "text": "What ___ you do last weekend?（あなたは先週末に何をしましたか？）",
-                "answer": "did",
-                "explanation": "「What」で始まる過去の疑問文では、助動詞の'did'を主語'you'の前に置きます。What did you ...? の語順になります。"
+                "text": "This is a ___ tree. （これは大きな木です）",
+                "answer": "big",
+                "explanation": "冠詞 'a' と名詞 'tree' の間に、名詞を修飾する形容詞 'big' が入ります。"
             },
             {
                 "#": 14,
                 "type": "fill_in_the_blank_en",
-                "text": "Emma went to the park three days ___.（エマは3日前に公園に行きました。）",
-                "answer": "ago",
-                "explanation": "'ago'は「～前に」という意味で、過去の出来事を表す時によく使われます。"
+                "text": "Ken's brother's bike is ___. （ケンのきょうだいの自転車は古いです）",
+                "answer": "old",
+                "explanation": "主語 'Ken's brother's bike' の状態を説明する補語として、形容詞 'old' が入ります。"
             },
             {
                 "#": 15,
                 "type": "fill_in_the_blank_en",
-                "text": "I ___ to a temple and took a lot of pictures. （私は寺に行ってたくさん写真を撮りました。）",
-                "answer": "went",
-                "explanation": "'and'の後ろの動詞が過去形'took'なので、前の動詞も過去形にする必要があります。文脈から'go'の過去形である'went'が適切です。"
+                "text": "This book is ___. （この本は古いです）",
+                "answer": "old",
+                "explanation": "主語 'This book' の状態を説明する補語として、形容詞 'old' が入ります。"
             }
         ]
     },
     "204": {
-        "questname": "疑問詞（１）",
+        "questname": "代名詞（三人称主格）",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
@@ -1669,117 +1695,117 @@
             {
                 "#": 1,
                 "type": "choice",
-                "text": "__ does Mr. Brown live?（ブラウンさんはどこに住んでいますか？）",
-                "choices": ["what", "where", "when", "who"],
-                "answer": "where",
-                "explanation": "「どこ」と場所を尋ねる場合は 'Where' を使います。主語が3人称単数（Mr. Brown）なので助動詞 'does' を使います。"
+                "text": "This is my brother. __ is a soccer player. （こちらは私の兄です。彼はサッカーの選手です）",
+                "choices": ["he", "she", "it", "his"],
+                "answer": "he",
+                "explanation": "「my brother」（私の兄）は男性なので、彼を指す主格の代名詞は 'he' を使います。"
             },
             {
                 "#": 2,
                 "type": "choice",
-                "text": "__ was your soccer game?（あなたのサッカーの試合はいつでしたか？）",
-                "choices": ["when", "who", "what", "where"],
-                "answer": "when",
-                "explanation": "「いつ」と過去の時について尋ねる場合は 'When' を使い、be動詞は過去形の 'was' を使います。"
+                "text": "Is that your father's car? （あれはあなたのお父さんの車ですか？） Yes, __ is.",
+                "choices": ["he", "she", "it", "car"],
+                "answer": "it",
+                "explanation": "「car」（車）は物なので、それを指す代名詞は 'it' を使います。答えの文では、一度出てきた名詞を代名詞に置き換えます。"
             },
             {
                 "#": 3,
                 "type": "choice",
-                "text": "__ food does your cat like?（あなたの猫はどんな種類の食べ物が好きですか？）",
-                "choices": ["what time", "who", "which", "what"],
-                "answer": "what",
-                "explanation": "「どんな種類の食べ物」のように、名詞（food）の種類を尋ねる場合は 'What' を使います。"
+                "text": "__ is that girl? （あの女の子はだれですか？） She is Lucy.",
+                "choices": ["what", "who", "she", "is"],
+                "answer": "who",
+                "explanation": "人をたずねる疑問文では、疑問詞 'who'（だれ）を使います。答えが 'She is Lucy' と人であるため、'who' が適切です。"
             },
             {
                 "#": 4,
                 "type": "choice",
-                "text": "What sport __ your father like?（あなたのお父さんはどんなスポーツが好きですか？）",
-                "choices": ["is", "do", "does", "are"],
-                "answer": "does",
-                "explanation": "主語が3人称単数（your father）で、一般動詞（like）の疑問文なので 'does' を使います。"
+                "text": "Ms. Yamada is my English teacher. （山田先生は私の英語の先生です。） 次のうち正しい英文はどれ？",
+                "choices": ["She is a kind.", "She is kind.", "Her is kind.", "She kind is."],
+                "answer": "she is kind.",
+                "explanation": "「Ms. Yamada」は女性なので、主語は 'She' になります。文の基本構造は「主語 + 動詞」なので 'She is' となり、補語として 'kind' が続きます。'kind' は形容詞なので 'a' は不要です。"
             },
             {
                 "#": 5,
                 "type": "choice",
-                "text": "__ is your pen, the blue one or the black one?（あなたのペンはどちらですか、青いのですか黒いのですか？）",
-                "choices": ["what", "which", "who", "where"],
-                "answer": "which",
-                "explanation": "「どちら」と、いくつかの選択肢（the blue one or the black one）の中から選んでほしい時に尋ねる場合は 'Which' を使います。"
+                "text": "__ teacher is young. （彼女の先生は若いです）",
+                "choices": ["he", "she", "her", "his"],
+                "answer": "her",
+                "explanation": "「～の」という意味で名詞の前に置くのは所有格です。「彼女の」という意味の所有格は 'her' です。'She' は主格なので文の主語として使います。"
             },
             {
                 "#": 6,
                 "type": "sort",
-                "text": "have / Mr. Brown / ? / does / what",
-                "answer": "what does mr. brown have ?",
-                "explanation": "疑問詞 'what' が文頭に来ます。主語が3人称単数 'Mr. Brown' なので、次に 'does' が来て、主語、動詞の原形 'have' と続きます。"
+                "text": "is / he / a / . / teacher",
+                "answer": "he is a teacher .",
+                "explanation": "主語 'he' の次に動詞 'is' を置き、その後に補語となる 'a teacher' を続けるのが基本的な文の形です。"
             },
             {
                 "#": 7,
                 "type": "sort",
-                "text": "is / ? / favorite / your / author / who",
-                "answer": "who is your favorite author ?",
-                "explanation": "「だれ」と人を尋ねる疑問詞 'who' が文頭に来ます。次にbe動詞 'is'、主語 'your favorite author' と続きます。"
+                "text": "boy / who / ? / is / this",
+                "answer": "who is this boy ?",
+                "explanation": "人をたずねる疑問詞 'who' で始まる疑問文は、'who + be動詞 + 主語 ?' の語順になります。"
             },
             {
                 "#": 8,
                 "type": "sort",
-                "text": "was / test / when / English / your / ?",
-                "answer": "when was your english test ?",
-                "explanation": "疑問詞 'when' が文頭に来ます。be動詞は過去形 'was' を使い、その次に主語 'your English test' が続きます。"
+                "text": "tom / he / is / .",
+                "answer": "he is tom .",
+                "explanation": "主語の 'he'、be動詞の 'is'、名前の 'tom' の順に並べます。文の最後にはピリオドを置きます。"
             },
             {
                 "#": 9,
                 "type": "sort",
-                "text": "start / what / your / school / time / does / ?",
-                "answer": "what time does your school start ?",
-                "explanation": "「何時」と時刻を尋ねる 'what time' が文頭に来ます。次に助動詞 'does'、主語 'your school'、動詞 'start' の順になります。"
+                "text": "my / is / she / teacher / science / .",
+                "answer": "she is my science teacher .",
+                "explanation": "主語 'she'、動詞 'is' の後に、補語である 'my science teacher' が続く形になります。"
             },
             {
                 "#": 10,
                 "type": "sort",
-                "text": "cat / my / where / ? / is",
-                "answer": "where is my cat ?",
-                "explanation": "疑問詞 'where' が文頭に来ます。次にbe動詞 'is'、主語 'my cat' と続きます。"
+                "text": "new / car / is / his / ?",
+                "answer": "is his car new ?",
+                "explanation": "be動詞の疑問文なので、'is' を文頭に置き、'is + 主語 （his car） + 補語 （new） ?' の語順にします。"
             },
             {
                 "#": 11,
                 "type": "fill_in_the_blank_en",
-                "text": "___ time was the English test?（英語のテストは何時でしたか？）",
-                "answer": "What",
-                "explanation": "「何時に」と具体的な時刻を尋ねる場合は 'What time' という決まった形で使います。過去の文なのでbe動詞は 'was' を使います。"
+                "text": "Is her uncle a doctor? （彼女のおじさんは医者ですか？） No, __ is a scientist.",
+                "answer": "he",
+                "explanation": "質問の主語は 'her uncle'（彼女のおじさん）で男性なので、答えの文の主語は代名詞 'he' を使います。"
             },
             {
                 "#": 12,
                 "type": "fill_in_the_blank_en",
-                "text": "___ lives in that house?（あの家にはだれが住んでいますか？）",
-                "answer": "Who",
-                "explanation": "「だれが」と人物について尋ねる場合は、疑問詞 'Who' を使います。"
+                "text": "This boy is Tom. （この少年はトムです。） __ is a soccer player.",
+                "answer": "he",
+                "explanation": "一度出てきた名詞 'This boy' を2文目で受けるときは代名詞を使います。男性なので 'He' を使います。文の始まりなので大文字にします。"
             },
             {
                 "#": 13,
                 "type": "fill_in_the_blank_en",
-                "text": "___ do you play soccer?（あなたはどこでサッカーをしますか？）",
-                "answer": "Where",
-                "explanation": "「どこで」と場所について尋ねる場合は、疑問詞 'Where' を使います。"
+                "text": "That tall woman __ my science teacher. （あの背の高い女性は私の理科の先生ではありません。）",
+                "answer": "isn't,is not",
+                "explanation": "be動詞の否定文は、動詞の後に 'not' を置きます。'is not' は 'isn't' と短縮できます。"
             },
             {
                 "#": 14,
                 "type": "fill_in_the_blank_en",
-                "text": "___ do you want for breakfast, rice or bread?（朝食にどちらを欲しいですか、ご飯それともパン？）",
-                "answer": "Which",
-                "explanation": "「どちらを」と選択肢（rice or bread）の中から尋ねる場合は、疑問詞 'Which' を使います。"
+                "text": "__ is that? （あれは何ですか？） It is a bus.",
+                "answer": "what",
+                "explanation": "答えが 'It is a bus.' と物について述べているので、物をたずねる疑問詞 'What' を使います。"
             },
             {
                 "#": 15,
                 "type": "fill_in_the_blank_en",
-                "text": "___ is in your pen case?（あなたのペンケースの中には何が入っていますか？）",
-                "answer": "What",
-                "explanation": "「何が」と物について尋ねる場合は、疑問詞 'What' を使います。"
-            }            
+                "text": "Is __ your father's car? （これはあなたのお父さんの車ですか？）",
+                "answer": "this",
+                "explanation": "疑問文で 'is' が文頭に来ていることから、主語が続くことがわかります。文脈から「これ」を意味する 'this' が入ります。"
+            }
         ]
     },
     "205": {
-        "questname": "疑問詞（２）",
+        "questname": "代名詞（一人称·二人称主格）",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
@@ -1788,117 +1814,117 @@
             {
                 "#": 1,
                 "type": "choice",
-                "text": "__ is the weather today?（今日の天気はどうですか？）",
-                "choices": ["how", "what", "when", "where"],
-                "answer": "how",
-                "explanation": "「どうですか」と天気や様子をたずねるときは、疑問詞のHowを使います。"
+                "text": "I __ from Osaka. （私は大阪出身です。）",
+                "choices": ["am", "are", "is", "be"],
+                "answer": "am",
+                "explanation": "主語が一人称の'I'の場合、be動詞は'am'を使います。"
             },
             {
                 "#": 2,
                 "type": "choice",
-                "text": "How __ cats do you have?（何匹の猫を飼っていますか？）",
-                "choices": ["many", "much", "old", "long"],
-                "answer": "many",
-                "explanation": "数をたずねる場合、数えられる名詞（複数形）の前にはHow manyを使います。"
+                "text": "You __ a student. （あなたは学生です。）",
+                "choices": ["am", "is", "are", "be"],
+                "answer": "are",
+                "explanation": "主語が二人称の'You'の場合、be動詞は'are'を使います。"
             },
             {
                 "#": 3,
                 "type": "choice",
-                "text": "__ bike is this?（これはだれの自転車ですか？）",
-                "choices": ["whose", "who", "how", "what"],
-                "answer": "whose",
-                "explanation": "「だれの～」と持ち主をたずねるときは、疑問詞のWhoseを使います。"
+                "text": "次のうち正しい英文はどれ？",
+                "choices": ["I not am a teacher.", "I am not a teacher.", "Am I not a teacher.", "I am a not teacher."],
+                "answer": "I am not a teacher.",
+                "explanation": "be動詞の否定文は、be動詞（am, are）のあとに not を置きます。"
             },
             {
                 "#": 4,
                 "type": "choice",
-                "text": "How __ do you come to school?（どうやって学校に来ますか？）",
-                "choices": ["do", "are", "is", "does"],
-                "answer": "do",
-                "explanation": "「どうやって～しますか」と方法をたずねる文では、主語がyouなので一般動詞の疑問文を作るdoを使います。"
+                "text": "次のうち正しい英文はどれ？",
+                "choices": ["You are a musician?", "Are you a musician?", "Am you a musician?", "You a musician are?"],
+                "answer": "Are you a musician?",
+                "explanation": "be動詞の疑問文は、be動詞（am, are）を主語の前に移動させて作ります。文の最後にはクエスチョンマーク（?）をつけます。"
             },
             {
                 "#": 5,
                 "type": "choice",
-                "text": "How __ is your brother?（あなたの兄は何歳ですか？）",
-                "choices": ["old", "many", "long", "much"],
-                "answer": "old",
-                "explanation": "「何歳ですか」と年齢をたずねるときは、How oldを使います。"
+                "text": "「I am a student.」の否定文として、最も適切なものはどれ？",
+                "choices": ["I'm not a student.", "I amn't a student.", "I not am a student.", "I'm'nt a student."],
+                "answer": "I'm not a student.",
+                "explanation": "'I am' の短縮形は 'I'm' ですが、'am not' の短縮形はありません。否定文は 'I'm not' または 'I am not' とします。"
             },
             {
                 "#": 6,
                 "type": "sort",
-                "text": "the / is / how / weather / ?",
-                "answer": "how is the weather?",
-                "explanation": "「天気はどうですか？」と様子をたずねる文です。疑問詞のHowを文頭に置きます。"
+                "text": "a / student / i / good / not / am / .",
+                "answer": "i am not a good student .",
+                "explanation": "主語'i'、be動詞'am'、否定の'not'、補語'a good student'の順になります。"
             },
             {
                 "#": 7,
                 "type": "sort",
-                "text": "you / do / school / come / how / to / ?",
-                "answer": "how do you come to school?",
-                "explanation": "「どうやって学校に来ますか？」と方法をたずねる文です。「How do you ...?」という語順になります。"
+                "text": "a / baseball / fan / are / you / ?",
+                "answer": "are you a baseball fan ?",
+                "explanation": "be動詞の疑問文なので、'are'が文頭に来て、次に主語の'you'が続きます。"
             },
             {
                 "#": 8,
                 "type": "sort",
-                "text": "many / have / cats / do / you / how / ?",
-                "answer": "how many cats do you have?",
-                "explanation": "「何匹の猫を飼っていますか？」と数をたずねる文です。「How many + 複数名詞」を文頭に置きます。"
+                "text": "america / you / from / are / .",
+                "answer": "you are from America .",
+                "explanation": "主語'you'、be動詞'are'、場所を示す'from America'の順になります。"
             },
             {
                 "#": 9,
                 "type": "sort",
-                "text": "bike / is / this / whose / ?",
-                "answer": "whose bike is this?",
-                "explanation": "「これはだれの自転車ですか？」と持ち主をたずねる文です。「Whose + 名詞」で文を始めます。"
+                "text": "teacher / english / am / your / i / ?",
+                "answer": "am i your english teacher ?",
+                "explanation": "主語が'i'のbe動詞の疑問文なので、'am'が文頭に来て、次に主語の'i'が続きます。"
             },
             {
                 "#": 10,
                 "type": "sort",
-                "text": "long / the / river / is / how / ?",
-                "answer": "how long is the river?",
-                "explanation": "「その川はどのくらい長いですか？」と長さをたずねる文です。「How long ...?」という語順になります。"
+                "text": "a / player / tennis / you / are / .",
+                "answer": "you are a tennis player .",
+                "explanation": "主語'you'、be動詞'are'、補語'a tennis player'の順になります。"
             },
             {
                 "#": 11,
                 "type": "fill_in_the_blank_en",
-                "text": "___ do you come to school?（どうやって学校に来ますか？）",
-                "answer": "How",
-                "explanation": "「どうやって」と方法や手段をたずねているので、疑問詞のHowを使います。"
+                "text": "You __ not her sister. （あなたは彼女の妹ではありません。）",
+                "answer": "are",
+                "explanation": "主語が'You'なので、be動詞は'are'を使います。否定文なので'are not'となります。"
             },
             {
                 "#": 12,
                 "type": "fill_in_the_blank_en",
-                "text": "How many ___ do you have?（何匹の猫を飼っていますか？）",
-                "answer": "cats",
-                "explanation": "How manyの後には、数えられる名詞の複数形が続きます。例文のcatsが適切です。"
+                "text": "I __ a football fan. （私はフットボールのファンです。）",
+                "answer": "am",
+                "explanation": "主語が'I'なので、be動詞は'am'を使います。"
             },
             {
                 "#": 13,
                 "type": "fill_in_the_blank_en",
-                "text": "___ is the weather?（天気はどうですか？）",
-                "answer": "How",
-                "explanation": "「どうですか」と様子をたずねているので、疑問詞のHowを使います。"
+                "text": "You ___ a good player. （あなたは良い選手ではありません。）",
+                "answer": "aren't,are not",
+                "explanation": "主語'You'の否定文ではbe動詞'are'の後に'not'を置きます。短縮形は'aren't'です。"
             },
             {
                 "#": 14,
                 "type": "fill_in_the_blank_en",
-                "text": "___ bike is this?（これはだれの自転車ですか？）",
-                "answer": "Whose",
-                "explanation": "「だれの」と持ち主をたずねているので、疑問詞のWhoseを使います。"
+                "text": "__ I a good teacher? （私は良い先生ですか？）",
+                "answer": "Am",
+                "explanation": "主語が'I'の疑問文では、be動詞の'am'を文の最初に置きます。文の始めの単語なので、大文字の'Am'で始めるのが正解です。"
             },
             {
                 "#": 15,
                 "type": "fill_in_the_blank_en",
-                "text": "How ___ are you?（あなたは何歳ですか？）",
-                "answer": "old",
-                "explanation": "「何歳ですか」と年齢をたずねているので、How oldを使います。"
+                "text": "I am ___ from Tokyo. （私は東京出身ではありません。）",
+                "answer": "not",
+                "explanation": "be動詞の否定文は、be動詞の後に'not'を置くことで作ります。"
             }
         ]
     },
     "206": {
-        "questname": "進行形",
+        "questname": "一般動詞",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
@@ -1907,117 +1933,118 @@
             {
                 "#": 1,
                 "type": "choice",
-                "text": "She __ TV now.（彼女は今テレビを見ています。）",
-                "choices": ["is watching", "watches", "watching", "watch"],
-                "answer": "is watching",
-                "explanation": "現在進行している動作を表すには、「be動詞 + 動詞のing形」を使います。主語が 'She' なので、be動詞は 'is' を使い、'is watching' となります。"
+                "text": "I __ soccer after school.（私は放課後サッカーをします。）",
+                "choices": ["play", "plays", "am play", "is playing"],
+                "answer": "play",
+                "explanation": "主語が 'I'（一人称）の場合、一般動詞は原形を使います。be動詞と一緒に使うことはできません。"
             },
             {
                 "#": 2,
                 "type": "choice",
-                "text": "__ it raining in London then?（そのときロンドンでは雨が降っていましたか？）",
-                "choices": ["was", "is", "did", "does"],
-                "answer": "was",
-                "explanation": "「then (そのとき)」という語があるため、過去の文であることがわかります。過去進行形の疑問文は 'Was/Were' で始めます。主語が 'it' なので 'was' を使います。"
+                "text": "I __ tennis.（私はテニスをしません。）",
+                "choices": ["am not", "don't play", "no play", "play not"],
+                "answer": "don't play",
+                "explanation": "一般動詞の文を否定文にするときは、動詞の前に do not（don't）を置きます。"
             },
             {
                 "#": 3,
                 "type": "choice",
-                "text": "I __ not watching TV.（私はテレビを見ていません。）",
-                "choices": ["am", "is", "are", "do"],
-                "answer": "am",
-                "explanation": "進行形の否定文は、be動詞の後に 'not' を置きます。主語が 'I' のときの現在形のbe動詞は 'am' です。"
+                "text": "__ you study science?（あなたは理科を勉強しますか？）",
+                "choices": ["are", "is", "do", "does"],
+                "answer": "do",
+                "explanation": "主語が 'you'（二人称）の一般動詞の文を疑問文にするときは、文頭に Do を置きます。"
             },
             {
                 "#": 4,
                 "type": "choice",
-                "text": "I __ a bath at that time.（そのとき私はお風呂に入っていました。）",
-                "choices": ["was taking", "am taking", "take", "took"],
-                "answer": "was taking",
-                "explanation": "「at that time (そのとき)」は過去のある時点を示しており、そのときに進行中だった動作を表すには過去進行形「be動詞の過去形 + 動詞のing形」を使います。主語が 'I' なので 'was taking' が正解です。"
+                "text": "You speak English __.（あなたは上手に英語を話します。）",
+                "choices": ["good", "well", "nice", "great"],
+                "answer": "well",
+                "explanation": "動詞 'speak' を修飾するのは副詞です。'well' は「上手に」という意味の副詞です。'good' は形容詞なので名詞を修飾します。"
             },
             {
                 "#": 5,
                 "type": "choice",
-                "text": "What __ you talking about?（あなたは何について話しているのですか？）",
-                "choices": ["are", "is", "do", "did"],
-                "answer": "are",
-                "explanation": "現在していることについて具体的に尋ねる疑問文です。現在進行形を使い、主語が 'you' なのでbe動詞は 'are' を使います。"
+                "text": "次のうち間違っている英文はどれ？",
+                "choices": ["I know Tom.", "Do you like math?", "I don't have a pen.", "Are you play tennis?"],
+                "answer": "Are you play tennis?",
+                "explanation": "be動詞と一般動詞は、一つの文で一緒には使えません。一般動詞 'play' の疑問文は 'Do' を使って作ります。"
             },
             {
                 "#": 6,
                 "type": "sort",
-                "text": "she / watching / is / tv / .",
-                "answer": "she is watching tv .",
-                "explanation": "肯定文の基本的な語順は「主語 + be動詞 + 動詞のing形」です。'she' が主語、'is' がbe動詞、'watching' がing形です。"
+                "text": "i / study / math / hard / .",
+                "answer": "I study math hard.",
+                "explanation": "英語の基本的な語順は「主語＋動詞＋目的語」です。'hard'（一生懸命に）は動詞を修飾する言葉なので後ろに続きます。"
             },
             {
                 "#": 7,
                 "type": "sort",
-                "text": "soccer / was / playing / she / .",
-                "answer": "she was playing soccer .",
-                "explanation": "過去進行形の肯定文は「主語 + be動詞の過去形 + 動詞のing形」の語順になります。"
+                "text": "you / don't / french / speak / .",
+                "answer": "You don't speak French.",
+                "explanation": "否定文では、主語の後に 'don't' を置き、その後に動詞の原形、目的語と続きます。"
             },
             {
                 "#": 8,
                 "type": "sort",
-                "text": "she / sleeping / is / ?",
-                "answer": "is she sleeping ?",
-                "explanation": "進行形の疑問文はbe動詞で文を始め、「be動詞 + 主語 + 動詞のing形...?」という語順になります。"
+                "text": "? / you / know / tom / do",
+                "answer": "Do you know Tom?",
+                "explanation": "疑問文では、文頭に 'do' を置き、その後に主語、動詞の原形、目的語と続きます。文の最後には '?' をつけます。"
             },
             {
                 "#": 9,
                 "type": "sort",
-                "text": "not / we / for / the bus / waiting / were / .",
-                "answer": "we were not waiting for the bus .",
-                "explanation": "進行形の否定文はbe動詞の後に 'not' を置くため、「主語 + be動詞 + not + 動詞のing形」という語順になります。"
+                "text": "i / a / in / have / hand / pen / my / .",
+                "answer": "I have a pen in my hand.",
+                "explanation": "「主語＋動詞＋目的語」の後に、「in my hand」のような場所を表す修飾語（前置詞＋名詞）が続きます。"
             },
             {
                 "#": 10,
                 "type": "sort",
-                "text": "what / doing / you / are / ?",
-                "answer": "what are you doing ?",
-                "explanation": "疑問詞で始まる疑問文は、「疑問詞 + be動詞 + 主語 + 動詞のing形...?」という語順になります。"
+                "text": "? / well / you / do / tennis / play",
+                "answer": "Do you play tennis well?",
+                "explanation": "疑問文の基本形「Do＋主語＋動詞＋目的語」の後に、副詞の 'well' が続きます。"
             },
             {
                 "#": 11,
                 "type": "fill_in_the_blank_en",
-                "text": "Yumi is ___ a letter.（ユミは手紙を書いています。）",
-                "answer": "writing",
-                "explanation": "進行形は「be動詞 + 動詞のing形」で作ります。'write' のing形は 'writing' です。"
+                "text": "I ___ play soccer very well.（私はあまりサッカーが上手ではありません。）",
+                "answer": "don't,do not",
+                "explanation": "一般動詞 'play' を否定するには、その前に 'do not' または短縮形の 'don't' を置きます。"
             },
             {
                 "#": 12,
                 "type": "fill_in_the_blank_en",
-                "text": "She ___ playing soccer at school.（彼女は学校でサッカーをしていました。）",
-                "answer": "was",
-                "explanation": "過去の進行中の動作を表すには、過去進行形を使います。主語が 'She' なので、be動詞の過去形は 'was' を使います。"
+                "text": "___ you clean your room every day?（あなたは毎日あなたの部屋をそうじしますか。）",
+                "answer": "Do",
+                "explanation": "主語が 'you' で一般動詞 'clean' を使った疑問文は、文頭に 'Do' を置くことで作ります。"
             },
             {
                 "#": 13,
                 "type": "fill_in_the_blank_en",
-                "text": "I'm ___ watching TV.（私はテレビを見ていません。）",
-                "answer": "not",
-                "explanation": "進行形の文を否定文にするには、be動詞の直後に 'not' を置きます。"
+                "text": "A: Do you study English hard?（あなたは英語を一生懸命勉強しますか？） B: Yes, I ___.（はい、します。）",
+                "answer": "do",
+                "explanation": "'Do' を使った質問に「はい」と答えるときは、'Yes, I do.' のように 'do' を使って答えます。"
             },
             {
                 "#": 14,
                 "type": "fill_in_the_blank_en",
-                "text": "___ she sleeping?（彼女は寝ていますか？）",
-                "answer": "Is",
-                "explanation": "現在進行形の疑問文は、be動詞を文頭に置きます。主語が 'she' なので、'Is' を使います。文の始まりなので大文字にします。"
+                "text": "A: Do you watch TV after school?（あなたは放課後テレビを見ますか？） B: No, I ___.（いいえ、しません。）",
+                "answer": "don't,do not",
+                "explanation": "'Do' を使った質問に「いいえ」と答えるときは、'No, I do not.' または短縮形の 'No, I don't.' を使います。"
             },
             {
                 "#": 15,
-                "type": "fill_in_the_blank_en",
-                "text": "I was ___ dance then.（そのとき私は踊っていました。）",
-                "answer": "practicing",
-                "explanation": "過去進行形は「be動詞の過去形 + 動詞のing形」です。'practice' のing形である 'practicing' が入ります。"
+                "type": "choice",
+                "text": "「私は上手な英語の話してです」を意味する、正しい英文はどれ？",
+                "choices": ["I speak English good.", "I am speak English well.", "I speak English well.", "I am a good English speaker."],
+                "answer": "I am a good English speaker.",
+                "explanation": "「話し手」という名詞 （speaker） があるので、be動詞と形容詞 （good） を使います。動詞 （speak） を修飾する場合は副詞 （well） を使いますが、この文の主語は「私＝上手な話して」です。"
             }
         ]
     },
     "207": {
-        "questname": "未来形",
+        "questname": "一般動詞の疑問文",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
@@ -2026,117 +2053,117 @@
             {
                 "#": 1,
                 "type": "choice",
-                "text": "We __ going to go shopping tomorrow.（私たちは明日買い物に行く予定です。）",
-                "choices": ["am", "is", "are", "will"],
-                "answer": "are",
-                "explanation": "未来の予定や計画を表す be going to の文です。主語が複数形（We）なので、be動詞は are を使います。"
+                "text": "__ do you eat for breakfast?（あなたは朝食に何を食べますか？）",
+                "choices": ["what", "who", "when", "where"],
+                "answer": "what",
+                "explanation": "「何を」と物をたずねているので、疑問詞の what を使います。"
             },
             {
                 "#": 2,
                 "type": "choice",
-                "text": "When __ you come back to Japan?（あなたはいつ日本に戻りますか？）",
-                "choices": ["do", "are", "will", "is"],
-                "answer": "will",
-                "explanation": "未来の行動についてたずねる will を使った疑問文です。「When will + 主語 + 動詞の原形...?」の形になります。"
+                "text": "What sport __ you play after school?（あなたは放課後、どんなスポーツをしますか？）",
+                "choices": ["are", "is", "do", "does"],
+                "answer": "do",
+                "explanation": "主語が you で、一般動詞 play を使った疑問文なので、助動詞の do を使います。"
             },
             {
                 "#": 3,
                 "type": "choice",
-                "text": "She __ come to the party this weekend.（彼女は今週末パーティーに来ないでしょう。）",
-                "choices": ["is not", "will", "not will", "won't"],
-                "answer": "won't",
-                "explanation": "未来の行動の否定を表す will not の文です。will not の短縮形は won't です。"
+                "text": "次のうち正しい英文はどれ？",
+                "choices": ["what do you like music?", "what music you do like?", "what are you like music?", "what music do you like?"],
+                "answer": "what music do you like?",
+                "explanation": "「どんな音楽」と種類をたずねるため、What の後に名詞の music を置きます。その後ろは do you like? という一般動詞の疑問文の語順になります。"
             },
             {
                 "#": 4,
                 "type": "choice",
-                "text": "次のうち正しい英文はどれですか？",
-                "choices": ["They won't to go shopping.", "They are not going to go shopping.", "They will not to go shopping.", "They are going not to go shopping."],
-                "answer": "They are not going to go shopping.",
-                "explanation": "be going to の否定文は、be動詞の直後に not を置きます。「主語 + be動詞 + not + going to + 動詞の原形」の形が正しいです。"
+                "text": "Who do you __ every day?（あなたは毎日だれを手伝いますか？）",
+                "choices": ["help", "helps", "helping", "helped"],
+                "answer": "help",
+                "explanation": "助動詞 do を使った疑問文では、後ろに続く動詞は必ず原形になります。"
             },
             {
                 "#": 5,
                 "type": "choice",
-                "text": "It will __ warm tomorrow afternoon.（明日の午後は暖かくなるでしょう。）",
-                "choices": ["is", "was", "be", "being"],
-                "answer": "be",
-                "explanation": "未来の予測を表す will の文です。will の後には必ず動詞の原形がきます。be動詞の原形は be です。"
+                "text": "What do you usually __ on Sunday?（あなたはたいてい日曜日に何をしますか？）",
+                "choices": ["is", "are", "do", "does"],
+                "answer": "do",
+                "explanation": "「何をしますか」と行動をたずねる文です。一つ目の do は疑問文を作るための助動詞、二つ目の do は「〜をする」という意味の一般動詞です。"
             },
             {
                 "#": 6,
                 "type": "sort",
-                "text": "shopping / i'm / go / to / going / tomorrow / .",
-                "answer": "I'm going to go shopping tomorrow .",
-                "explanation": "未来の予定を表す be going to の文です。語順は「主語 + be動詞 + going to + 動詞の原形」となります。"
+                "text": "do / you / what / have / bag / in / your / ?",
+                "answer": "what do you have in your bag ?",
+                "explanation": "「何を」という意味の What を文頭に置き、「What do you + 動詞の原形...?」の語順で組み立てます。in your bag（あなたのかばんの中に）が後に続きます。"
             },
             {
                 "#": 7,
                 "type": "sort",
-                "text": "what / will / tomorrow / be / the / weather / like / ?",
-                "answer": "What will the weather be like tomorrow ?",
-                "explanation": "未来の天気をたずねる疑問文です。「What will + 主語 + be like?」という語順になります。"
+                "text": "on / what / do / you / do / monday / ?",
+                "answer": "what do you do on monday ?",
+                "explanation": "「何をしますか」とたずねる What do you do? の形です。on monday（月曜日に）を文の最後に置きます。"
             },
             {
                 "#": 8,
                 "type": "sort",
-                "text": "the / party / aren't / they / to / come / to / going / .",
-                "answer": "They aren't going to come to the party .",
-                "explanation": "be going to の否定文です。語順は「主語 + be動詞 + not + going to + 動詞の原形」です。are not は aren't に短縮できます。"
+                "text": "school / you / before / always / do / what / do / ?",
+                "answer": "what do you always do before school ?",
+                "explanation": "What do you do? の文に、頻度を表す副詞 always が入った形です。always は一般動詞の前に置きます。"
             },
             {
                 "#": 9,
                 "type": "sort",
-                "text": "a / singer / be / good / she / will / .",
-                "answer": "She will be a good singer .",
-                "explanation": "未来のことについての予測を表す will を使った文です。語順は「主語 + will + 動詞の原形」となります。"
+                "text": "i / lunch / for / have / okonomiyaki / usually / .",
+                "answer": "i usually have okonomiyaki for lunch .",
+                "explanation": "主語 + 動詞 の基本の語順です。頻度を表す副詞 usually は一般動詞 have の前に置きます。"
             },
             {
                 "#": 10,
                 "type": "sort",
-                "text": "what / you / to / do / are / after / school / going / ?",
-                "answer": "What are you going to do after school ?",
-                "explanation": "相手の未来の予定をたずねる be going to の疑問文です。語順は「What + be動詞 + 主語 + going to do?」となります。"
+                "text": "what / book / do / you / have / in / your / bag / ?",
+                "answer": "what book do you have in your bag ?",
+                "explanation": "「どんな本」と種類をたずねるため、What の後に名詞の book を置きます。その後ろは do you have...? という一般動詞の疑問文の語順になります。"
             },
             {
                 "#": 11,
                 "type": "fill_in_the_blank_en",
-                "text": "He is ___ to play soccer tomorrow.（彼は明日サッカーをする予定です。）",
-                "answer": "going",
-                "explanation": "未来の予定を表す「be going to」の形を作る問題です。be動詞 is の後には going が入ります。"
+                "text": "I usually __ my room on Sunday.（私はたいてい日曜日に自分の部屋をそうじします。）",
+                "answer": "clean",
+                "explanation": "「そうじする」という意味の一般動詞 clean が入ります。"
             },
             {
                 "#": 12,
                 "type": "fill_in_the_blank_en",
-                "text": "She will ___ a good singer.（彼女は良い歌手になるでしょう。）",
-                "answer": "be",
-                "explanation": "未来の予測を表す will の文です。助動詞 will の後には、必ず動詞の原形が続きます。"
+                "text": "What do you often do after dinner? --- I __ TV.（あなたは夕食後、よく何をしますか？ --- テレビを見ます。）",
+                "answer": "watch",
+                "explanation": "「テレビを見る」は watch TV と表現します。"
             },
             {
                 "#": 13,
                 "type": "fill_in_the_blank_en",
-                "text": "I ___ call him tonight.（今夜、彼に電話するつもりだ。）",
-                "answer": "will",
-                "explanation": "「今夜、彼に電話するつもりだ」という未来の意志を表す文です。主語の意志を表すには will を使います。"
+                "text": "I read a __.（私は本を読みます。）",
+                "answer": "book",
+                "explanation": "「本」を意味する名詞 book が入ります。数えられる名詞なので前に a をつけます。"
             },
             {
                 "#": 14,
                 "type": "fill_in_the_blank_en",
-                "text": "___ you come back to Japan soon?（あなたはすぐに日本に戻りますか？）",
-                "answer": "Will",
-                "explanation": "相手に未来の行動をたずねる疑問文です。文頭に Will を置くことで「～しますか？」という質問ができます。"
+                "text": "What subject do you __ every day?（あなたは毎日どんな教科を勉強しますか？）",
+                "answer": "study",
+                "explanation": "「勉強する」という意味の一般動詞 study が入ります。"
             },
             {
                 "#": 15,
                 "type": "fill_in_the_blank_en",
-                "text": "They are ___ going to play soccer tomorrow.（彼らは明日サッカーをするつもりはありません。）",
-                "answer": "not",
-                "explanation": "be going to を使った文を否定文にするには、be動詞の直後に not を置きます。"
+                "text": "I __ baseball on Monday.（私は月曜日に野球をします。）",
+                "answer": "play",
+                "explanation": "スポーツを「する」と言うときは、一般動詞の play を使います。"
             }
-        ]
+        ]   
     },
     "208": {
-        "questname": "助動詞（１）",
+        "questname": "他動詞と自動詞",
         "level": "Lv1",
         "subject": "英語",
         "world_name": "americus",
@@ -2145,112 +2172,137 @@
             {
                 "#": 1,
                 "type": "choice",
-                "text": "My brother can __ the piano.（私の兄はピアノを弾くことができます。）",
-                "choices": ["plays", "play", "playing", "played"],
-                "answer": "play",
-                "explanation": "助動詞 'can' の後には、動詞の原形がきます。そのため、'play' が正解です。(After the auxiliary verb 'can', always use the base form of the verb. Therefore, 'play' is the correct answer.)"
+                "text": "次の文のうち、他動詞が使われているのはどれ？",
+                "choices": [
+                    "I live in Tokyo.",
+                    "I love Japan.",
+                    "I go to school.",
+                    "I come home."
+                ],
+                "answer": "I love Japan.",
+                "explanation": "動詞loveは「～を愛する」という意味で、目的語（ここではJapan）を必要とする他動詞です。live、go、comeは目的語を必要としない自動詞です。"
             },
             {
                 "#": 2,
                 "type": "choice",
-                "text": "__ I use your pen?（あなたのペンを使ってもいいですか？）",
-                "choices": ["do", "can", "am", "may"],
-                "answer": "may",
-                "explanation": "相手に許可を求めるとき（〜してもいいですか）は 'May I 〜?' を使います。'Can I 〜?' も使えますが、'May I 〜?' の方がより丁寧な表現です。(When asking for permission, use 'May I...?'. While 'Can I...?' can also be used, 'May I...?' is a more polite expression.)"
+                "text": "I go __ school by bike.（私は自転車で学校へ行きます）",
+                "choices": [
+                    "to",
+                    "in",
+                    "at",
+                    "on"
+                ],
+                "answer": "to",
+                "explanation": "自動詞のgoは、目的地や方向を示すために前置詞toと一緒に使います。"
             },
             {
                 "#": 3,
                 "type": "choice",
-                "text": "__ you open the door?（ドアを開けてくれますか？）",
-                "choices": ["may", "can", "do", "will"],
-                "answer": "can",
-                "explanation": "相手に依頼するとき（〜してくれますか）は 'Can you 〜?' を使います。(To ask someone to do something ('Can you...?'), use 'Can you ~?'.)"
+                "text": "次の文のうち、文法的に正しいのはどれ？",
+                "choices": [
+                    "I write.",
+                    "I live Japan.",
+                    "Do you stay in Tokyo?",
+                    "I have in my room."
+                ],
+                "answer": "Do you stay in Tokyo?",
+                "explanation": "stayは「滞在する」という意味の自動詞で、前置詞句in Tokyoを伴って正しく使われています。writeとhaveは目的語が必要な他動詞、liveは「～に住む」の場合、live in Japanのように前置詞inが必要な自動詞です。"
             },
             {
                 "#": 4,
                 "type": "choice",
-                "text": "A cat __ fly, but it can climb trees.（猫は飛べませんが、木に登ることはできます。）",
-                "choices": ["isn't", "don't", "can't", "doesn't"],
-                "answer": "can't",
-                "explanation": "「〜できない」という不可能を表すには、助動詞 'can' の否定形である 'can't' を使います。(To express inability ('cannot do something'), use the negative form of the auxiliary verb 'can', which is 'can't'.)"
+                "text": "I __ kanji.（私は漢字を書きます）",
+                "choices": [
+                    "write",
+                    "go",
+                    "live",
+                    "stay"
+                ],
+                "answer": "write",
+                "explanation": "kanjiは目的語です。選択肢の中で、kanjiを目的語として取ることができる他動詞はwrite（～を書く）だけです。"
             },
             {
                 "#": 5,
                 "type": "choice",
-                "text": "Can you help me? - __, I'm busy right now.（手伝ってくれますか？－ すみません、今忙しいです。）",
-                "choices": ["Yes, I can", "Of course", "I'm sorry, I can't", "No, you can't"],
-                "answer": "I'm sorry, I can't",
-                "explanation": "依頼を断るとき、'I'm sorry, I can't.' のように丁寧に断ることができます。(When refusing a request, you can politely say 'I'm sorry, I can't.')"
+                "text": "次の動詞のうち、自動詞はどれ？",
+                "choices": [
+                    "have",
+                    "clean",
+                    "come",
+                    "love"
+                ],
+                "answer": "come",
+                "explanation": "テキストの例に基づくと、come（来る）は直接目的語を取らない自動詞です。一方、have、clean、loveは目的語を必要とする他動詞です。"
             },
             {
                 "#": 6,
                 "type": "sort",
-                "text": "drive / . / they / can / a car",
-                "answer": "They can drive a car .",
-                "explanation": "肯定文の基本的な語順は「主語 + 助動詞(can) + 動詞の原形」です。(The basic word order for an affirmative sentence is 'Subject + auxiliary verb (can) + base form of the verb'.)"
+                "text": "i / in / live / japan / .",
+                "answer": "I live in japan .",
+                "explanation": "英語の基本的な文の構造は「主語（i）+ 自動詞（live）+ 修飾語句（in japan）」となります。"
             },
             {
                 "#": 7,
                 "type": "sort",
-                "text": "my / make / sister / can / delicious / cookies / .",
-                "answer": "My sister can make delicious cookies .",
-                "explanation": "主語の次に助動詞 'can'、動詞の原形、目的語の順に並べます。(Place the auxiliary verb 'can' after the subject, followed by the base form of the verb and then the object.)"
+                "text": "i / my / room / clean / .",
+                "answer": "I clean my room .",
+                "explanation": "英語の基本的な文の構造は「主語（i）+ 他動詞（clean）+ 目的語（my room）」となります。"
             },
             {
                 "#": 8,
                 "type": "sort",
-                "text": "you / ? / the / open / door / can",
-                "answer": "Can you open the door ?",
-                "explanation": "依頼の疑問文では、文頭に 'Can' を置き、「Can + 主語 + 動詞の原形」の語順になります。(For a request question, start with 'Can', followed by the subject and the base form of the verb.)"
+                "text": "i / to / go / tokyo / every / year / .",
+                "answer": "I go to tokyo every year .",
+                "explanation": "文の語順は「主語（i）+ 自動詞（go）+ 方向を示す修飾語句（to tokyo）+ 時を示す修飾語句（every year）」となります。"
             },
             {
                 "#": 9,
                 "type": "sort",
-                "text": "pen / i / ? / may / use / your",
-                "answer": "May I use your pen ?",
-                "explanation": "許可を求める疑問文では、文頭に 'May' を置き、「May + 主語 + 動詞の原形」の語順になります。(To ask for permission, start with 'May', followed by the subject and the base form of the verb.)"
+                "text": "i / an / write / e-mail / after / school / .",
+                "answer": "I write an e-mail after school .",
+                "explanation": "文の語順は「主語（i）+ 他動詞（write）+ 目的語（an e-mail）+ 修飾語句（after school）」となります。"
             },
             {
                 "#": 10,
                 "type": "sort",
-                "text": "find / he / his / . / can't / keys",
-                "answer": "He can't find his keys .",
-                "explanation": "否定文の語順は「主語 + can't + 動詞の原形」です。(The word order for a negative sentence is 'Subject + can't + base form of the verb'.)"
+                "text": "you / do / school / to / come / by / bike / ?",
+                "answer": "Do you come to school by bike ?",
+                "explanation": "一般動詞の疑問文は「助動詞（do）+ 主語（you）+ 動詞の原形（come）+ 修飾語句（to school by bike）」という構造になります。"
             },
             {
                 "#": 11,
                 "type": "fill_in_the_blank_en",
-                "text": "Birds ___ fly high in the sky.（鳥は空高く飛ぶことができます。）",
-                "answer": "can",
-                "explanation": "「〜できる」という能力を表すには、助動詞 'can' を動詞の前に置きます。(To express ability ('can do something'), place the auxiliary verb 'can' before the verb.)"
+                "text": "I watch a soccer __ on TV with Ken.（私はケンといっしょにテレビでサッカーの試合を見ます）",
+                "answer": "game",
+                "explanation": "他動詞watch（～を見る）は目的語を必要とします。この文脈では「サッカーの試合」を意味する a soccer game を完成させるために名詞gameが入ります。"
             },
             {
                 "#": 12,
                 "type": "fill_in_the_blank_en",
-                "text": "He can ___ a bicycle.（彼は自転車に乗ることができます。）",
-                "answer": "ride",
-                "explanation": "助動詞 'can' の後には、必ず動詞の原形がきます。(After the auxiliary verb 'can', you must use the base form of the verb.)"
+                "text": "I usually __ home at six.（私はたいてい6時に帰宅します）",
+                "answer": "come",
+                "explanation": "come homeは「家に帰る」という一般的な表現です。文脈に合う自動詞はcomeです。"
             },
             {
                 "#": 13,
                 "type": "fill_in_the_blank_en",
-                "text": "___ I take a picture here?（ここで写真を撮ってもいいですか？）",
-                "answer": "May",
-                "explanation": "「〜してもいいですか」と許可を求める文では、文頭に 'May' を使います。(To ask for permission ('May I...?'), start the sentence with 'May'.)"
+                "text": "I have a bike __ my room.（私は自分の部屋に自転車を置いています）",
+                "answer": "in",
+                "explanation": "自転車がある場所（my roomの中）を示すためには、前置詞inが必要です。"
             },
             {
                 "#": 14,
                 "type": "fill_in_the_blank_en",
-                "text": "___ you pass me the salt, please?（塩を取ってくれますか？）",
-                "answer": "Can",
-                "explanation": "「〜してくれますか」と依頼する文では、文頭に 'Can' を使います。(To make a request ('Can you...?'), start the sentence with 'Can'.)"
+                "text": "I __ to Ken in English.（私はケンに英語で話します）",
+                "answer": "speak",
+                "explanation": "文脈から、誰かに特定の言語で「話す」という行動を示す動詞speakが最も適切です。"
             },
             {
                 "#": 15,
                 "type": "fill_in_the_blank_en",
-                "text": "Sorry, I ___ go to the party tonight.（すみません、今夜パーティーに行けません。）",
-                "answer": "can't",
-                "explanation": "「〜できない」と否定するときは、'can't' (cannot) を動詞の前に置きます。(When making a negative statement ('cannot do something'), place 'can't' (cannot) before the verb.)"
+                "text": "I go to school __ bus on Monday.（私は月曜日にバスで学校へ行きます）",
+                "answer": "by",
+                "explanation": "交通手段を表す名詞の前には、前置詞byを使います（例：by bus）。"
             }
         ]
     },
