@@ -335,14 +335,19 @@ def quest_result(quest_id):
                 expected = correct_answer
 
             elif question_type == 'sort':
-                user_answer = request.form.get(f'q{i}', '').strip().lower()
+                user_answer = request.form.get(f'q{i}', '').strip()
                 try:
                     correct_answer = json.loads(q.answer)
                 except (json.JSONDecodeError, TypeError):
                     correct_answer = q.answer
                 if isinstance(correct_answer, str):
                     correct_answer = correct_answer.strip()
-                correct = str(correct_answer).lower() == user_answer
+                
+                # 句読点の前のスペースを削除して正規化
+                user_answer_normalized = user_answer.replace(" .", ".").replace(" ,", ",").replace(" ?", "?").replace(" !", "!")
+                correct_answer_normalized = str(correct_answer).replace(" .", ".").replace(" ,", ",").replace(" ?", "?").replace(" !", "!")
+                
+                correct = user_answer_normalized.lower() == correct_answer_normalized.lower()
                 expected = correct_answer
 
             elif question_type == 'fill_in_the_blank_en':
@@ -607,7 +612,7 @@ def manage_students():
 @login_required
 def manage_quests():
     if not current_user.is_admin():
-        return redirect(url_for("dashboard"))
+        return redirect(url_for(f"dashboard_{current_user.role}"))
 
     quests = Quest.query.all()
     return render_template('list_quests.html', quests=quests)

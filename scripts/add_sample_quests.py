@@ -87,11 +87,14 @@ if __name__ == '__main__':
 
         quest_data = load_quest_data()
         print("Adding new quests and questions...")
-        for qset in quest_data.values():
+        for quest_id_str, qset in quest_data.items():
             subject_jp = qset.get("subject", "その他")
             subject_key = SUBJECT_KEY_MAP.get(subject_jp, "misc")
+            
+            quest_id = int(quest_id_str)
 
             quest = Quest(
+                id=quest_id,
                 title=subject_key,
                 level=qset["level"],
                 questname=qset["questname"],

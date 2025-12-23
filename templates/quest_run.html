@@ -24,8 +24,10 @@
           {% endfor %}
         </div>
       {% elif question.type == 'sort' %}
+        {% set text_parts = question.text.split('（', 1) %}
+        {% set sortable_text = text_parts[0] %}
         <ul class="sortable" id="q{{ q_index }}_sortable" data-name="q{{ q_index }}">
-          {% for part in question.text.split('/') %}
+          {% for part in sortable_text.split('/') %}
             {% set cleaned = part.strip() %}
             {% if cleaned %}
               <li class="sortable-item" data-id="item{{ loop.index0 }}">{{ cleaned }}</li>
