@@ -120,6 +120,7 @@
             <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="btn btn-secondary">クエスト選択に戻る</a>
         {% else %}
             <a href="{{ url_for('quest_run', quest_id=quest_id) }}" class="btn btn-warning">再挑戦する</a>
+            <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="btn btn-secondary">クエスト選択に戻る</a>
             <a href="{{ url_for('dashboard_student') }}" class="btn btn-primary">ダッシュボードに戻る</a>
         {% endif %}
     </div>

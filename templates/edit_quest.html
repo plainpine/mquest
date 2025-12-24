@@ -23,8 +23,10 @@
 
 <h2>クエスト編集</h2>
 
-<form method="post" action="{{ url_for('save_quest', quest_id=quest.id) }}">
-  <label>ID: {{ quest.id }}</label><br>
+<form method="post" action="{{ url_for('save_quest', quest_id=quest_id) }}">
+  <input type="hidden" name="title" value="{{ quest.title }}">
+  <input type="hidden" name="level" value="{{ quest.level }}">
+  <label>ID: {{ quest.id if quest.id else 'New' }}</label><br>
   <div class="form-group">
     <label>タイトル:</label>
     <input type="text" name="title" value="{{ quest.title }}" required>
@@ -44,6 +46,8 @@
 <hr>
 <h3>このクエストの問題一覧</h3>
 <form method="post">
+  <input type="hidden" name="title" value="{{ title }}">
+  <input type="hidden" name="level" value="{{ level }}">
   <table border="1" cellpadding="8">
     <tr>
       <th></th>
@@ -76,5 +80,5 @@ function validateQuestionSelection() {
   return true;
 }
 </script>
-<p><a href="{{ url_for('manage_quests') }}" class="button">クエスト一覧に戻る</a></p>
+<p><a href="{{ url_for('manage_quests', title=title, level=level) }}" class="button">クエスト一覧に戻る</a></p>
 {% endblock %}

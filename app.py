@@ -648,82 +648,116 @@ def manage_quests():
 def handle_quest_action():
     action = request.form.get('action')
     quest_id = request.form.get('quest_id')
+    title = request.form.get('title', '')
+    level = request.form.get('level', '')
 
     if action == 'add':
-        return redirect(url_for('edit_quest'))
-    elif action == 'edit':
-        if not quest_id:
-            flash("Questを選択してください", "warning")
-            return redirect(url_for('list_quests'))
-        return redirect(url_for('edit_quest', quest_id=quest_id))
+        # Assuming 'add' goes to a new quest page that should also know how to get back
+        return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
+    
+    # Actions that need a quest_id
+    if not quest_id:
+        flash("Questを選択してください", "warning")
+        return redirect(url_for('list_quests', title=title, level=level))
+
+    if action == 'edit':
+        return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
     elif action == 'delete':
-        if not quest_id:
-            flash("Questを選択してください", "warning")
-            return redirect(url_for('list_quests'))
         quest = Quest.query.get(int(quest_id))
         if quest:
             db.session.delete(quest)
             db.session.commit()
             flash("削除しました", "success")
-        return redirect(url_for('list_quests'))
+        return redirect(url_for('list_quests', title=title, level=level))
+    
+    # Fallback just in case
+    return redirect(url_for('list_quests', title=title, level=level))
 
-@app.route('/admin/quest/edit/<int:quest_id>', methods=['GET'])
+@app.route('/admin/quest/edit/<quest_id>', methods=['GET'])
 @login_required
 def edit_quest(quest_id):
-    quest = Quest.query.get_or_404(quest_id)
-    return render_template('edit_quest.html', quest=quest,  quest_id=quest_id)
+    title = request.args.get('title', '')
+    level = request.args.get('level', '')
+    if quest_id == 'new':
+        quest = Quest(title=title, level=level, questname='') # Create a new quest object
+    else:
+        quest = Quest.query.get_or_404(int(quest_id))
+    return render_template('edit_quest.html', quest=quest, quest_id=quest_id, title=title, level=level)
 
 # Quest情報の保存
-@app.route('/admin/quest/save/<int:quest_id>', methods=['POST'])
+@app.route('/admin/quest/save/<quest_id>', methods=['POST'])
 def save_quest(quest_id):
-    quest = Quest.query.get_or_404(quest_id)
-    quest.title = request.form.get('title')
-    quest.level = request.form.get('level')
-    quest.questname = request.form.get('questname')
-    db.session.commit()
-    flash("クエスト情報を保存しました", "success")
-    return redirect(url_for('edit_quest', quest_id=quest_id))
+    title = request.form.get('title')
+    level = request.form.get('level')
+    questname = request.form.get('questname')
+
+    if quest_id == 'new':
+        new_quest = Quest(title=title, level=level, questname=questname)
+        db.session.add(new_quest)
+        db.session.commit()
+        flash("新しいクエストを保存しました", "success")
+        # After saving, we redirect to the edit page of the *new* quest
+        # We also pass the filters back so the "back" button works correctly
+        return redirect(url_for('edit_quest', quest_id=new_quest.id, title=title, level=level))
+    else:
+        quest = Quest.query.get_or_404(int(quest_id))
+        quest.title = title
+        quest.level = level
+        quest.questname = questname
+        db.session.commit()
+        flash("クエスト情報を保存しました", "success")
+        return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
 @app.route('/admin/question/edit/<int:quest_id>', methods=['POST'])
 @login_required
 def edit_question_action(quest_id):
     question_id = request.form.get('question_id')
+    title = request.form.get('title', '')
+    level = request.form.get('level', '')
     if question_id:
-        return redirect(url_for('edit_question', quest_id=quest_id, question_id=question_id))
+        return redirect(url_for('edit_question', quest_id=quest_id, question_id=question_id, title=title, level=level))
     flash("編集する問題を選択してください", "warning")
-    return redirect(url_for('edit_quest', quest_id=quest_id))
+    return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
 @app.route('/admin/question/delete/<int:quest_id>', methods=['POST'])
 @login_required
 def delete_question_action(quest_id):
     question_id = request.form.get('question_id')
+    title = request.form.get('title', '')
+    level = request.form.get('level', '')
     if question_id:
-        return redirect(url_for('delete_question', quest_id=quest_id, question_id=question_id))
+        return redirect(url_for('delete_question', quest_id=quest_id, question_id=question_id, title=title, level=level))
     flash("削除する問題を選択してください", "warning")
-    return redirect(url_for('edit_quest', quest_id=quest_id))
+    return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
 # Questionの削除
-@app.route('/admin/question/delete/<int:question_id>', methods=['POST'])
+@app.route('/admin/question/delete/<int:quest_id>/<int:question_id>', methods=['GET','POST'])
 def delete_question(quest_id, question_id):
+    title = request.args.get('title', '')
+    level = request.args.get('level', '')
     question = Question.query.get_or_404(question_id)
-    quest_id = question.quest_id
     db.session.delete(question)
     db.session.commit()
     flash("問題を削除しました", "success")
-    return redirect(url_for('edit_quest', quest_id=quest_id))
+    return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
 # 新規Question作成画面
 @app.route('/admin/question/add/<int:quest_id>')
 def add_question(quest_id):
     quest = Quest.query.get_or_404(quest_id)
-    return render_template('edit_question.html', question=None, quest=quest)
+    title = request.args.get('title', '')
+    level = request.args.get('level', '')
+    return render_template('edit_question.html', question=None, quest=quest, title=title, level=level)
 
 # 問題の編集画面
 @app.route('/admin/question/edit/<int:quest_id>/<question_id>', methods=['GET'])
 def edit_question(quest_id, question_id):
     quest = Quest.query.get_or_404(quest_id)
+    title = request.args.get('title', '')
+    level = request.args.get('level', '')
+
     if question_id == 'new':
-        return render_template('edit_question.html', quest_id=quest.id, question=None)
+        return render_template('edit_question.html', quest_id=quest.id, question=None, title=title, level=level)
     else:
         question = Question.query.get_or_404(int(question_id))
         choices = None
@@ -741,13 +775,15 @@ def edit_question(quest_id, question_id):
 
         # question.answers にセット（テンプレートで読みやすくする）
         if answers is not None:
-            question.answers = answers  # ✅ ここで直接属性にセット
+            question.answers = answers
 
-        return render_template('edit_question.html', quest_id=quest.id, question=question, choices=choices, answers=answers)
+        return render_template('edit_question.html', quest_id=quest.id, question=question, choices=choices, answers=answers, title=title, level=level)
 
 # 問題の保存画面
 @app.route('/admin/question/save/<int:quest_id>/<question_id>', methods=['POST'])
 def save_question(quest_id, question_id):
+    title = request.form.get('title', '')
+    level = request.form.get('level', '')
 
     action = request.form.get('action')
 
@@ -804,11 +840,13 @@ def save_question(quest_id, question_id):
             question.choices = svg_content
             question.answer = json.dumps(sub_questions)
 
-        db.session.add(question)
+        if question_id == 'new':
+            db.session.add(question)
+        
         db.session.commit()
         flash('問題を保存しました')
 
-    return redirect(url_for('edit_quest', quest_id=quest_id))
+    return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
 # タイトル一覧表示（ステップ1）
 @app.route('/select_title_admin')

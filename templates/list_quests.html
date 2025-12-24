@@ -24,6 +24,8 @@
 </form>
 
 <form method="post" action="{{ url_for('handle_quest_action') }}" onsubmit="return validateQuestSelection()">
+  <input type="hidden" name="title" value="{{ selected_title }}">
+  <input type="hidden" name="level" value="{{ selected_level }}">
   <div style="margin-bottom: 1rem;">
     <button type="submit" name="action" value="edit">編集</button>
     <button type="submit" name="action" value="add">追加</button>

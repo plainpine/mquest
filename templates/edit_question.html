@@ -30,6 +30,8 @@
     }
 </style>
 <form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
+  <input type="hidden" name="title" value="{{ title }}">
+  <input type="hidden" name="level" value="{{ level }}">
   <label>タイプ:</label>
   <select name="type" id="type-select">
     <option value="choice" {% if question and question.type == 'choice' %}selected{% endif %}>4択問題</option>
@@ -107,7 +109,7 @@
 <button type="submit" name="action" value="save_question">保存</button>
 <!-- 戻るボタン：下段 -->
 <div style="margin-top: 1rem;">
-  <a href="{{ url_for('edit_quest', quest_id=quest_id) }}" class="button">クエスト編集に戻る</a>
+  <a href="{{ url_for('edit_quest', quest_id=quest_id, title=title, level=level) }}" class="button">クエスト編集に戻る</a>
 </div>
 </form>
 
