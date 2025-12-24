@@ -4,14 +4,40 @@
 {% block title %}クエスト編集{% endblock %}
 
 {% block content %}
+<style>
+  .form-group {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .form-group label {
+    width: 100px; /* Adjust as needed for alignment */
+    text-align: right;
+    margin-right: 10px;
+    padding-top: 5px; /* Align with input text vertically */
+  }
+  input[name="questname"] {
+    width: 300px; /* Widens the questname input field */
+  }
+</style>
+
 <h2>クエスト編集</h2>
 
 <form method="post" action="{{ url_for('save_quest', quest_id=quest.id) }}">
   <label>ID: {{ quest.id }}</label><br>
-  <label>タイトル:</label>
-  <input type="text" name="title" value="{{ quest.title }}" required><br>
-  <label>レベル:</label>
-  <input type="text" name="level" value="{{ quest.level }}" required><br><br>
+  <div class="form-group">
+    <label>タイトル:</label>
+    <input type="text" name="title" value="{{ quest.title }}" required>
+  </div>
+  <div class="form-group">
+    <label>レベル:</label>
+    <input type="text" name="level" value="{{ quest.level }}" required>
+  </div>
+  <div class="form-group">
+    <label>クエスト名:</label>
+    <input type="text" name="questname" value="{{ quest.questname }}" required>
+  </div>
+  <br>
   <button type="submit">保存</button>
 </form>
 

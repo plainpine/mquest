@@ -11,6 +11,7 @@
       <th>ID</th>
       <th>タイトル</th>
       <th>レベル</th>
+      <th>クエスト名</th>
       <th>問題数</th>
     </tr>
   </thead>
@@ -20,10 +21,11 @@
       <td>{{ quest.id }}</td>
       <td>{{ quest.title }}</td>
       <td>{{ quest.level }}</td>
+      <td>{{ quest.questname }}</td>
       <td>{{ quest.questions|length }}</td>
     </tr>
     {% else %}
-    <tr><td colspan="4">問題が登録されていません。</td></tr>
+    <tr><td colspan="5">問題が登録されていません。</td></tr>
     {% endfor %}
   </tbody>
 </table>

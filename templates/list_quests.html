@@ -3,6 +3,26 @@
 {% block title %}Quest一覧{% endblock %}
 {% block content %}
 <h2>Quest一覧</h2>
+
+<form method="get" action="{{ url_for('manage_quests') }}" style="margin-bottom: 1rem;">
+  <label for="title-select">タイトルで絞り込み:</label>
+  <select name="title" id="title-select">
+    <option value="">すべて</option>
+    {% for title in titles %}
+      <option value="{{ title }}" {% if title == selected_title %}selected{% endif %}>{{ title }}</option>
+    {% endfor %}
+  </select>
+  
+  <label for="level-select" style="margin-left: 1rem;">レベルで絞り込み:</label>
+  <select name="level" id="level-select">
+    <option value="">すべて</option>
+    {% for level in levels %}
+      <option value="{{ level }}" {% if level == selected_level %}selected{% endif %}>{{ level }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">絞り込み</button>
+</form>
+
 <form method="post" action="{{ url_for('handle_quest_action') }}" onsubmit="return validateQuestSelection()">
   <div style="margin-bottom: 1rem;">
     <button type="submit" name="action" value="edit">編集</button>
@@ -16,6 +36,7 @@
         <th>ID</th>
         <th>タイトル</th>
         <th>レベル</th>
+        <th>クエスト名</th>
       </tr>
     </thead>
     <tbody>
@@ -25,7 +46,10 @@
         <td>{{ quest.id }}</td>
         <td>{{ quest.title }}</td>
         <td>{{ quest.level }}</td>
+        <td>{{ quest.questname }}</td>
       </tr>
+      {% else %}
+      <tr><td colspan="6">対象のクエストがありません。</td></tr>
       {% endfor %}
     </tbody>
   </table>

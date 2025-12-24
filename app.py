@@ -614,8 +614,33 @@ def manage_quests():
     if not current_user.is_admin():
         return redirect(url_for(f"dashboard_{current_user.role}"))
 
-    quests = Quest.query.all()
-    return render_template('list_quests.html', quests=quests)
+    selected_title_jp = request.args.get('title', '')
+    selected_level = request.args.get('level', '')
+
+    # 全てのユニークなタイトルを取得
+    all_titles_raw = db.session.query(Quest.title).distinct().all()
+    jp_titles = sorted(list(set([SUBJECT_KEY_TO_JP.get(t[0], t[0]) for t in all_titles_raw])))
+
+    # 全てのユニークなレベルを取得
+    all_levels_raw = db.session.query(Quest.level).distinct().all()
+    all_levels = sorted(list(set([l[0] for l in all_levels_raw])))
+
+    quest_query = Quest.query
+    if selected_title_jp:
+        title_key = SUBJECT_JP_TO_KEY.get(selected_title_jp, selected_title_jp)
+        quest_query = quest_query.filter_by(title=title_key)
+    
+    if selected_level:
+        quest_query = quest_query.filter_by(level=selected_level)
+    
+    quests = quest_query.all()
+
+    return render_template('list_quests.html', 
+                           quests=quests, 
+                           titles=jp_titles, 
+                           selected_title=selected_title_jp,
+                           levels=all_levels,
+                           selected_level=selected_level)
 
 #　クエストの編集・問題の追加
 @app.route('/admin/quests/action', methods=['POST'])
@@ -654,6 +679,7 @@ def save_quest(quest_id):
     quest = Quest.query.get_or_404(quest_id)
     quest.title = request.form.get('title')
     quest.level = request.form.get('level')
+    quest.questname = request.form.get('questname')
     db.session.commit()
     flash("クエスト情報を保存しました", "success")
     return redirect(url_for('edit_quest', quest_id=quest_id))
