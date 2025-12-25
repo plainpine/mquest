@@ -136,7 +136,11 @@
 
   <div style="margin-top: 1rem; display: flex; align-items: center;">
     <input type="submit" value="回答を提出" style="padding: 0.5rem 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 6px; margin-right: 10px;">
-    <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="button secondary">クエスト選択に戻る</a>
+    {% if role == 'admin' %}
+      <a href="{{ url_for('manage_quests', title=original_title, level=original_level) }}" class="button secondary">クエスト一覧に戻る</a>
+    {% else %}
+      <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="button secondary">クエスト選択に戻る</a>
+    {% endif %}
   </div>
 </form>
 
@@ -273,8 +277,8 @@
 <script>
   window.MathJax = {
     tex: {
-      inlineMath: [['$', '$'], ['\(', '\)']],
-      displayMath: [['$$', '$$'], ['\[', '\]']]
+      inlineMath: [[', '], ['\(', '\)']],
+      displayMath: [['$', '$'], ['\[', '\]']]
      },
     svg: {
       fontCache: 'global'

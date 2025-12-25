@@ -307,7 +307,29 @@ def quest_run(quest_id):
                 "answers": answer if q.type == "numeric" else None
             })
 
-    return render_template("quest_run.html", quest_id=quest_id, quest=quest, title=SUBJECT_KEY_TO_JP.get(quest.title, quest.title), level=quest.level, questions=questions)
+    # Get title and level from request args if present (from manage_quests)
+    # Otherwise, use the quest's own title/level as fallback
+    # Store original keys in session for managing redirects back to filtered lists
+    param_title = request.args.get('title')
+    param_level = request.args.get('level')
+    
+    app.logger.debug(f"[quest_run] Received title: {param_title}, level: {param_level}")
+
+    if param_title and param_level:
+        session['last_manage_quests_filters'] = {'title': param_title, 'level': param_level}
+        app.logger.debug(f"[quest_run] Stored in session: {session['last_manage_quests_filters']}")
+
+    return render_template(
+        "quest_run.html",
+        quest_id=quest_id,
+        quest=quest,
+        title=SUBJECT_KEY_TO_JP.get(quest.title, quest.title), # For display
+        level=quest.level, # For display
+        questions=questions,
+        role=session.get('role'),
+        original_title=param_title or quest.title, # Pass original title/level for "back" links
+        original_level=param_level or quest.level
+    )
 
 # クエストの結果を処理するエンドポイント
 @app.route('/quest/<int:quest_id>/result', methods=['GET', 'POST'])
@@ -459,10 +481,14 @@ def quest_result(quest_id):
         return redirect(url_for('quest_result', quest_id=quest_id))
 
     # GET request
+    role = session.get('role')
+    if not role:
+        return redirect(url_for('login')) # Redirect to login if role is not in session
+
     last_result = session.get('last_result')
     if not last_result or last_result.get('quest_id') != quest_id:
-        # appropriate fallback, maybe redirect to dashboard
-        return redirect(url_for('dashboard_student'))
+        # Redirect to the dashboard corresponding to the user's role
+        return redirect(url_for(f'dashboard_{role}'))
 
     quest = db.session.get(Quest, quest_id)
     jp_title = SUBJECT_KEY_TO_JP.get(quest.title, quest.title)
@@ -486,9 +512,15 @@ def quest_result(quest_id):
                 question_view_model['svg_content'] = q.choices
             # Convert newlines in explanation to <br> tags for HTML rendering
             if q.explanation:
-                question_view_model['explanation'] = q.explanation.replace('\\n', '<br>')
+                question_view_model['explanation'] = q.explanation.replace('\n', '<br>')
 
             res['question'] = question_view_model
+    
+    # Retrieve original title and level from session for filter retention
+    filters = session.get('last_manage_quests_filters', {})
+    app.logger.debug(f"[quest_result] Retrieved from session: {filters}")
+    original_title = filters.get('title', '')
+    original_level = filters.get('level', '')
 
     return render_template("quest_result.html",
                            quest_id=quest_id,
@@ -496,7 +528,10 @@ def quest_result(quest_id):
                            results=last_result['results'],
                            all_correct=last_result['all_correct'],
                            title=jp_title,
-                           level=quest.level)
+                           level=quest.level,
+                           role=role,
+                           original_title=original_title, # Pass these to template
+                           original_level=original_level)
 
 
 @app.route('/quest')
@@ -662,6 +697,9 @@ def handle_quest_action():
 
     if action == 'edit':
         return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
+    elif action == 'challenge':
+        # Preserve title and level filters when challenging a quest from manage_quests
+        return redirect(url_for('quest_run', quest_id=quest_id, title=title, level=level))
     elif action == 'delete':
         quest = Quest.query.get(int(quest_id))
         if quest:
