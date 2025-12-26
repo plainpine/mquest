@@ -356,6 +356,19 @@ def quest_result(quest_id):
                 correct = user_answer == correct_answer
                 expected = correct_answer
 
+            elif question_type == 'multiple_choice':
+                user_answers = request.form.getlist(f'q{i}')
+                try:
+                    # DBの答えはカンマ区切りの文字列
+                    correct_answers = [ans.strip() for ans in q.answer.split(',')]
+                except Exception:
+                    correct_answers = []
+                
+                # ソートして比較
+                correct = sorted(user_answers) == sorted(correct_answers)
+                user_answer = ','.join(sorted(user_answers))
+                expected = ','.join(sorted(correct_answers))
+
             elif question_type == 'sort':
                 user_answer = request.form.get(f'q{i}', '').strip()
                 try:
@@ -820,12 +833,8 @@ def edit_question(quest_id, question_id):
         question = Question.query.get_or_404(int(question_id))
         choices = None
         answers = None
-        if question.type == 'choice':
+        if question.type == 'choice' or question.type == 'multiple_choice':
             choices = json.loads(question.choices) if question.choices else None
-            try:
-                question.answer = json.loads(question.answer)
-            except (json.JSONDecodeError, TypeError):
-                pass
         elif question.type == 'numeric':
             answers = json.loads(question.answer) if question.answer else None
         elif question.type == 'svg_interactive':
@@ -856,7 +865,7 @@ def save_question(quest_id, question_id):
             question.text = text
         question.explanation = request.form.get('explanation')
 
-        if q_type == 'choice':
+        if q_type == 'choice' or q_type == 'multiple_choice':
             choices = [request.form.get(f'choice{i}', '') for i in range(4)]
             answer = request.form['answer']
             question.choices = json.dumps(choices)

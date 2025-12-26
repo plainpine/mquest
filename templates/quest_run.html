@@ -17,10 +17,24 @@
         <div class="choice-block">
           <div style="height: 0.5rem;"></div>
           {% for choice in question.choices %}
+            {% if choice %}
             <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
               <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
               <span class="markdown" data-content="{{ choice | e }}"></span>
             </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% elif question.type == 'multiple_choice' %}
+        <div class="choice-block">
+          <div style="height: 0.5rem;"></div>
+          {% for choice in question.choices %}
+            {% if choice %}
+            <div class="choice-option multiple-choice" data-qname="q{{ q_index }}">
+              <input type="checkbox" name="q{{ q_index }}" value="{{ choice | e }}" style="margin-right: 0.5rem;">
+              <span class="markdown" data-content="{{ choice | e }}"></span>
+            </div>
+            {% endif %}
           {% endfor %}
         </div>
       {% elif question.type == 'sort' %}
@@ -429,16 +443,37 @@
 
     // --- Existing JS logic ---
     document.querySelectorAll('.choice-option').forEach(option => {
-      option.addEventListener('click', () => {
-        const qname = option.dataset.qname;
-        document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => {
-          el.classList.remove('selected');
-          const input = el.querySelector('input[type="radio"]');
-          if (input) input.checked = false;
-        });
-        option.classList.add('selected');
-        const input = option.querySelector('input[type="radio"]');
-        if (input) input.checked = true;
+      option.addEventListener('click', (event) => {
+        // Stop the event from propagating to parent elements
+        event.stopPropagation();
+        
+        // If the click is on the input itself, don't re-trigger the logic
+        if (event.target.tagName === 'INPUT') {
+          // But we need to manually toggle the class if the checkbox was clicked
+          if (event.target.type === 'checkbox') {
+             option.classList.toggle('selected');
+          }
+          return;
+        }
+
+        // multiple-choice の場合はトグル処理
+        if (option.classList.contains('multiple-choice')) {
+          option.classList.toggle('selected');
+          const input = option.querySelector('input[type="checkbox"]');
+          if (input) {
+            input.checked = !input.checked;
+          }
+        } else { // 既存のラジオボタンの処理
+          const qname = option.dataset.qname;
+          document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => {
+            el.classList.remove('selected');
+            const input = el.querySelector('input[type="radio"]');
+            if (input) input.checked = false;
+          });
+          option.classList.add('selected');
+          const input = option.querySelector('input[type="radio"]');
+          if (input) input.checked = true;
+        }
       });
     });
 

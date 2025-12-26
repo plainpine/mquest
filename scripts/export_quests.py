@@ -39,19 +39,26 @@ def export_data_to_json():
                     "explanation": q.explanation
                 }
 
-                # 'choices' と 'answer' はJSON文字列として保存されているため、パースする
+                # 'choices' はJSON文字列として保存されていることが多い
                 try:
                     choices = json.loads(q.choices) if q.choices else None
                 except (json.JSONDecodeError, TypeError):
                     choices = q.choices # パースに失敗した場合はそのまま使用
 
-                try:
-                    answer = json.loads(q.answer) if q.answer else None
-                except (json.JSONDecodeError, TypeError):
-                    answer = q.answer # パースに失敗した場合はそのまま使用
+                # 'answer' の扱いをタイプごとに制御
+                answer = None
+                if q.type in ['choice', 'multiple_choice', 'sort', 'fill_in_the_blank_en']:
+                    # これらのタイプの answer は文字列なので、loads しない
+                    answer = q.answer
+                else:
+                    # numeric, svg_interactive などはJSON文字列の可能性
+                    try:
+                        answer = json.loads(q.answer) if q.answer else None
+                    except (json.JSONDecodeError, TypeError):
+                        answer = q.answer # パースに失敗した場合はそのまま使用
 
                 # quests.jsonのフォーマットに合わせてキーを調整
-                if q.type == 'choice':
+                if q.type == 'choice' or q.type == 'multiple_choice':
                     question_data['choices'] = choices
                     question_data['answer'] = answer
                 elif q.type == 'numeric':
@@ -61,7 +68,7 @@ def export_data_to_json():
                 elif q.type == 'svg_interactive':
                     question_data['svg_content'] = choices # choicesフィールドにSVGコンテンツが格納されている
                     question_data['sub_questions'] = answer # answerフィールドにサブ問題が格納されている
-                else:
+                else: # フォールバック
                     question_data['choices'] = choices
                     question_data['answer'] = answer
 

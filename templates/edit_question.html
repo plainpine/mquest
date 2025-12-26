@@ -35,6 +35,7 @@
   <label>タイプ:</label>
   <select name="type" id="type-select">
     <option value="choice" {% if question and question.type == 'choice' %}selected{% endif %}>4択問題</option>
+    <option value="multiple_choice" {% if question and question.type == 'multiple_choice' %}selected{% endif %}>複数選択</option>
     <option value="sort" {% if question and question.type == 'sort' %}selected{% endif %}>並び替え</option>
     <option value="numeric" {% if question and question.type == 'numeric' %}selected{% endif %}>数値入力</option>
     <option value="fill_in_the_blank_en" {% if question and question.type == 'fill_in_the_blank_en' %}selected{% endif %}>英語穴埋め</option>
@@ -52,11 +53,11 @@
   <div id="choice-section" style="display:none;">
     <label>選択肢:</label><br>
     {% for i in range(4) %}
-      <input type="text" name="choice{{ i }}" id="choice{{ i }}" value="{{ choices[i] if question and question.type == 'choice' and question.choices|length > i else '' }}"><br>
+      <input type="text" name="choice{{ i }}" id="choice{{ i }}" value="{{ choices[i] if question and (question.type == 'choice' or question.type == 'multiple_choice') and question.choices|length > i else '' }}"><br>
       <div id="choice{{ i }}_preview" class="markdown-preview" style="margin-bottom: 0.5rem;"></div>
     {% endfor %}
     <label>正解:</label>
-    <input type="text" name="answer" value="{{ question.answer if question and question.type == 'choice' else '' }}">
+    <input type="text" name="answer" value="{{ question.answer if question and (question.type == 'choice' or question.type == 'multiple_choice') else '' }}" placeholder="単一選択は正解、複数選択はカンマ区切り（例: A,C）">
   </div>
 
   <div id="sort-section" style="display:none;">
@@ -145,7 +146,7 @@
 
   function updateSections() {
     const type = typeSelect.value;
-    choiceSection.style.display = type === 'choice' ? 'block' : 'none';
+    choiceSection.style.display = (type === 'choice' || type === 'multiple_choice') ? 'block' : 'none';
     sortSection.style.display = type === 'sort' ? 'block' : 'none';
     numericSection.style.display = type === 'numeric' ? 'block' : 'none';
     fillInTheBlankEnSection.style.display = type === 'fill_in_the_blank_en' ? 'block' : 'none';

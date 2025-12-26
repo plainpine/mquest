@@ -104,17 +104,29 @@ if __name__ == '__main__':
             db.session.flush()
 
             for q in qset["questions"]:
+                # choicesの処理
+                choices_data = None
+                if q.get("type") == "choice" or q.get("type") == "multiple_choice":
+                    choices_data = json.dumps(q.get("choices")) # JSONリストを文字列化
+                elif q.get("type") == "svg_interactive":
+                    choices_data = q.get("svg_content") # SVGコンテンツをそのまま
+
+                # answerの処理
+                answer_data = None
+                if q.get("type") == "numeric":
+                    answer_data = json.dumps(q.get("answers")) # 数値問題の答えはJSONリスト
+                elif q.get("type") == "svg_interactive":
+                    answer_data = json.dumps(q.get("sub_questions")) # SVG問題のサブ質問はJSONリスト
+                elif q.get("type") == "choice" or q.get("type") == "multiple_choice":
+                    answer_data = q.get("answer") # choiceとmultiple_choiceの答えはそのまま文字列
+
                 question = Question(
                     quest_id=quest.id,
                     type=q["type"],
                     text=q["text"],
                     explanation=q.get("explanation"),
-                    choices=json.dumps(q.get("choices")) if q.get("type") == "choice" else (
-                        q.get("svg_content") if q.get("type") == "svg_interactive" else None
-                    ),
-                    answer=json.dumps(q.get("answers") if q.get("type") == "numeric" else (
-                        q.get("sub_questions") if q.get("type") == "svg_interactive" else q.get("answer")
-                    ))
+                    choices=choices_data,
+                    answer=answer_data
                 )
                 db.session.add(question)
 
