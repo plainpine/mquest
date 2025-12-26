@@ -24,16 +24,22 @@
 <h2>クエスト編集</h2>
 
 <form method="post" action="{{ url_for('save_quest', quest_id=quest_id) }}">
-  <input type="hidden" name="title" value="{{ quest.title }}">
-  <input type="hidden" name="level" value="{{ quest.level }}">
   <label>ID: {{ quest.id if quest.id else 'New' }}</label><br>
   <div class="form-group">
-    <label>タイトル:</label>
-    <input type="text" name="title" value="{{ quest.title }}" required>
+    <label for="title-select">タイトル:</label>
+    <select name="title" id="title-select" required>
+      {% for jp_title, en_key in all_titles %}
+        <option value="{{ en_key }}" {% if jp_title == quest_display_title %}selected{% endif %}>{{ jp_title }}</option>
+      {% endfor %}
+    </select>
   </div>
   <div class="form-group">
-    <label>レベル:</label>
-    <input type="text" name="level" value="{{ quest.level }}" required>
+    <label for="level-select">レベル:</label>
+    <select name="level" id="level-select" required>
+      {% for l in all_levels %}
+        <option value="{{ l }}" {% if l == quest.level %}selected{% endif %}>{{ l }}</option>
+      {% endfor %}
+    </select>
   </div>
   <div class="form-group">
     <label>クエスト名:</label>
@@ -44,6 +50,7 @@
 </form>
 
 <hr>
+{% if quest.id %}
 <h3>このクエストの問題一覧</h3>
 <form method="post">
   <input type="hidden" name="title" value="{{ title }}">
@@ -65,10 +72,11 @@
     {% endfor %}
   </table>
   <br>
-  <button formaction="{{ url_for('edit_question_action', quest_id=quest.id, question_id=question_id)}}" onclick="return validateQuestionSelection()" formmethod="post">編集</button>
-  <button formaction="{{ url_for('add_question', quest_id=quest.id) }}" formmethod="post">追加</button>
-  <button formaction="{{ url_for('delete_question_action', quest_id=quest.id, question_id=question_id) }}" formmethod="post" onclick="return confirm('本当に削除しますか？');">削除</button>
+  <button formaction="{{ url_for('edit_question_action', quest_id=quest.id) }}" onclick="return validateQuestionSelection()" formmethod="post">編集</button>
+  <button formaction="{{ url_for('add_question', quest_id=quest.id) }}" formmethod="get">追加</button>
+  <button formaction="{{ url_for('delete_question_action', quest_id=quest.id) }}" formmethod="post" onclick="return validateQuestionSelection() && confirm('本当に削除しますか？');">削除</button>
 </form>
+{% endif %}
 
 <script>
 function validateQuestionSelection() {

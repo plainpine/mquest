@@ -693,7 +693,7 @@ def handle_quest_action():
     # Actions that need a quest_id
     if not quest_id:
         flash("Questを選択してください", "warning")
-        return redirect(url_for('list_quests', title=title, level=level))
+        return redirect(url_for('manage_quests', title=title, level=level))
 
     if action == 'edit':
         return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
@@ -701,15 +701,21 @@ def handle_quest_action():
         # Preserve title and level filters when challenging a quest from manage_quests
         return redirect(url_for('quest_run', quest_id=quest_id, title=title, level=level))
     elif action == 'delete':
-        quest = Quest.query.get(int(quest_id))
+        quest_id_to_delete = int(quest_id)
+        quest = Quest.query.get(quest_id_to_delete)
         if quest:
+            # Manually delete dependent records to prevent IntegrityError
+            UserProgress.query.filter_by(quest_id=quest_id_to_delete).delete()
+            QuestHistory.query.filter_by(quest_id=quest_id_to_delete).delete()
+            Question.query.filter_by(quest_id=quest_id_to_delete).delete()
+
             db.session.delete(quest)
             db.session.commit()
             flash("削除しました", "success")
-        return redirect(url_for('list_quests', title=title, level=level))
+        return redirect(url_for('manage_quests', title=title, level=level))
     
     # Fallback just in case
-    return redirect(url_for('list_quests', title=title, level=level))
+    return redirect(url_for('manage_quests', title=title, level=level))
 
 @app.route('/admin/quest/edit/<quest_id>', methods=['GET'])
 @login_required
@@ -720,7 +726,21 @@ def edit_quest(quest_id):
         quest = Quest(title=title, level=level, questname='') # Create a new quest object
     else:
         quest = Quest.query.get_or_404(int(quest_id))
-    return render_template('edit_quest.html', quest=quest, quest_id=quest_id, title=title, level=level)
+    # Fetch all unique titles and levels for dropdowns
+    all_titles_raw = db.session.query(Quest.title).distinct().all()
+    all_titles_for_select = sorted([
+        (SUBJECT_KEY_TO_JP.get(t[0], t[0]), t[0]) for t in all_titles_raw
+    ], key=lambda x: x[0])
+
+    all_levels = sorted(list(set([l[0] for l in db.session.query(Quest.level).distinct().all()])))
+
+    quest_display_title = SUBJECT_KEY_TO_JP.get(quest.title, quest.title) if quest and quest.title else ''
+
+    return render_template('edit_quest.html', quest=quest, quest_id=quest_id, 
+                           title=title, level=level, 
+                           all_titles=all_titles_for_select, # New: (JP_title, EN_key) tuples
+                           all_levels=all_levels,
+                           quest_display_title=quest_display_title)
 
 # Quest情報の保存
 @app.route('/admin/quest/save/<quest_id>', methods=['POST'])
@@ -785,7 +805,7 @@ def add_question(quest_id):
     quest = Quest.query.get_or_404(quest_id)
     title = request.args.get('title', '')
     level = request.args.get('level', '')
-    return render_template('edit_question.html', question=None, quest=quest, title=title, level=level)
+    return render_template('edit_question.html', question=None, quest=quest, quest_id=quest_id, title=title, level=level)
 
 # 問題の編集画面
 @app.route('/admin/question/edit/<int:quest_id>/<question_id>', methods=['GET'])

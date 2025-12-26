@@ -28,7 +28,7 @@
   <input type="hidden" name="level" value="{{ selected_level }}">
   <div style="margin-bottom: 1rem;">
     <button type="submit" name="action" value="edit">編集</button>
-    <button type="submit" name="action" value="add">追加</button>
+    <button type="button" onclick="location.href='{{ url_for('edit_quest', quest_id='new', title=selected_title, level=selected_level) }}'">追加</button>
     <button type="submit" name="action" value="delete" onclick="return confirm('本当に削除しますか？')">削除</button>
     <button type="submit" name="action" value="challenge">問題確認</button>
   </div>

@@ -55,6 +55,8 @@ class Quest(db.Model):
 
     # 明示的に one-to-many の関係を定義
     questions = db.relationship('Question', back_populates='quest', cascade="all, delete-orphan")
+    progress = db.relationship('UserProgress', back_populates='quest', cascade="all, delete-orphan")
+    history = db.relationship('QuestHistory', back_populates='quest', cascade="all, delete-orphan")
 
 
 
@@ -85,6 +87,8 @@ class QuestHistory(db.Model):
     __table_args__ = (
         UniqueConstraint('user_id', 'quest_id', name='unique_user_quest'),
     )
+    quest = db.relationship('Quest', back_populates='history')
+
 
 # ▼ 世界制覇機能用の進捗管理モデル
 class UserProgress(db.Model):
@@ -100,4 +104,4 @@ class UserProgress(db.Model):
     )
 
     user = db.relationship('User', backref=db.backref('progress', lazy='dynamic'))
-    quest = db.relationship('Quest', backref=db.backref('progress', lazy='dynamic'))
+    quest = db.relationship('Quest', back_populates='progress')
