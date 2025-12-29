@@ -117,8 +117,8 @@ if __name__ == '__main__':
                     answer_data = json.dumps(q.get("answers")) # 数値問題の答えはJSONリスト
                 elif q.get("type") == "svg_interactive":
                     answer_data = json.dumps(q.get("sub_questions")) # SVG問題のサブ質問はJSONリスト
-                elif q.get("type") == "choice" or q.get("type") == "multiple_choice":
-                    answer_data = q.get("answer") # choiceとmultiple_choiceの答えはそのまま文字列
+                elif q.get("type") == "choice" or q.get("type") == "multiple_choice" or q.get("type") == "sort" or q.get("type") == "fill_in_the_blank_en":
+                    answer_data = q.get("answer") # choice, multiple_choice, sort の答えはそのまま文字列
 
                 question = Question(
                     quest_id=quest.id,

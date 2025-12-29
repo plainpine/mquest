@@ -62,7 +62,7 @@
 
   <div id="sort-section" style="display:none;">
     <label>正解の並び順（文字列）:</label>
-    <input type="text" name="answer_sort" value="{{ question.answer if question and question.type == 'sort' else '' }}">
+    <input type="text" name="answer_sort" value="{% if question and question.type == 'sort' %}{{ question.answer or '' }}{% endif %}">
   </div>
 
   <div id="numeric-section" style="display:none;">
@@ -155,24 +155,39 @@
 
   // 初期表示時に選択肢と問題文のMarkdownをプレビュー
   async function updatePreviews() {
-    const mdText = document.getElementById("text-input").value;
-    const previewDiv = document.getElementById("text-preview");
-    previewDiv.innerHTML = marked.parse(mdText);
-    await MathJax.typesetPromise([previewDiv]);
+    // text
+    try {
+      const mdText = document.getElementById("text-input").value;
+      const previewDiv = document.getElementById("text-preview");
+      previewDiv.innerHTML = marked.parse(mdText || '');
+      await MathJax.typesetPromise([previewDiv]);
+    } catch (e) {
+      console.error("Error updating text preview:", e);
+    }
 
-    const mdExplanation = document.getElementById("explanation-input").value;
-    const explanationPreviewDiv = document.getElementById("explanation-preview");
-    explanationPreviewDiv.innerHTML = marked.parse(mdExplanation);
-    await MathJax.typesetPromise([explanationPreviewDiv]);
+    // explanation
+    try {
+      const mdExplanation = document.getElementById("explanation-input").value;
+      const explanationPreviewDiv = document.getElementById("explanation-preview");
+      explanationPreviewDiv.innerHTML = marked.parse(mdExplanation || '');
+      await MathJax.typesetPromise([explanationPreviewDiv]);
+    } catch (e) {
+      console.error("Error updating explanation preview:", e);
+    }
 
-    // 初期状態で選択肢の内容も表示
+    // choices
     for (let i = 0; i < 4; i++) {
-      const input = document.getElementById(`choice${i}`);
-      const preview = document.getElementById(`choice${i}_preview`);
-      // ここで選択肢が空であってもMarkdownプレビューを表示
-      const md = input.value || ''; // 空の場合でもMarkdownプレビューを表示する
-      preview.innerHTML = marked.parse(md); // Markdownをプレビュー表示
-      await MathJax.typesetPromise([preview]);
+      try {
+        const input = document.getElementById(`choice${i}`);
+        if (input) {
+          const preview = document.getElementById(`choice${i}_preview`);
+          const md = input.value || '';
+          preview.innerHTML = marked.parse(md);
+          await MathJax.typesetPromise([preview]);
+        }
+      } catch (e) {
+        console.error(`Error updating choice ${i} preview:`, e);
+      }
     }
   }
 

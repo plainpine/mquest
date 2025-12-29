@@ -842,13 +842,23 @@ def edit_question(quest_id, question_id):
         if question.type == 'choice' or question.type == 'multiple_choice':
             choices = json.loads(question.choices) if question.choices else None
         elif question.type == 'numeric':
-            answers = json.loads(question.answer) if question.answer else None
+            try:
+                answers = json.loads(question.answer) if question.answer else []
+            except json.JSONDecodeError:
+                answers = [] # Invalid JSON in DB, treat as empty
         elif question.type == 'svg_interactive':
-            answers = json.loads(question.answer) if question.answer else None
+            try:
+                answers = json.loads(question.answer) if question.answer else []
+            except json.JSONDecodeError:
+                answers = [] # Invalid JSON in DB, treat as empty
 
         # question.answers にセット（テンプレートで読みやすくする）
         if answers is not None:
             question.answers = answers
+
+        # Debug log for sort type answer
+        if question.type == 'sort':
+            app.logger.debug(f"Edit Question (sort): question.answer = '{question.answer}'")
 
         return render_template('edit_question.html', quest_id=quest.id, question=question, choices=choices, answers=answers, title=title, level=level)
 
@@ -869,7 +879,7 @@ def save_question(quest_id, question_id):
             question = Question.query.get_or_404(int(question_id))
             question.type = q_type
             question.text = text
-        question.explanation = request.form.get('explanation')
+        question.explanation = request.form.get('explanation', '').strip()
 
         if q_type == 'choice' or q_type == 'multiple_choice':
             choices = [request.form.get(f'choice{i}', '') for i in range(4)]
@@ -879,7 +889,7 @@ def save_question(quest_id, question_id):
 
         elif q_type == 'sort':
             question.choices = None
-            question.answer = request.form['answer_sort']
+            question.answer = request.form.get('answer_sort', '')
 
         elif q_type == 'fill_in_the_blank_en':
             question.choices = None
