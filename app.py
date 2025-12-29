@@ -394,9 +394,13 @@ def quest_result(quest_id):
                     # Or a plain string
                     correct_answers_raw = q.answer
 
-                # Split the string by comma to get multiple answers, and trim whitespace from each
-                correct_answer_list = [ans.strip().lower() for ans in correct_answers_raw.split(',')]
-                
+                # NEW: Check if correct_answers_raw is not None before splitting
+                if correct_answers_raw:
+                    # Split the string by comma to get multiple answers, and trim whitespace from each
+                    correct_answer_list = [ans.strip().lower() for ans in correct_answers_raw.split(',')]
+                else:
+                    correct_answer_list = []
+
                 # Check if the user's answer is in the list of correct answers
                 correct = user_answer in correct_answer_list
                 expected = correct_answers_raw # Show all possible answers in the result
