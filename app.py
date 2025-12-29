@@ -447,7 +447,27 @@ def quest_result(quest_id):
         user_id = session.get('user_id')
         if user_id:
             try:
-                if all_correct:
+                # Update or create QuestHistory first
+                history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+                if history:
+                    history.attempts += 1
+                    history.correct = all_correct
+                    history.last_attempt = datetime.now(timezone.utc)
+                    if all_correct or history.is_cleared:
+                        history.is_cleared = True
+                else:
+                    history = QuestHistory(
+                        user_id=user_id,
+                        quest_id=quest_id,
+                        correct=all_correct,
+                        is_cleared=all_correct,
+                        attempts=1,
+                        last_attempt=datetime.now(timezone.utc)
+                    )
+                    db.session.add(history)
+
+                # Now, sync UserProgress based on the definitive 'is_cleared' status from QuestHistory
+                if history.is_cleared:
                     progress_record = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
                     if progress_record:
                         if progress_record.status != 'cleared':
@@ -461,24 +481,6 @@ def quest_result(quest_id):
                             conquered_at=datetime.now(timezone.utc)
                         )
                         db.session.add(new_progress)
-
-                history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
-                if history:
-                    history.attempts += 1
-                    history.correct = all_correct
-                    history.last_attempt = datetime.now(timezone.utc)
-                    if all_correct or history.is_cleared: # Keep cleared if previously cleared or all correct now
-                        history.is_cleared = True
-                else:
-                    history = QuestHistory(
-                        user_id=user_id,
-                        quest_id=quest_id,
-                        correct=all_correct,
-                        is_cleared=all_correct,
-                        attempts=1,
-                        last_attempt=datetime.now(timezone.utc)
-                    )
-                    db.session.add(history)
                 
                 db.session.commit()
 
