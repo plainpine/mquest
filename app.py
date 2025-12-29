@@ -467,7 +467,7 @@ def quest_result(quest_id):
                     history.attempts += 1
                     history.correct = all_correct
                     history.last_attempt = datetime.now(timezone.utc)
-                    if all_correct:
+                    if all_correct or history.is_cleared: # Keep cleared if previously cleared or all correct now
                         history.is_cleared = True
                 else:
                     history = QuestHistory(
