@@ -291,20 +291,25 @@
 <script>
   window.MathJax = {
     tex: {
-      inlineMath: [[', '], ['\(', '\)']],
-      displayMath: [['$', '$'], ['\[', '\]']]
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
      },
     svg: {
       fontCache: 'global'
     }
   };
 
+  function htmlDecode(input) {
+    var doc = new DOMParser().parseFromString(input, "text/html");
+    return doc.documentElement.textContent;
+  }
+
   function renderMarkdownAndMath() {
     marked.setOptions({ breaks: true });
     document.querySelectorAll('.markdown').forEach(div => {
       let md = div.getAttribute('data-content');
       if (!md) return;
-      md = md.replace(/\\n/g, '\n');
+      md = htmlDecode(md.replace(/\\n/g, '\n'));
       div.innerHTML = marked.parse(md);
     });
     if (window.MathJax && MathJax.typesetPromise) {

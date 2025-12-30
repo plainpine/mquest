@@ -11,6 +11,9 @@
         align-items: center;
         margin-left: 1rem;
     }
+    .markdown p:last-child {
+        margin-bottom: 0;
+    }
 </style>
 {% endblock %}
 
@@ -44,9 +47,7 @@
             </div>
             <div class="mt-2">
                 <p><strong>問題文:</strong></p>
-                <div class="p-2 border rounded bg-light">
-                    {{ res.question.text | safe }}
-                </div>
+                <div class="markdown p-2 border rounded bg-light" data-content="{{ res.question.text | e }}"></div>
                 {% if res.question.type == 'svg_interactive' and res.question.svg_content %}
                 <div class="mt-3 text-center">
                     {{ res.question.svg_content | safe }}
@@ -64,6 +65,8 @@
                             {% endfor %}
                         {% endfor %}
                         </div>
+                    {% elif res.type in ['choice', 'multiple_choice'] %}
+                         <div class="markdown text-danger" data-content="{{ res.user_answer | e }}"></div>
                     {% else %}
                         <span class="text-danger">{{ res.user_answer | safe }}</span>
                     {% endif %}
@@ -77,6 +80,8 @@
                             {% endfor %}
                         {% endfor %}
                         </div>
+                    {% elif res.type in ['choice', 'multiple_choice', 'sort'] %}
+                        <div class="markdown text-success" style="font-weight: bold;" data-content="{{ res.expected | e }}"></div>
                     {% else %}
                         <span class="text-success" style="font-weight: bold;">{{ res.expected | safe }}</span>
                     {% endif %}
@@ -139,7 +144,6 @@
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-  // Default MathJax config - this will auto-render the page.
   window.MathJax = {
     tex: {
       inlineMath: [['$', '$'], ['\(', '\)']],
@@ -151,15 +155,47 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
 <script>
+function htmlDecode(input) {
+    var doc = new DOMParser().parseFromString(input, "text/html");
+    return doc.documentElement.textContent;
+}
+
+function renderMarkdownAndMath() {
+    marked.setOptions({ breaks: true });
+    // Process all elements with class 'markdown' and a 'data-content' attribute
+    document.querySelectorAll('.markdown[data-content]').forEach(div => {
+        let md = div.getAttribute('data-content');
+        if (md) {
+            md = htmlDecode(md.replace(/\\n/g, '\n'));
+            div.innerHTML = marked.parse(md);
+        }
+    });
+    // Typeset MathJax on the whole page
+    if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    // Render markdown content on the main page first
+    renderMarkdownAndMath();
+
+    // Set up listeners for explanation modals
     var explanationModals = document.querySelectorAll('.modal');
     explanationModals.forEach(function (modal) {
         modal.addEventListener('show.bs.modal', function (event) {
             var modalBody = modal.querySelector('.explanation-modal-body');
 
-            // Re-run MathJax typesetting on the modal body when it's shown,
-            // but only if it hasn't been rendered before.
+            // Render modal content only once
             if (modalBody && !modalBody.hasAttribute('data-rendered')) {
+                // 1. Decode HTML entities from the raw content
+                var rawContent = modalBody.innerHTML;
+                var decodedContent = htmlDecode(rawContent.trim());
+                
+                // 2. Convert Markdown to HTML with breaks
+                modalBody.innerHTML = marked.parse(decodedContent, { breaks: true });
+
+                // 3. Re-run MathJax typesetting on the modal body
                 MathJax.typesetPromise([modalBody]).then(() => {
                     modalBody.setAttribute('data-rendered', 'true');
                 });

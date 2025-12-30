@@ -137,6 +137,12 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <script>
+  // Marked.js の設定を MathJax と共存できるように変更
+  marked.setOptions({
+    gfm: true,    // GitHub Flavored Markdown を有効にする
+    breaks: true  // 改行を <br> に変換する
+  });
+
   const typeSelect = document.getElementById('type-select');
   const choiceSection = document.getElementById('choice-section');
   const sortSection = document.getElementById('sort-section');
