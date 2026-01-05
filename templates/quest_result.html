@@ -188,14 +188,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Render modal content only once
             if (modalBody && !modalBody.hasAttribute('data-rendered')) {
-                // 1. Decode HTML entities from the raw content
-                var rawContent = modalBody.innerHTML;
-                var decodedContent = htmlDecode(rawContent.trim());
-                
-                // 2. Convert Markdown to HTML with breaks
-                modalBody.innerHTML = marked.parse(decodedContent, { breaks: true });
+                let content = modalBody.innerHTML.trim();
 
-                // 3. Re-run MathJax typesetting on the modal body
+                // Protect MathJax content from marked.js
+                const mathRegex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[\s\S]+?\$|\\\([\s\S]+?\\\))/g;
+                const placeholders = [];
+                let i = 0;
+
+                content = content.replace(mathRegex, (match) => {
+                    placeholders.push(match);
+                    return `__MATH_PLACEHOLDER_${i++}__`;
+                });
+
+                // Convert Markdown to HTML, preserving breaks
+                let html = marked.parse(content, { breaks: true });
+
+                // Restore MathJax content
+                for (let j = 0; j < placeholders.length; j++) {
+                    html = html.replace(`__MATH_PLACEHOLDER_${j}__`, placeholders[j]);
+                }
+
+                modalBody.innerHTML = html;
+
+                // Re-run MathJax typesetting on the modal body
                 MathJax.typesetPromise([modalBody]).then(() => {
                     modalBody.setAttribute('data-rendered', 'true');
                 });
