@@ -591,23 +591,29 @@ def medals():
         return redirect(url_for('login'))
 
     user_id = session.get('user_id')
-    from models import QuestHistory, Quest
 
-    # quest_idごとの挑戦回数を取得
+    # Aggregate attempts by title and level
     medal_data = db.session.query(
-        QuestHistory.quest_id,
         Quest.title,
-        QuestHistory.attempts
-    ).join(Quest, Quest.id == QuestHistory.quest_id
-    ).filter(QuestHistory.user_id == user_id).all()
+        Quest.level,
+        func.sum(QuestHistory.attempts).label('total_attempts')
+    ).join(
+        Quest, Quest.id == QuestHistory.quest_id
+    ).filter(
+        QuestHistory.user_id == user_id
+    ).group_by(
+        Quest.title, Quest.level
+    ).order_by(
+        Quest.title, Quest.level
+    ).all()
 
     # Apply Japanese mapping to titles
     processed_medal_data = []
-    for quest_id, title, attempts in medal_data:
+    for title, level, total_attempts in medal_data:
         jp_title = SUBJECT_KEY_TO_JP.get(title, title)
-        processed_medal_data.append((quest_id, jp_title, attempts))
+        processed_medal_data.append((jp_title, level, total_attempts))
 
-    return render_template("medals.html", attempts=processed_medal_data)
+    return render_template("medals.html", medal_data=processed_medal_data)
 
 # 進捗表示用ルート
 @app.route('/progress')

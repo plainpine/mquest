@@ -6,33 +6,37 @@
 {% block content %}
 <h1>🏅 メダル一覧</h1>
 
+<p>各科目・レベルでの合計挑戦回数に応じてメダルが授与されます。</p>
+
 <table border="1" cellpadding="6" cellspacing="0">
     <thead>
         <tr>
-            <th>Quest ID</th>
             <th>科目</th>
-            <th>挑戦回数</th>
+            <th>レベル</th>
+            <th>合計挑戦回数</th>
             <th>メダル</th>
         </tr>
     </thead>
     <tbody>
-        {% for quest_id, title, attempts in attempts %}
+        {% for title, level, total_attempts in medal_data %}
         <tr>
-            <td>{{ quest_id }}</td>
             <td>{{ title }}</td>
-            <td>{{ attempts }}</td>
+            <td>{{ level }}</td>
+            <td>{{ total_attempts }}</td>
             <td>
-                {% if attempts >= 10 %}
-                    🥇 金
-                {% elif attempts >= 5 %}
-                    🥈 銀
+                {% if total_attempts >= 50 %}
+                    💎 ダイヤモンド
+                {% elif total_attempts >= 30 %}
+                    🥇 ゴールド
+                {% elif total_attempts >= 10 %}
+                    🥈 シルバー
                 {% else %}
-                    🥉 銅
+                    🥉 ブロンズ
                 {% endif %}
             </td>
         </tr>
         {% endfor %}
-        {% if not attempts %}
+        {% if not medal_data %}
         <tr><td colspan="4">まだ挑戦記録がありません。</td></tr>
         {% endif %}
     </tbody>
