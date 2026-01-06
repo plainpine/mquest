@@ -63,6 +63,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    const mapContainer = document.querySelector('.map-container');
+
+    // 背景画像を更新する関数
+    function updateBackground(mapType) {
+        let imageUrl = '';
+        switch (mapType) {
+            case 'europe':
+                imageUrl = "url('/static/maps/Europe.png')";
+                break;
+            case 'americus':
+                imageUrl = "url('/static/maps/Americus.png')";
+                break;
+            case 'zipangu':
+                imageUrl = "url('/static/maps/Zipangu.png')";
+                break;
+            default:
+                imageUrl = "url('/static/maps/world.svg')"; // デフォルト
+        }
+        if (mapContainer) {
+            mapContainer.style.backgroundImage = imageUrl;
+        }
+    }
+
     function switchMap(type) {
         currentMapType = type;
         document.querySelectorAll('.map').forEach(m => m.classList.remove('active'));
@@ -71,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
             newMap.classList.add('active');
         }
         highlightMap(type);
+        updateBackground(type); // 背景画像を更新
     }
 
     // Add click listeners to buttons
@@ -98,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initialMap.classList.add('active');
     }
     highlightMap(currentMapType);
+    updateBackground(currentMapType); // 初期背景を設定
 
     // Add listeners for subsequent loads to handle caching
     document.querySelectorAll('.map object').forEach(obj => {
