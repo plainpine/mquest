@@ -81,7 +81,8 @@
 
   <div id="svg-interactive-section" style="display:none;">
     <label>SVGコンテンツ:</label>
-    <textarea name="svg_content" rows="10" cols="60">{{ question.choices if question and question.type == 'svg_interactive' else '' }}</textarea><br>
+    <textarea name="svg_content" id="svg-content-textarea" rows="10" cols="60">{{ question.choices if question and question.type == 'svg_interactive' else '' }}</textarea><br>
+    <button type="button" id="svg-preview-button" class="button">SVGプレビュー</button><br>
     <label>追加文:</label>
     <div id="sub-questions-container">
       {% if question and question.type == 'svg_interactive' and answers %}
@@ -263,6 +264,28 @@
         e.target.parentElement.remove();
       }
     });
+
+    // SVGプレビューボタンの処理
+    const svgPreviewButton = document.getElementById('svg-preview-button');
+    if (svgPreviewButton) {
+      svgPreviewButton.addEventListener('click', () => {
+        const svgContent = document.getElementById('svg-content-textarea').value;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for('main.svg_preview') }}';
+        form.target = '_blank'; // 新しいタブで開く
+
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'svg_data';
+        hiddenField.value = svgContent;
+        form.appendChild(hiddenField);
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      });
+    }
   });
 </script>
 

@@ -9,6 +9,7 @@ from models import QuestHistory, Quest, Question, QuestAttemptLog
 import json
 import logging
 import random
+from utils.svg_preview_bp import bp as svg_preview_bp # Import the blueprint
 
 # 科目キーと日本語名のマッピング
 SUBJECT_KEY_TO_JP = {
@@ -33,6 +34,8 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+app.register_blueprint(svg_preview_bp) # Register the blueprint
 
 @app.route('/')
 def home():
