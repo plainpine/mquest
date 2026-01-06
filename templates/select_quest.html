@@ -3,14 +3,40 @@
 
 {% block title %}クエスト選択{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+  .selectable-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .quest-stats {
+    font-size: 0.9em;
+    color: #666;
+    background-color: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>{{ title }} / {{ level }} のクエストを選んでください</h1>
 
 <ul class="selectable-list">
   {% for quest in quests %}
+    {% set history = history_map.get(quest.id) %}
     <li data-url="{{ url_for('quest_run', quest_id=quest.id) }}" onclick="window.location.href=this.dataset.url">
-      {{ quest.questname }}
+      <span>{{ quest.questname }}</span>
+      {% if history %}
+        <span class="quest-stats">{{ history.cleared_count|default(0) }}/{{ history.attempts|default(0) }}</span>
+      {% else %}
+        <span class="quest-stats">0/0</span>
+      {% endif %}
     </li>
+  {% else %}
+    <li>このレベルのクエストはまだありません。</li>
   {% endfor %}
 </ul>
 

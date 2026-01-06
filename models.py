@@ -26,6 +26,7 @@ class User(UserMixin, db.Model):
 
     # ▼ 保護者 ↔ 生徒の関係（1対多）
     children = db.relationship('User', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
+    attempt_logs = db.relationship('QuestAttemptLog', back_populates='user', cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -57,6 +58,7 @@ class Quest(db.Model):
     questions = db.relationship('Question', back_populates='quest', cascade="all, delete-orphan")
     progress = db.relationship('UserProgress', back_populates='quest', cascade="all, delete-orphan")
     history = db.relationship('QuestHistory', back_populates='quest', cascade="all, delete-orphan")
+    attempt_logs = db.relationship('QuestAttemptLog', back_populates='quest', cascade="all, delete-orphan")
 
 
 
@@ -81,6 +83,7 @@ class QuestHistory(db.Model):
     quest_id = db.Column(db.Integer, db.ForeignKey('quests.id'), nullable=False)
     correct = db.Column(db.Boolean, nullable=False, default=False) 
     is_cleared = db.Column(db.Boolean, default=False)
+    cleared_count = db.Column(db.Integer, default=0)
     attempts = db.Column(db.Integer, default=0)
     last_attempt = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
@@ -105,3 +108,16 @@ class UserProgress(db.Model):
 
     user = db.relationship('User', backref=db.backref('progress', lazy='dynamic'))
     quest = db.relationship('Quest', back_populates='progress')
+
+
+class QuestAttemptLog(db.Model):
+    __tablename__ = 'quest_attempt_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    quest_id = db.Column(db.Integer, db.ForeignKey('quests.id'), nullable=False)
+    correct_answers = db.Column(db.Integer, nullable=False)
+    total_questions = db.Column(db.Integer, nullable=False)
+    attempted_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    user = db.relationship('User', back_populates='attempt_logs')
+    quest = db.relationship('Quest', back_populates='attempt_logs')

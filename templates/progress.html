@@ -3,15 +3,73 @@
 
 {% block title %}学習状況{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    .chart-container {
+        width: 80%;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .chart-selector .btn {
+        margin-right: 5px;
+    }
+    .chart-view {
+        display: none;
+    }
+    .chart-view.active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>📘 学習進捗状況</h1>
 
-<table border="1" cellpadding="6" cellspacing="0">
+<div class="text-center mb-4">
+    <div class="btn-group chart-selector" role="group">
+        <button type="button" class="btn btn-primary active" data-chart-type="weekly">過去4週間</button>
+        <button type="button" class="btn btn-secondary" data-chart-type="monthly">過去3ヶ月</button>
+    </div>
+</div>
+
+<div id="chart-weekly" class="chart-view active">
+    <div class="chart-container">
+        <h2>過去4週間の学習記録</h2>
+        {% if weekly_chart_data.labels %}
+            <canvas id="weeklyChart"></canvas>
+        {% else %}
+            <p>過去4週間の学習記録はありません。</p>
+        {% endif %}
+    </div>
+</div>
+
+<div id="chart-monthly" class="chart-view">
+    <div class="chart-container">
+        <h2>過去3ヶ月の学習記録</h2>
+        {% if monthly_chart_data.labels %}
+            <canvas id="monthlyChart"></canvas>
+        {% else %}
+            <p>過去3ヶ月の学習記録はありません。</p>
+        {% endif %}
+    </div>
+</div>
+
+<h2>クエスト制覇状況</h2>
+<table border="1" cellpadding="6" cellspacing="0" style="margin: 20px auto;">
     <thead>
         <tr>
             <th>科目</th>
             <th>レベル</th>
-            <th>全問正解数</th>
+            <th>制覇クエスト数</th>
         </tr>
     </thead>
     <tbody>
@@ -30,4 +88,118 @@
 
 <br>
 <a href="{{ url_for('dashboard_student') }}" class="button">← ダッシュボードへ戻る</a>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const buttons = document.querySelectorAll('.chart-selector button');
+    buttons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            const type = event.currentTarget.dataset.chartType;
+            if (!type) return;
+
+            // Toggle button styles
+            document.querySelectorAll('.chart-selector button').forEach(btn => {
+                btn.classList.remove('active', 'btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            event.currentTarget.classList.add('active', 'btn-primary');
+            event.currentTarget.classList.remove('btn-secondary');
+            
+            // Toggle chart visibility
+            document.querySelectorAll('.chart-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            const newChartView = document.getElementById(`chart-${type}`);
+            if (newChartView) {
+                newChartView.classList.add('active');
+            }
+        });
+    });
+
+    const weeklyCtx = document.getElementById('weeklyChart');
+    if (weeklyCtx) {
+        const weeklyData = {{ weekly_chart_data|tojson }};
+        new Chart(weeklyCtx, {
+            type: 'line',
+            data: {
+                labels: weeklyData.labels,
+                datasets: [
+                    {
+                        label: 'クエスト制覇回数',
+                        data: weeklyData.cleared_count,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'クエスト挑戦回数',
+                        data: weeklyData.attempt_count,
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1,
+                        yAxisID: 'y',
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1 // 整数で表示
+                        },
+                        title: {
+                            display: true,
+                            text: '回数'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const monthlyCtx = document.getElementById('monthlyChart');
+    if (monthlyCtx) {
+        const monthlyData = {{ monthly_chart_data|tojson }};
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: monthlyData.labels,
+                datasets: [
+                    {
+                        label: 'クエスト制覇回数',
+                        data: monthlyData.cleared_count,
+                        borderColor: 'rgb(54, 162, 235)',
+                        tension: 0.1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'クエスト挑戦回数',
+                        data: monthlyData.attempt_count,
+                        borderColor: 'rgb(255, 159, 64)',
+                        tension: 0.1,
+                        yAxisID: 'y',
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1 // 整数で表示
+                        },
+                        title: {
+                            display: true,
+                            text: '回数'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

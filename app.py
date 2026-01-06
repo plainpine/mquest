@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func, case
 from sqlalchemy.exc import IntegrityError
 from flask_login import LoginManager, login_user, login_required, logout_user, UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timezone
-from models import QuestHistory, Quest, Question
+from datetime import datetime, timezone, timedelta
+from models import QuestHistory, Quest, Question, QuestAttemptLog
 import json
 import logging
 import random
@@ -207,12 +208,22 @@ def select_level(title):
 def select_quest_by_title_level(title, level):
     title_key = SUBJECT_JP_TO_KEY.get(title, title)
     quests = Quest.query.filter_by(title=title_key, level=level).all()
-    print(quests)
+
+    history_map = {}
+    if current_user.is_authenticated:
+        user_id = current_user.id
+        histories = QuestHistory.query.filter(
+            QuestHistory.user_id == user_id,
+            QuestHistory.quest_id.in_([q.id for q in quests])
+        ).all()
+        history_map = {h.quest_id: h for h in histories}
+
     return render_template(
         'select_quest.html',
         title=title,
         level=level,
-        quests=quests
+        quests=quests,
+        history_map=history_map
     )
 
 # クエスト実行（ステップ4）    
@@ -457,18 +468,33 @@ def quest_result(quest_id):
                     history.attempts += 1
                     history.correct = all_correct
                     history.last_attempt = datetime.now(timezone.utc)
-                    if all_correct or history.is_cleared:
+                    if all_correct:
+                        history.cleared_count += 1
                         history.is_cleared = True
+                    elif history.is_cleared:
+                        history.is_cleared = True #維持
                 else:
                     history = QuestHistory(
                         user_id=user_id,
                         quest_id=quest_id,
                         correct=all_correct,
                         is_cleared=all_correct,
+                        cleared_count=1 if all_correct else 0,
                         attempts=1,
                         last_attempt=datetime.now(timezone.utc)
                     )
                     db.session.add(history)
+
+                # Create a detailed log for this attempt
+                score = sum(1 for r in results if r['correct'])
+                total_questions = len(results)
+                attempt_log = QuestAttemptLog(
+                    user_id=user_id,
+                    quest_id=quest_id,
+                    correct_answers=score,
+                    total_questions=total_questions
+                )
+                db.session.add(attempt_log)
 
                 # Now, sync UserProgress based on the definitive 'is_cleared' status from QuestHistory
                 if history.is_cleared:
@@ -592,7 +618,7 @@ def progress():
 
     user_id = session.get('user_id')
 
-    # 各タイトル・レベルのクリア済みクエスト数を UserProgress からカウント
+    # 1. Existing query for the summary table (preserved)
     cleared_counts = db.session.query(
         Quest.title,
         Quest.level,
@@ -606,14 +632,52 @@ def progress():
         Quest.title, Quest.level
     ).all()
 
-    # Apply Japanese mapping to titles and levels
     processed_cleared_data = []
     for title, level, count in cleared_counts:
         jp_title = SUBJECT_KEY_TO_JP.get(title, title)
-        jp_level = SUBJECT_KEY_TO_JP.get(level, level) # Assuming level might also need translation
+        jp_level = SUBJECT_KEY_TO_JP.get(level, level)
         processed_cleared_data.append((jp_title, jp_level, count))
 
-    return render_template("progress.html", cleared=processed_cleared_data)
+    # 2. New query for 4-week chart data
+    four_weeks_ago = datetime.now(timezone.utc) - timedelta(weeks=4)
+    weekly_data = db.session.query(
+        func.strftime('%Y-%W', QuestAttemptLog.attempted_at).label('week'),
+        func.sum(case((QuestAttemptLog.correct_answers == QuestAttemptLog.total_questions, 1), else_=0)).label('cleared_count'),
+        func.count(QuestAttemptLog.id).label('attempt_count')
+    ).filter(
+        QuestAttemptLog.user_id == user_id,
+        QuestAttemptLog.attempted_at >= four_weeks_ago
+    ).group_by('week').order_by('week').all()
+
+    weekly_chart_data = {
+        'labels': [d.week for d in weekly_data],
+        'cleared_count': [d.cleared_count for d in weekly_data],
+        'attempt_count': [d.attempt_count for d in weekly_data]
+    }
+
+    # 3. New query for 3-month chart data
+    three_months_ago = datetime.now(timezone.utc) - timedelta(days=90)
+    monthly_data = db.session.query(
+        func.strftime('%Y-%m', QuestAttemptLog.attempted_at).label('month'),
+        func.sum(case((QuestAttemptLog.correct_answers == QuestAttemptLog.total_questions, 1), else_=0)).label('cleared_count'),
+        func.count(QuestAttemptLog.id).label('attempt_count')
+    ).filter(
+        QuestAttemptLog.user_id == user_id,
+        QuestAttemptLog.attempted_at >= three_months_ago
+    ).group_by('month').order_by('month').all()
+
+    monthly_chart_data = {
+        'labels': [d.month for d in monthly_data],
+        'cleared_count': [d.cleared_count for d in monthly_data],
+        'attempt_count': [d.attempt_count for d in monthly_data]
+    }
+
+    return render_template(
+        "progress.html", 
+        cleared=processed_cleared_data,
+        weekly_chart_data=weekly_chart_data,
+        monthly_chart_data=monthly_chart_data
+    )
 
 @app.route('/admin/students')
 def manage_students():
