@@ -16,7 +16,7 @@
       appearance: none;
       -moz-appearance: textfield;
     }
-    .sub-question {
+    .sub-question, .function-entry {
       border: 1px solid #ddd;
       padding: 10px;
       margin-bottom: 10px;
@@ -27,6 +27,22 @@
     }
     .sub-question label {
       font-weight: bold;
+    }
+    .function-entry {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .function-entry input {
+        flex: 1;
+    }
+    .remove-function-entry {
+        background: #f44336;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 4px;
     }
 </style>
 <form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
@@ -40,6 +56,7 @@
     <option value="numeric" {% if question and question.type == 'numeric' %}selected{% endif %}>数値入力</option>
     <option value="fill_in_the_blank_en" {% if question and question.type == 'fill_in_the_blank_en' %}selected{% endif %}>英語穴埋め</option>
     <option value="svg_interactive" {% if question and question.type == 'svg_interactive' %}selected{% endif %}>図形問題</option>
+    <option value="function_graph" {% if question and question.type == 'function_graph' %}selected{% endif %}>方程式グラフ</option>
   </select>
 
   <label>問題文（Markdown）:</label>
@@ -106,6 +123,14 @@
     <button type="button" id="add-sub-question">追加文を追加</button>
   </div>
 
+  <div id="function-graph-section" style="display:none;">
+      <div id="function-entries-container">
+          {# JavaScript will populate this #}
+      </div>
+      <button type="button" id="add-function-entry">方程式を追加</button>
+      <input type="hidden" name="answer_function_graph" id="answer_function_graph_hidden">
+  </div>
+
 <!-- 保存ボタン：上段 -->
 <br>
 <button type="submit" name="action" value="save_question">保存</button>
@@ -132,7 +157,15 @@
       inlineMath: [['$', '$'], ['\(', '\)']],
       displayMath: [['$$', '$$'], ['\[', '\]']]
     },
-    svg: { fontCache: 'global' }
+    svg: { fontCache: 'global' },
+    startup: {
+      ready: () => {
+        console.log('MathJax is now ready to process math.');
+        // Initial preview rendering after MathJax is fully loaded
+        updatePreviews();
+        MathJax.startup.defaultReady();
+      }
+    }
   };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
@@ -140,132 +173,121 @@
 <script>
   // Marked.js の設定を MathJax と共存できるように変更
   marked.setOptions({
-    gfm: true,    // GitHub Flavored Markdown を有効にする
-    breaks: true  // 改行を <br> に変換する
+    gfm: true,
+    breaks: true
   });
 
-  const typeSelect = document.getElementById('type-select');
-  const choiceSection = document.getElementById('choice-section');
-  const sortSection = document.getElementById('sort-section');
-  const numericSection = document.getElementById('numeric-section');
-  const fillInTheBlankEnSection = document.getElementById('fill-in-the-blank-en-section');
-  const svgInteractiveSection = document.getElementById('svg-interactive-section');
-
-  function updateSections() {
-    const type = typeSelect.value;
-    choiceSection.style.display = (type === 'choice' || type === 'multiple_choice') ? 'block' : 'none';
-    sortSection.style.display = type === 'sort' ? 'block' : 'none';
-    numericSection.style.display = type === 'numeric' ? 'block' : 'none';
-    fillInTheBlankEnSection.style.display = type === 'fill_in_the_blank_en' ? 'block' : 'none';
-    svgInteractiveSection.style.display = type === 'svg_interactive' ? 'block' : 'none';
-  }
-
-  // 初期表示時に選択肢と問題文のMarkdownをプレビュー
   async function updatePreviews() {
-    // text
-    try {
-      const mdText = document.getElementById("text-input").value;
-      const previewDiv = document.getElementById("text-preview");
-      previewDiv.innerHTML = marked.parse(mdText || '');
-      await MathJax.typesetPromise([previewDiv]);
-    } catch (e) {
-      console.error("Error updating text preview:", e);
-    }
+      const allPreviews = [
+        { inputId: "text-input", previewId: "text-preview" },
+        { inputId: "explanation-input", previewId: "explanation-preview" },
+      ];
+      for (let i = 0; i < 4; i++) {
+        allPreviews.push({ inputId: `choice${i}`, previewId: `choice${i}_preview` });
+      }
 
-    // explanation
-    try {
-      const mdExplanation = document.getElementById("explanation-input").value;
-      const explanationPreviewDiv = document.getElementById("explanation-preview");
-      explanationPreviewDiv.innerHTML = marked.parse(mdExplanation || '');
-      await MathJax.typesetPromise([explanationPreviewDiv]);
-    } catch (e) {
-      console.error("Error updating explanation preview:", e);
-    }
+      for (const item of allPreviews) {
+        const inputEl = document.getElementById(item.inputId);
+        const previewEl = document.getElementById(item.previewId);
 
-    // choices
-    for (let i = 0; i < 4; i++) {
-      try {
-        const input = document.getElementById(`choice${i}`);
-        if (input) {
-          const preview = document.getElementById(`choice${i}_preview`);
-          const md = input.value || '';
-          preview.innerHTML = marked.parse(md);
-          await MathJax.typesetPromise([preview]);
+        if (inputEl && previewEl) {
+          try {
+            const markdown = inputEl.value || '';
+            previewEl.innerHTML = marked.parse(markdown);
+            // Add a safeguard in case this is called before MathJax is ready
+            if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
+              await MathJax.typesetPromise([previewEl]);
+            }
+          } catch (e) {
+            console.error(`Error updating preview for #${item.inputId}:`, e);
+            if(previewEl) previewEl.innerHTML = "<p style='color: red;'>プレビューの生成中にエラーが発生しました。</p>";
+          }
         }
-      } catch (e) {
-        console.error(`Error updating choice ${i} preview:`, e);
       }
     }
-  }
-
-  // sub-questionのプレビューを更新する関数
-  async function updateSubQuestionPreview(inputElement) {
-    const preview = inputElement.nextElementSibling;
-    preview.innerHTML = marked.parse(inputElement.value);
-    await MathJax.typesetPromise([preview]);
-  }
 
   document.addEventListener('DOMContentLoaded', () => {
-    // ページ読み込み時にプレビューを更新
+    const typeSelect = document.getElementById('type-select');
+    const sections = {
+        choice: document.getElementById('choice-section'),
+        multiple_choice: document.getElementById('choice-section'),
+        sort: document.getElementById('sort-section'),
+        numeric: document.getElementById('numeric-section'),
+        fill_in_the_blank_en: document.getElementById('fill-in-the-blank-en-section'),
+        svg_interactive: document.getElementById('svg-interactive-section'),
+        function_graph: document.getElementById('function-graph-section')
+    };
+
+    function updateSections() {
+        const selectedType = typeSelect.value;
+        for (const type in sections) {
+            if (sections[type]) {
+                sections[type].style.display = (type === selectedType || (selectedType === 'multiple_choice' && type === 'choice')) ? 'block' : 'none';
+            }
+        }
+    }
+    
+    async function updateSubQuestionPreview(inputElement) {
+      const preview = inputElement.nextElementSibling;
+      preview.innerHTML = marked.parse(inputElement.value);
+      await MathJax.typesetPromise([preview]);
+    }
+
+    // Initial setup
     updateSections();
-    updatePreviews(); // ここで初期表示時のプレビューも更新
-
-    // イベントリスナー
-    typeSelect.addEventListener('change', () => {
-      updateSections();
-      updatePreviews();
-    });
-
-    // 入力内容が変更された場合にプレビューを更新
+    // The initial call to updatePreviews() is now handled by the MathJax.startup.ready callback
+    // to ensure the library is loaded before we try to use it.
+    
+    // Event Listeners
+    typeSelect.addEventListener('change', updateSections);
     document.getElementById("text-input").addEventListener("input", updatePreviews);
     document.getElementById("explanation-input").addEventListener("input", updatePreviews);
     for (let i = 0; i < 4; i++) {
-      const input = document.getElementById(`choice${i}`);
-      if (input) {
-        input.addEventListener("input", updatePreviews);
-      }
+      const choiceInput = document.getElementById(`choice${i}`);
+      if (choiceInput) choiceInput.addEventListener("input", updatePreviews);
+    }
+    
+    // Sub-question logic
+    const subQuestionsContainer = document.getElementById('sub-questions-container');
+    if (subQuestionsContainer) {
+        let subQuestionCounter = subQuestionsContainer.querySelectorAll('.sub-question').length;
+        
+        subQuestionsContainer.querySelectorAll('.sub-prompt-input').forEach(input => {
+            updateSubQuestionPreview(input);
+            input.addEventListener('input', () => updateSubQuestionPreview(input));
+        });
+
+        document.getElementById('add-sub-question').addEventListener('click', () => {
+            subQuestionCounter++;
+            const newSubQuestion = document.createElement('div');
+            newSubQuestion.classList.add('sub-question');
+            newSubQuestion.innerHTML = `
+                <input type="hidden" name="sub_id" value="sub${subQuestionCounter}">
+                <div>
+                  <label>問題文 (Markdown):</label>
+                  <textarea name="sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
+                  <div class="markdown-preview sub-prompt-preview"></div>
+                </div>
+                <div>
+                  <label>正答:</label>
+                  <input type="text" name="sub_answer" placeholder="正答">
+                </div>
+                <button type="button" class="remove-sub-question">削除</button>
+            `;
+            subQuestionsContainer.appendChild(newSubQuestion);
+            const newInput = newSubQuestion.querySelector('.sub-prompt-input');
+            updateSubQuestionPreview(newInput);
+            newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
+        });
+
+        subQuestionsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-sub-question')) {
+                e.target.parentElement.remove();
+            }
+        });
     }
 
-    // 既存のsub-questionのプレビューを初期化
-    document.querySelectorAll('.sub-prompt-input').forEach(input => {
-      updateSubQuestionPreview(input);
-      input.addEventListener('input', () => updateSubQuestionPreview(input));
-    });
-
-    let subQuestionCounter = document.querySelectorAll('.sub-question').length;
-
-    document.getElementById('add-sub-question').addEventListener('click', () => {
-      subQuestionCounter++;
-      const container = document.getElementById('sub-questions-container');
-      const newSubQuestion = document.createElement('div');
-      newSubQuestion.classList.add('sub-question');
-      newSubQuestion.innerHTML = `
-        <input type="hidden" name="sub_id" value="sub${subQuestionCounter}">
-        <div>
-          <label>問題文 (Markdown):</label>
-          <textarea name="sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
-          <div class="markdown-preview sub-prompt-preview"></div>
-        </div>
-        <div>
-          <label>正答:</label>
-          <input type="text" name="sub_answer" placeholder="正答">
-        </div>
-        <button type="button" class="remove-sub-question">削除</button>
-      `;
-      container.appendChild(newSubQuestion);
-
-      const newInput = newSubQuestion.querySelector('.sub-prompt-input');
-      updateSubQuestionPreview(newInput); // 新しい要素のプレビューを初期化
-      newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
-    });
-
-    document.getElementById('sub-questions-container').addEventListener('click', (e) => {
-      if (e.target.classList.contains('remove-sub-question')) {
-        e.target.parentElement.remove();
-      }
-    });
-
-    // SVGプレビューボタンの処理
+    // SVG Preview Logic
     const svgPreviewButton = document.getElementById('svg-preview-button');
     if (svgPreviewButton) {
       svgPreviewButton.addEventListener('click', () => {
@@ -273,18 +295,106 @@
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '{{ url_for('main.svg_preview') }}';
-        form.target = '_blank'; // 新しいタブで開く
-
+        form.target = '_blank';
         const hiddenField = document.createElement('input');
         hiddenField.type = 'hidden';
         hiddenField.name = 'svg_data';
         hiddenField.value = svgContent;
         form.appendChild(hiddenField);
-
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
       });
+    }
+
+    // --- Function Graph Section Logic ---
+    const functionEntriesContainer = document.getElementById('function-entries-container');
+    const addFunctionEntryBtn = document.getElementById('add-function-entry');
+    const hiddenFunctionGraphInput = document.getElementById('answer_function_graph_hidden');
+    const mainForm = document.querySelector('form');
+
+    function serializeFunctionEntries() {
+        if (typeSelect.value !== 'function_graph') return;
+        const entries = [];
+        functionEntriesContainer.querySelectorAll('.function-entry').forEach(entryEl => {
+            const fnInput = entryEl.querySelector('.function-fn-input');
+            const captionInput = entryEl.querySelector('.function-caption-input');
+            if (fnInput && captionInput) {
+                entries.push({
+                    fn: fnInput.value,
+                    caption: captionInput.value
+                });
+            }
+        });
+        hiddenFunctionGraphInput.value = JSON.stringify(entries);
+    }
+
+    function createFunctionEntry(fn = '', caption = '') {
+        const entryDiv = document.createElement('div');
+        entryDiv.classList.add('function-entry');
+
+        const fnInput = document.createElement('input');
+        fnInput.type = 'text';
+        fnInput.className = 'function-fn-input';
+        fnInput.placeholder = '方程式 (例: 2*x, x^2, sin(x), 1/x)';
+        fnInput.value = fn;
+
+        const captionInput = document.createElement('input');
+        captionInput.type = 'text';
+        captionInput.className = 'function-caption-input';
+        captionInput.placeholder = 'キャプション (Markdown/LaTeX)';
+        captionInput.value = caption;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-function-entry';
+        removeBtn.textContent = '削除';
+
+        entryDiv.appendChild(fnInput);
+        entryDiv.appendChild(captionInput);
+        entryDiv.appendChild(removeBtn);
+        functionEntriesContainer.appendChild(entryDiv);
+    }
+
+    if (addFunctionEntryBtn) {
+        addFunctionEntryBtn.addEventListener('click', () => {
+            createFunctionEntry();
+        });
+    }
+    
+    if (functionEntriesContainer) {
+        functionEntriesContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-function-entry')) {
+                e.target.closest('.function-entry').remove();
+            }
+        });
+    }
+
+    if (mainForm) {
+        mainForm.addEventListener('submit', serializeFunctionEntries);
+    }
+
+    // Populate existing function graph data on load
+    if (typeSelect.value === 'function_graph') {
+        const existingDataRaw = `{{ question.answer | default('[]') | safe }}`;
+        try {
+            const existingData = JSON.parse(existingDataRaw);
+            if (Array.isArray(existingData) && existingData.length > 0) {
+                existingData.forEach(item => createFunctionEntry(item.fn || '', item.caption || ''));
+            } else if (typeof existingData === 'string' && existingData.trim() !== '' && !existingData.trim().startsWith('[')) {
+                // Handle old single-string format
+                createFunctionEntry(existingData, '');
+            } else {
+                createFunctionEntry(); // Add one empty entry if no valid data
+            }
+        } catch(e) {
+            // Handle non-JSON string (old format)
+            if (existingDataRaw && !existingDataRaw.trim().startsWith('[')) {
+                createFunctionEntry(existingDataRaw, '');
+            } else {
+                createFunctionEntry(); // Add one empty entry on error
+            }
+        }
     }
   });
 </script>

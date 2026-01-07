@@ -144,492 +144,571 @@
             </div>
           </div>
         </div>
-      {% endif %}
-    </div>
-  {% endfor %}
-
-  <div style="margin-top: 1rem; display: flex; align-items: center;">
-    <input type="submit" value="回答を提出" style="padding: 0.5rem 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 6px; margin-right: 10px;">
-    {% if role == 'admin' %}
-      <a href="{{ url_for('manage_quests', title=original_title, level=original_level) }}" class="button secondary">クエスト一覧に戻る</a>
-    {% else %}
-      <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="button secondary">クエスト選択に戻る</a>
-    {% endif %}
-  </div>
-</form>
-
-<!-- Memo Pad Modal -->
-<button id="open-memo-btn"><i class="fas fa-pencil-alt"></i> メモ</button>
-
-<div id="memo-modal-backdrop" style="display: none;">
-  <div id="memo-modal-content">
-    <div id="memo-modal-header">
-      <h5>メモ帳</h5>
-      <button id="close-memo-btn">&times;</button>
-    </div>
-    <div id="memo-modal-body">
-      <canvas id="memo-canvas"></canvas>
-    </div>
-    <div id="memo-modal-footer">
-      <button id="clear-memo-btn">クリア</button>
-    </div>
-  </div>
-</div>
-
-<style>
-  /* Styles from previous steps */
-  .choice-option { padding: 1rem; border: 1px solid #ccc; border-radius: 8px; margin: 0.5rem 0; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; display: flex; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
-  .choice-option:hover, .choice-option:active { background-color: #f7f7f7; }
-  .choice-option.selected { background-color: #d0ebff; border-color: #339af0; }
-  .choice-option .markdown { display: inline-block; white-space: normal; word-break: break-word; margin-left: 0.5rem; flex: 1; }
-  .markdown p { margin: 0; display: inline; }
-  .sortable-item { padding: 8px; border: 1px solid #ccc; margin-bottom: 4px; background-color: #f9f9f9; border-radius: 4px; user-select: none; touch-action: none; -webkit-user-drag: element; }
-  .sortable-ghost { opacity: 0.4; }
-  label { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; max-width: 100%; }
-  label .markdown { white-space: normal; word-break: break-word; display: inline; }
-  .en-fill-in-the-blank-input { font-size: 1.2rem; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 0.5rem; text-align: center; }
-  .keypad { margin-top: 1rem; padding: 10px; border: 1px solid #ccc; border-radius: 8px; display: inline-block; }
-  .virtual-keyboard { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
-  .keyboard-row { margin-bottom: 5px; }
-  .key-btn-en:active { background-color: #e0e0e0; }
-
-  /* Memo Pad Styles */
-  #open-memo-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 100px;
-    height: 50px;
-    background-color: #3f51b5;
-    color: white;
-    border: none;
-    border-radius: 25px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    cursor: pointer;
-    font-size: 1rem;
-    z-index: 1050;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-  #open-memo-btn:hover { background-color: #303f9f; }
-
-  #memo-modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1051;
-    display: none; /* Initially hidden */
-    align-items: center;
-    justify-content: center;
-  }
-
-  #memo-modal-content {
-    position: absolute; /* Make it absolutely positioned for dragging */
-    top: 50%; /* Initial vertical centering */
-    left: 50%; /* Initial horizontal centering */
-    transform: translate(-50%, -50%); /* Adjust for true centering */
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    width: 90%;
-    max-width: 700px;
-    display: flex;
-    flex-direction: column;
-    z-index: 1052; /* Ensure it's above the backdrop */
-  }
-
-  #memo-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
-    cursor: grab; /* Indicate draggable */
-  }
-  #memo-modal-header h5 { margin: 0; }
-  #close-memo-btn {
-    background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem;
-  }
-
-  #memo-modal-body {
-    padding: 1rem;
-    overflow-y: auto;
-  }
-  #memo-canvas {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    cursor: crosshair;
-    touch-action: none;
-    width: 100%;
-  }
-
-  #memo-modal-footer {
-    padding: 1rem;
-    border-top: 1px solid #dee2e6;
-    text-align: right;
-  }
-  #clear-memo-btn {
-    padding: 0.5rem 1rem;
-    background-color: #e0e0e0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  #clear-memo-btn:hover { background-color: #d0d0d0; }
-</style>
-
-<!-- JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-<!-- MathJax for LaTeX rendering -->
-<script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']]
-     },
-    svg: {
-      fontCache: 'global'
-    }
-  };
-
-  function htmlDecode(input) {
-    var doc = new DOMParser().parseFromString(input, "text/html");
-    return doc.documentElement.textContent;
-  }
-
-  function renderMarkdownAndMath() {
-    marked.setOptions({ breaks: true });
-    document.querySelectorAll('.markdown').forEach(div => {
-      let md = div.getAttribute('data-content');
-      if (!md) return;
-      md = htmlDecode(md.replace(/\\n/g, '\n'));
-      div.innerHTML = marked.parse(md);
-    });
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise();
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    renderMarkdownAndMath();
-
-    // --- Memo Pad Modal Logic ---
-    const openBtn = document.getElementById('open-memo-btn');
-    const closeBtn = document.getElementById('close-memo-btn');
-    const modalBackdrop = document.getElementById('memo-modal-backdrop');
-    const canvas = document.getElementById('memo-canvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-    let hasBeenResized = false;
-
-    function resizeCanvas() {
-        const bodyRect = document.getElementById('memo-modal-body').getBoundingClientRect();
-        canvas.width = bodyRect.width - 2 * 16; // body padding
-        canvas.height = 400; // Fixed height
-        hasBeenResized = true;
-    }
-
-    function openModal() {
-        modalBackdrop.style.display = 'flex';
-        if (!hasBeenResized) {
-            resizeCanvas();
-        }
-    }
-
-    function closeModal() {
-        modalBackdrop.style.display = 'none';
-    }
-
-    function getPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        if (e.touches && e.touches.length > 0) {
-            return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-        }
-        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    }
-
-    function startDrawing(e) {
-        drawing = true;
-        const pos = getPos(e);
-        ctx.beginPath();
-        ctx.moveTo(pos.x, pos.y);
-        // Add document-level listeners for mousemove and mouseup
-        document.addEventListener('mousemove', draw);
-        document.addEventListener('mouseup', stopDrawing);
-        e.preventDefault(); // Prevent default browser actions like text selection
-    }
-
-    function draw(e) {
-        if (!drawing) return;
-        e.preventDefault();
-        const pos = getPos(e);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-    }
-
-    function stopDrawing() {
-        drawing = false;
-        ctx.closePath();
-        // Remove document-level listeners when drawing stops
-        document.removeEventListener('mousemove', draw);
-        document.removeEventListener('mouseup', stopDrawing);
-    }
-
-    openBtn.addEventListener('click', openModal);
-    closeBtn.addEventListener('click', closeModal);
-    modalBackdrop.addEventListener('click', (e) => {
-        if (e.target === modalBackdrop) closeModal();
-    });
-
-    canvas.addEventListener('mousedown', startDrawing);
-    // Removed: canvas.addEventListener('mousemove', draw);
-    // Removed: canvas.addEventListener('mouseup', stopDrawing);
-    // Removed: canvas.addEventListener('mouseout', stopDrawing);
-    canvas.addEventListener('touchstart', startDrawing, { passive: false });
-    canvas.addEventListener('touchmove', draw, { passive: false });
-    canvas.addEventListener('touchend', stopDrawing);
-
-    document.getElementById('clear-memo-btn').addEventListener('click', () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
-
-    window.addEventListener('resize', () => { if(modalBackdrop.style.display === 'flex') resizeCanvas(); });
-
-    // --- Draggable Memo Modal Logic ---
-    const memoModalContent = document.getElementById('memo-modal-content');
-    const memoModalHeader = document.getElementById('memo-modal-header');
-
-    let isDragging = false;
-    let offsetX, offsetY;
-
-    memoModalHeader.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        offsetX = e.clientX - memoModalContent.getBoundingClientRect().left;
-        offsetY = e.clientY - memoModalContent.getBoundingClientRect().top;
-        memoModalContent.style.cursor = 'grabbing';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        e.preventDefault(); // Prevent text selection during drag
-
-        const newX = e.clientX - offsetX;
-        const newY = e.clientY - offsetY;
-
-        // Boundary checks to keep the modal within the viewport
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const modalWidth = memoModalContent.offsetWidth;
-        const modalHeight = memoModalContent.offsetHeight;
-
-        const maxX = viewportWidth - modalWidth;
-        const maxY = viewportHeight - modalHeight;
-
-        memoModalContent.style.left = `${Math.min(Math.max(0, newX), maxX)}px`;
-        memoModalContent.style.top = `${Math.min(Math.max(0, newY), maxY)}px`;
-        memoModalContent.style.transform = 'none'; // Remove transform for dragging
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        memoModalContent.style.cursor = 'grab';
-    });
-
-    // --- Existing JS logic ---
-    document.querySelectorAll('.choice-option').forEach(option => {
-      option.addEventListener('click', (event) => {
-        // Stop the event from propagating to parent elements
-        event.stopPropagation();
+      {% elif question.type == 'function_graph' %}
+        <div class="function-graph-container" data-functions='{{ question.answer | tojson }}'>
+                <div id="graph-target-{{ q_index }}"></div>
+                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+              </div>
+              {# This type is for display only, no answer input needed #}
+              <input type="hidden" name="q{{ q_index }}" value="seen">
+            {% endif %}
+            </div>
+          {% endfor %}
         
-        // If the click is on the input itself, don't re-trigger the logic
-        if (event.target.tagName === 'INPUT') {
-          // But we need to manually toggle the class if the checkbox was clicked
-          if (event.target.type === 'checkbox') {
-             option.classList.toggle('selected');
+          <div style="margin-top: 1rem; display: flex; align-items: center;">
+            <input type="submit" value="回答を提出" style="padding: 0.5rem 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 6px; margin-right: 10px;">
+            {% if role == 'admin' %}
+              <a href="{{ url_for('manage_quests', title=original_title, level=original_level) }}" class="button secondary">クエスト一覧に戻る</a>
+            {% else %}
+              <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="button secondary">クエスト選択に戻る</a>
+            {% endif %}
+          </div>
+        </form>
+        
+        <!-- Memo Pad Modal -->
+        <button id="open-memo-btn"><i class="fas fa-pencil-alt"></i> メモ</button>
+        
+        <div id="memo-modal-backdrop" style="display: none;">
+          <div id="memo-modal-content">
+            <div id="memo-modal-header">
+              <h5>メモ帳</h5>
+              <button id="close-memo-btn">&times;</button>
+            </div>
+            <div id="memo-modal-body">
+              <canvas id="memo-canvas"></canvas>
+            </div>
+            <div id="memo-modal-footer">
+              <button id="clear-memo-btn">クリア</button>
+            </div>
+          </div>
+        </div>
+        
+        <style>
+          /* Styles from previous steps */
+          .choice-option { padding: 1rem; border: 1px solid #ccc; border-radius: 8px; margin: 0.5rem 0; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; display: flex; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
+          .choice-option:hover, .choice-option:active { background-color: #f7f7f7; }
+          .choice-option.selected { background-color: #d0ebff; border-color: #339af0; }
+          .choice-option .markdown { display: inline-block; white-space: normal; word-break: break-word; margin-left: 0.5rem; flex: 1; }
+          .markdown p { margin: 0; display: inline; }
+          .sortable-item { padding: 8px; border: 1px solid #ccc; margin-bottom: 4px; background-color: #f9f9f9; border-radius: 4px; user-select: none; touch-action: none; -webkit-user-drag: element; }
+          .sortable-ghost { opacity: 0.4; }
+          label { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; max-width: 100%; }
+          label .markdown { white-space: normal; word-break: break-word; display: inline; }
+          .en-fill-in-the-blank-input { font-size: 1.2rem; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 0.5rem; text-align: center; }
+          .keypad { margin-top: 1rem; padding: 10px; border: 1px solid #ccc; border-radius: 8px; display: inline-block; }
+          .virtual-keyboard { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
+          .keyboard-row { margin-bottom: 5px; }
+          .key-btn-en:active { background-color: #e0e0e0; }
+        
+          .graph-legend {
+              margin-top: 1rem;
           }
-          return;
-        }
-
-        // multiple-choice の場合はトグル処理
-        if (option.classList.contains('multiple-choice')) {
-          option.classList.toggle('selected');
-          const input = option.querySelector('input[type="checkbox"]');
-          if (input) {
-            input.checked = !input.checked;
+          .legend-item {
+              display: flex;
+              align-items: center;
+              margin-bottom: 0.5rem;
           }
-        } else { // 既存のラジオボタンの処理
-          const qname = option.dataset.qname;
-          document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => {
-            el.classList.remove('selected');
-            const input = el.querySelector('input[type="radio"]');
-            if (input) input.checked = false;
-          });
-          option.classList.add('selected');
-          const input = option.querySelector('input[type="radio"]');
-          if (input) input.checked = true;
-        }
-      });
-    });
-
-    document.querySelectorAll('.sortable').forEach(list => {
-      const name = list.dataset.name;
-      const hiddenInput = document.getElementById(`${name}_input`);
-      Sortable.create(list, {
-        animation: 150, touchStartThreshold: 0, ghostClass: 'sortable-ghost',
-        onEnd: () => {
-          const order = Array.from(list.children).map(li => li.textContent.trim());
-          hiddenInput.value = order.join(' ');
-        }
-      });
-      const initialOrder = Array.from(list.children).map(li => li.textContent.trim());
-      hiddenInput.value = initialOrder.join(' ');
-    });
-
-    document.querySelectorAll('.svg-interactive-container').forEach(container => {
-      const q_index = container.dataset.questionIndex;
-      const questionBlock = container.closest('.question-block');
-      questionBlock.querySelectorAll('input[type="hidden"][data-choices]').forEach(hiddenInput => {
-        const choices = hiddenInput.dataset.choices.split(',');
-        choices.forEach(choiceId => {
-          const shape = container.querySelector('#' + choiceId);
-          if (shape) {
-            shape.style.cursor = 'pointer';
-            shape.addEventListener('click', () => {
-              choices.forEach(id => {
-                const otherShape = container.querySelector('#' + id);
-                if(otherShape) { otherShape.style.stroke = ''; otherShape.style.strokeWidth = ''; }
-              });
-              shape.style.stroke = 'orange';
-              shape.style.strokeWidth = '5px';
-              hiddenInput.value = choiceId;
+          .legend-color {
+              width: 20px;
+              height: 10px;
+              margin-right: 10px;
+              border: 1px solid #ccc;
+          }
+          .legend-text {
+              flex: 1;
+          }
+        
+          /* Memo Pad Styles */
+          #open-memo-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 100px;
+            height: 50px;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 1rem;
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+          }
+          #open-memo-btn:hover { background-color: #303f9f; }
+        
+          #memo-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1051;
+            display: none; /* Initially hidden */
+            align-items: center;
+            justify-content: center;
+          }
+        
+          #memo-modal-content {
+            position: absolute; /* Make it absolutely positioned for dragging */
+            top: 50%; /* Initial vertical centering */
+            left: 50%; /* Initial horizontal centering */
+            transform: translate(-50%, -50%); /* Adjust for true centering */
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            z-index: 1052; /* Ensure it's above the backdrop */
+          }
+        
+          #memo-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            cursor: grab; /* Indicate draggable */
+          }
+          #memo-modal-header h5 { margin: 0; }
+          #close-memo-btn {
+            background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem;
+          }
+        
+          #memo-modal-body {
+            padding: 1rem;
+            overflow-y: auto;
+          }
+          #memo-canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: crosshair;
+            touch-action: none;
+            width: 100%;
+          }
+        
+          #memo-modal-footer {
+            padding: 1rem;
+            border-top: 1px solid #dee2e6;
+            text-align: right;
+          }
+          #clear-memo-btn {
+            padding: 0.5rem 1rem;
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+          }
+          #clear-memo-btn:hover { background-color: #d0d0d0; }
+        </style>
+        
+        <!-- JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        
+        <!-- MathJax for LaTeX rendering -->
+        <script>
+          window.MathJax = {
+            tex: {
+              inlineMath: [['$', '$'], ['\\(', '\\)']],
+              displayMath: [['$$', '$$'], ['\\[', '\\]']]
+             },
+            svg: {
+              fontCache: 'global'
+            }
+          };
+        
+          function htmlDecode(input) {
+            var doc = new DOMParser().parseFromString(input, "text/html");
+            return doc.documentElement.textContent;
+          }
+        
+          function renderMarkdownAndMath() {
+            marked.setOptions({ breaks: true });
+            document.querySelectorAll('.markdown').forEach(div => {
+              let md = div.getAttribute('data-content');
+              if (!md) return;
+              md = htmlDecode(md.replace(/\\n/g, '\n'));
+              div.innerHTML = marked.parse(md);
             });
+            if (window.MathJax && MathJax.typesetPromise) {
+              MathJax.typesetPromise();
+            }
           }
-        });
-      });
-    });
-
-    let activeInput = null, activeEnInput = null;
-
-    const showKeyboard = (input) => {
-      const isNumeric = input.classList.contains('numeric-input');
-      const isEn = input.classList.contains('en-fill-in-the-blank-input');
-
-      if (!isNumeric && !isEn) return;
-
-      // Check if the correct keyboard is already visible for this input
-      const qid = input.dataset.qid;
-      const questionBlock = input.closest('.question-block, .sub-questions-container');
-      if (!questionBlock) return;
-
-      const selector = isNumeric ? `.keypad[data-qid="${qid}"]` : `.virtual-keyboard[data-qid="${qid}"]`;
-      const keyboard = questionBlock.querySelector(selector);
-
-      if (keyboard && keyboard.style.display !== 'none' && ((isNumeric && activeInput === input) || (isEn && activeEnInput === input))) {
-          // If the correct keyboard for the active input is already visible, do nothing.
-          return;
-      }
-
-      // Hide all keyboards first
-      document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
-
-      // Show the target keyboard
-      if (keyboard) {
-        if (isNumeric) {
-          activeInput = input;
-          activeEnInput = null;
-          keyboard.style.display = 'inline-block';
-        } else if (isEn) {
-          activeInput = null;
-          activeEnInput = input;
-          keyboard.style.display = 'flex';
-        }
-      }
-    };
-
-    document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input').forEach(input => {
-        input.addEventListener('click', (event) => {
-            event.stopPropagation();
-            showKeyboard(input);
-        });
-    });
-
-    document.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!target.closest('.numeric-input, .en-fill-in-the-blank-input, .keypad, .virtual-keyboard')) {
-        document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
-        activeInput = null;
-        activeEnInput = null;
-      }
-    });
-
-    document.querySelectorAll('.keypad').forEach(keypad => {
-      const qid = keypad.dataset.qid;
-      keypad.querySelectorAll('.key-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (!activeInput || activeInput.dataset.qid !== qid) return;
-          const char = btn.dataset.num;
-          const currentValue = activeInput.value;
-          if (char === 'del') activeInput.value = currentValue.slice(0, -1);
-          else if (char === 'clear') activeInput.value = '';
-          else if (char === '-') { if (currentValue.length === 0) activeInput.value += char; }
-          else if (char === '.') { if (!currentValue.includes('.')) activeInput.value += char; }
-          else if (char === '/') { if (!currentValue.includes('/')) activeInput.value += char; }
-          else activeInput.value += char;
-        });
-      });
-    });
-
-    document.querySelectorAll('.virtual-keyboard').forEach(keyboard => {
-      const qid = keyboard.dataset.qid;
-      keyboard.querySelectorAll('.key-btn-en').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (!activeEnInput || activeEnInput.dataset.qid !== qid) return;
-          const key = btn.dataset.key;
-          if (key === 'del') activeEnInput.value = activeEnInput.value.slice(0, -1);
-          else if (key === 'clear') activeEnInput.value = '';
-          else activeEnInput.value += key;
-        });
-      });
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (activeInput) {
-        const key = event.key;
-        const currentValue = activeInput.value;
-        if ((key >= '0' && key <= '9') ||
-            (key === '.' && !currentValue.includes('.')) ||
-            (key === '/' && !currentValue.includes('/')) ||
-            (key === '-' && currentValue.length === 0)) {
-          event.preventDefault();
-          activeInput.value += key;
-        } else if (key === 'Backspace') {
-          event.preventDefault();
-          activeInput.value = currentValue.slice(0, -1);
-        }
-      } else if (activeEnInput) {
-        const key = event.key;
-        if ((key.length === 1 && key.match(/[a-z']/i)) || key === ' ') {
-          event.preventDefault();
-          activeEnInput.value += key.toLowerCase();
-        } else if (key === 'Backspace') {
-          event.preventDefault();
-          activeEnInput.value = activeEnInput.value.slice(0, -1);
-        }
-      }
-    });
-  });
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
-{% endblock %}
+        
+          document.addEventListener("DOMContentLoaded", () => {
+            renderMarkdownAndMath();
+        
+            // --- Memo Pad Modal Logic ---
+            const openBtn = document.getElementById('open-memo-btn');
+            const closeBtn = document.getElementById('close-memo-btn');
+            const modalBackdrop = document.getElementById('memo-modal-backdrop');
+            const canvas = document.getElementById('memo-canvas');
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+            let hasBeenResized = false;
+        
+            function resizeCanvas() {
+                const bodyRect = document.getElementById('memo-modal-body').getBoundingClientRect();
+                canvas.width = bodyRect.width - 2 * 16; // body padding
+                canvas.height = 400; // Fixed height
+                hasBeenResized = true;
+            }
+        
+            function openModal() {
+                modalBackdrop.style.display = 'flex';
+                if (!hasBeenResized) {
+                    resizeCanvas();
+                }
+            }
+        
+            function closeModal() {
+                modalBackdrop.style.display = 'none';
+            }
+        
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                if (e.touches && e.touches.length > 0) {
+                    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+                }
+                return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            }
+        
+            function startDrawing(e) {
+                drawing = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                // Add document-level listeners for mousemove and mouseup
+                document.addEventListener('mousemove', draw);
+                document.addEventListener('mouseup', stopDrawing);
+                e.preventDefault(); // Prevent default browser actions like text selection
+            }
+        
+            function draw(e) {
+                if (!drawing) return;
+                e.preventDefault();
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            }
+        
+            function stopDrawing() {
+                drawing = false;
+                ctx.closePath();
+                // Remove document-level listeners when drawing stops
+                document.removeEventListener('mousemove', draw);
+                document.removeEventListener('mouseup', stopDrawing);
+            }
+        
+            openBtn.addEventListener('click', openModal);
+            closeBtn.addEventListener('click', closeModal);
+            modalBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalBackdrop) closeModal();
+            });
+        
+            canvas.addEventListener('mousedown', startDrawing);
+            // Removed: canvas.addEventListener('mousemove', draw);
+            // Removed: canvas.addEventListener('mouseup', stopDrawing);
+            // Removed: canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing);
+        
+            document.getElementById('clear-memo-btn').addEventListener('click', () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+        
+            window.addEventListener('resize', () => { if(modalBackdrop.style.display === 'flex') resizeCanvas(); });
+        
+            // --- Draggable Memo Modal Logic ---
+            const memoModalContent = document.getElementById('memo-modal-content');
+            const memoModalHeader = document.getElementById('memo-modal-header');
+        
+            let isDragging = false;
+            let offsetX, offsetY;
+        
+            memoModalHeader.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                offsetX = e.clientX - memoModalContent.getBoundingClientRect().left;
+                offsetY = e.clientY - memoModalContent.getBoundingClientRect().top;
+                memoModalContent.style.cursor = 'grabbing';
+            });
+        
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault(); // Prevent text selection during drag
+        
+                const newX = e.clientX - offsetX;
+                const newY = e.clientY - offsetY;
+        
+                // Boundary checks to keep the modal within the viewport
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const modalWidth = memoModalContent.offsetWidth;
+                const modalHeight = memoModalContent.offsetHeight;
+        
+                const maxX = viewportWidth - modalWidth;
+                const maxY = viewportHeight - modalHeight;
+        
+                memoModalContent.style.left = `${Math.min(Math.max(0, newX), maxX)}px`;
+                memoModalContent.style.top = `${Math.min(Math.max(0, newY), maxY)}px`;
+                memoModalContent.style.transform = 'none'; // Remove transform for dragging
+            });
+        
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                memoModalContent.style.cursor = 'grab';
+            });
+        
+            // --- Existing JS logic ---
+            document.querySelectorAll('.choice-option').forEach(option => {
+              option.addEventListener('click', (event) => {
+                // Stop the event from propagating to parent elements
+                event.stopPropagation();
+                
+                // If the click is on the input itself, don't re-trigger the logic
+                if (event.target.tagName === 'INPUT') {
+                  // But we need to manually toggle the class if the checkbox was clicked
+                  if (event.target.type === 'checkbox') {
+                     option.classList.toggle('selected');
+                  }
+                  return;
+                }
+        
+                // multiple-choice の場合はトグル処理
+                if (option.classList.contains('multiple-choice')) {
+                  option.classList.toggle('selected');
+                  const input = option.querySelector('input[type="checkbox"]');
+                  if (input) {
+                    input.checked = !input.checked;
+                  }
+                } else { // 既存のラジオボタンの処理
+                  const qname = option.dataset.qname;
+                  document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => {
+                    el.classList.remove('selected');
+                    const input = el.querySelector('input[type="radio"]');
+                    if (input) input.checked = false;
+                  });
+                  option.classList.add('selected');
+                  const input = option.querySelector('input[type="radio"]');
+                  if (input) input.checked = true;
+                }
+              });
+            });
+        
+            document.querySelectorAll('.sortable').forEach(list => {
+              const name = list.dataset.name;
+              const hiddenInput = document.getElementById(`${name}_input`);
+              Sortable.create(list, {
+                animation: 150, touchStartThreshold: 0, ghostClass: 'sortable-ghost',
+                onEnd: () => {
+                  const order = Array.from(list.children).map(li => li.textContent.trim());
+                  hiddenInput.value = order.join(' ');
+                }
+              });
+              const initialOrder = Array.from(list.children).map(li => li.textContent.trim());
+              hiddenInput.value = initialOrder.join(' ');
+            });
+        
+            document.querySelectorAll('.svg-interactive-container').forEach(container => {
+              const q_index = container.dataset.questionIndex;
+              const questionBlock = container.closest('.question-block');
+              questionBlock.querySelectorAll('input[type="hidden"][data-choices]').forEach(hiddenInput => {
+                const choices = hiddenInput.dataset.choices.split(',');
+                choices.forEach(choiceId => {
+                  const shape = container.querySelector('#' + choiceId);
+                  if (shape) {
+                    shape.style.cursor = 'pointer';
+                    shape.addEventListener('click', () => {
+                      choices.forEach(id => {
+                        const otherShape = container.querySelector('#' + id);
+                        if(otherShape) { otherShape.style.stroke = ''; otherShape.style.strokeWidth = ''; }
+                      });
+                      shape.style.stroke = 'orange';
+                      shape.style.strokeWidth = '5px';
+                      hiddenInput.value = choiceId;
+                    });
+                  }
+                });
+              });
+            });
+        
+            let activeInput = null, activeEnInput = null;
+        
+            const showKeyboard = (input) => {
+              const isNumeric = input.classList.contains('numeric-input');
+              const isEn = input.classList.contains('en-fill-in-the-blank-input');
+        
+              if (!isNumeric && !isEn) return;
+        
+              // Check if the correct keyboard is already visible for this input
+              const qid = input.dataset.qid;
+              const questionBlock = input.closest('.question-block, .sub-questions-container');
+              if (!questionBlock) return;
+        
+              const selector = isNumeric ? `.keypad[data-qid="${qid}"]` : `.virtual-keyboard[data-qid="${qid}"]`;
+              const keyboard = questionBlock.querySelector(selector);
+        
+              if (keyboard && keyboard.style.display !== 'none' && ((isNumeric && activeInput === input) || (isEn && activeEnInput === input))) {
+                  // If the correct keyboard for the active input is already visible, do nothing.
+                  return;
+              }
+        
+              // Hide all keyboards first
+              document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
+        
+              // Show the target keyboard
+              if (keyboard) {
+                if (isNumeric) {
+                  activeInput = input;
+                  activeEnInput = null;
+                  keyboard.style.display = 'inline-block';
+                } else if (isEn) {
+                  activeInput = null;
+                  activeEnInput = input;
+                  keyboard.style.display = 'flex';
+                }
+              }
+            };
+        
+            document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input').forEach(input => {
+                input.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    showKeyboard(input);
+                });
+            });
+        
+            document.addEventListener('click', (event) => {
+              const target = event.target;
+              if (!target.closest('.numeric-input, .en-fill-in-the-blank-input, .keypad, .virtual-keyboard')) {
+                document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
+                activeInput = null;
+                activeEnInput = null;
+              }
+            });
+        
+            document.querySelectorAll('.keypad').forEach(keypad => {
+              const qid = keypad.dataset.qid;
+              keypad.querySelectorAll('.key-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                  if (!activeInput || activeInput.dataset.qid !== qid) return;
+                  const char = btn.dataset.num;
+                  const currentValue = activeInput.value;
+                  if (char === 'del') activeInput.value = currentValue.slice(0, -1);
+                  else if (char === 'clear') activeInput.value = '';
+                  else if (char === '-') { if (currentValue.length === 0) activeInput.value += char; }
+                  else if (char === '.') { if (!currentValue.includes('.')) activeInput.value += char; }
+                  else if (char === '/') { if (!currentValue.includes('/')) activeInput.value += char; }
+                  else activeInput.value += char;
+                });
+              });
+            });
+        
+            document.querySelectorAll('.virtual-keyboard').forEach(keyboard => {
+              const qid = keyboard.dataset.qid;
+              keyboard.querySelectorAll('.key-btn-en').forEach(btn => {
+                btn.addEventListener('click', () => {
+                  if (!activeEnInput || activeEnInput.dataset.qid !== qid) return;
+                  const key = btn.dataset.key;
+                  if (key === 'del') activeEnInput.value = activeEnInput.value.slice(0, -1);
+                  else if (key === 'clear') activeEnInput.value = '';
+                  else activeEnInput.value += key;
+                });
+              });
+            });
+        
+            document.addEventListener('keydown', (event) => {
+              if (activeInput) {
+                const key = event.key;
+                const currentValue = activeInput.value;
+                if ((key >= '0' && key <= '9') ||
+                    (key === '.' && !currentValue.includes('.')) ||
+                    (key === '/' && !currentValue.includes('/')) ||
+                    (key === '-' && currentValue.length === 0)) {
+                  event.preventDefault();
+                  activeInput.value += key;
+                } else if (key === 'Backspace') {
+                  event.preventDefault();
+                  activeInput.value = currentValue.slice(0, -1);
+                }
+              } else if (activeEnInput) {
+                const key = event.key;
+                if ((key.length === 1 && key.match(/[a-z']/i)) || key === ' ') {
+                  event.preventDefault();
+                  activeEnInput.value += key.toLowerCase();
+                } else if (key === 'Backspace') {
+                  event.preventDefault();
+                  activeEnInput.value = activeEnInput.value.slice(0, -1);
+                }
+              }
+            });
+        
+            // --- Function Plotting Logic ---
+            const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
+            document.querySelectorAll('.function-graph-container').forEach((container, i) => {
+                const functionsDataRaw = container.dataset.functions;
+                const targetId = `#graph-target-${i}`;
+                const legendId = `graph-legend-${i}`;
+                
+                if (functionsDataRaw && targetId) {
+                    try {
+                        const functionsData = JSON.parse(functionsDataRaw);
+                        
+                        const plotData = functionsData.map((item, index) => {
+                            let fnString = item.fn.trim().replace(/^y\s*=\s*/, '');
+                            // Explicitly handle implicit multiplication, e.g., "2x" -> "2*x"
+                            fnString = fnString.replace(/(\d)([a-zA-Z])/g, '$1*$2'); // number followed by letter
+                            fnString = fnString.replace(/([a-zA-Z])(\d)/g, '$1*$2'); // letter followed by number (less common for functions but safe)
+                            fnString = fnString.replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2'); // letter followed by letter (e.g., ax -> a*x)
+                            return {
+                                fn: fnString,
+                                color: colors[index % colors.length]
+                            };
+                        });
+        
+                        functionPlot({
+                            target: targetId,
+                            data: plotData,
+                            grid: true
+                        });
+        
+                        // Render legend
+                        const legendContainer = document.getElementById(legendId);
+                        legendContainer.innerHTML = '';
+                        functionsData.forEach((item, index) => {
+                            if (item.caption) {
+                                const legendItem = document.createElement('div');
+                                legendItem.classList.add('legend-item');
+                                
+                                legendItem.innerHTML = `
+                                    <div class="legend-color" style="background-color: ${colors[index % colors.length]}"></div>
+                                    <div class="legend-text markdown" data-content="${item.caption.replace(/"/g, '&quot;')}"></div>
+                                `;
+                                legendContainer.appendChild(legendItem);
+                            }
+                        });
+                        // Re-run markdown and mathjax rendering for the new legend items
+                        renderMarkdownAndMath();
+        
+                    } catch (e) {
+                        console.error(`Error processing function data:`, e);
+                        container.querySelector(targetId).textContent = 'グラフの描画に失敗しました。';
+                    }
+                }
+            });
+          });
+        </script>
+        
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+        {% endblock %}

@@ -312,6 +312,14 @@ def quest_run(quest_id):
                 "svg_content": q.choices, # choicesにSVGコンテンツを格納
                 "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
             })
+        elif q.type == 'function_graph':
+            questions.append({
+                "type": q.type,
+                "text": q.text,
+                "answer": answer, # This will be the parsed list of dicts
+                "choices": choices,
+                "answers": None
+            })
         else:
             questions.append({
                 "type": q.type,  
@@ -925,6 +933,10 @@ def edit_question(quest_id, question_id):
             except json.JSONDecodeError:
                 answers = [] # Invalid JSON in DB, treat as empty
 
+        if question.type == 'function_graph' and question.answer:
+            # Escape backslashes for the JavaScript template literal in edit_question.html
+            question.answer = question.answer.replace('\\', '\\\\')
+
         # question.answers にセット（テンプレートで読みやすくする）
         if answers is not None:
             question.answers = answers
@@ -972,9 +984,15 @@ def save_question(quest_id, question_id):
             answers = []
             for i in range(4):
                 label = request.form.get(f'label{i}', '')
-                value = request.form.get(f'num_answer{i}', '')
-                if label and value:
-                    answers.append({'label': label, 'answer': int(value)})
+                value_str = request.form.get(f'num_answer{i}', '')
+                if label and value_str:
+                    try:
+                        # Ensure value is a valid number before converting
+                        answers.append({'label': label, 'answer': int(value_str)})
+                    except (ValueError, TypeError):
+                        # Skip invalid entries gracefully
+                        flash(f'数値入力の解答「{value_str}」は無効なため、スキップされました。', 'warning')
+                        pass
             question.choices = None
             question.answer = json.dumps(answers)
 
@@ -996,11 +1014,23 @@ def save_question(quest_id, question_id):
             question.choices = svg_content
             question.answer = json.dumps(sub_questions)
 
+        elif q_type == 'function_graph':
+            question.choices = None
+            # The client-side JS already formats this into a JSON string.
+            json_string_from_client = request.form.get('answer_function_graph', '[]')
+            # Validate that it's valid JSON before saving.
+            try:
+                json.loads(json_string_from_client)
+                question.answer = json_string_from_client
+            except json.JSONDecodeError:
+                question.answer = '[]'
+                flash('方程式グラフのデータ形式が無効だったため、保存されませんでした。', 'error')
+
         if question_id == 'new':
             db.session.add(question)
         
         db.session.commit()
-        flash('問題を保存しました')
+        flash('問題を保存しました', 'success')
 
     return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
