@@ -134,6 +134,7 @@
 <!-- 保存ボタン：上段 -->
 <br>
 <button type="submit" name="action" value="save_question">保存</button>
+<button type="button" id="preview-button">プレビュー</button>
 <!-- 戻るボタン：下段 -->
 <div style="margin-top: 1rem;">
   <a href="{{ url_for('edit_quest', quest_id=quest_id, title=title, level=level) }}" class="button">クエスト編集に戻る</a>
@@ -171,6 +172,26 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <script>
+    function serializeFunctionEntries() {
+        const typeSelect = document.getElementById('type-select');
+        const functionEntriesContainer = document.getElementById('function-entries-container');
+        const hiddenFunctionGraphInput = document.getElementById('answer_function_graph_hidden');
+
+        if (typeSelect.value !== 'function_graph') return;
+        
+        const entries = [];
+        functionEntriesContainer.querySelectorAll('.function-entry').forEach(entryEl => {
+            const fnInput = entryEl.querySelector('.function-fn-input');
+            const captionInput = entryEl.querySelector('.function-caption-input');
+            if (fnInput && captionInput) {
+                entries.push({
+                    fn: fnInput.value,
+                    caption: captionInput.value
+                });
+            }
+        });
+        hiddenFunctionGraphInput.value = JSON.stringify(entries);
+    }
   // Marked.js の設定を MathJax と共存できるように変更
   marked.setOptions({
     gfm: true,
@@ -313,22 +334,6 @@
     const hiddenFunctionGraphInput = document.getElementById('answer_function_graph_hidden');
     const mainForm = document.querySelector('form');
 
-    function serializeFunctionEntries() {
-        if (typeSelect.value !== 'function_graph') return;
-        const entries = [];
-        functionEntriesContainer.querySelectorAll('.function-entry').forEach(entryEl => {
-            const fnInput = entryEl.querySelector('.function-fn-input');
-            const captionInput = entryEl.querySelector('.function-caption-input');
-            if (fnInput && captionInput) {
-                entries.push({
-                    fn: fnInput.value,
-                    caption: captionInput.value
-                });
-            }
-        });
-        hiddenFunctionGraphInput.value = JSON.stringify(entries);
-    }
-
     function createFunctionEntry(fn = '', caption = '') {
         const entryDiv = document.createElement('div');
         entryDiv.classList.add('function-entry');
@@ -396,6 +401,25 @@
             }
         }
     }
+  });
+
+  document.getElementById('preview-button').addEventListener('click', function() {
+    const form = document.querySelector('form');
+    const originalAction = form.action;
+    const originalTarget = form.target;
+
+    form.action = "{{ url_for('preview_question') }}";
+    form.target = '_blank';
+    
+    // For function_graph, ensure the data is serialized before submitting for preview
+    if (document.getElementById('type-select').value === 'function_graph') {
+        serializeFunctionEntries();
+    }
+
+    form.submit();
+
+    form.action = originalAction;
+    form.target = originalTarget;
   });
 </script>
 

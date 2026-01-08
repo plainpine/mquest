@@ -1034,6 +1034,81 @@ def save_question(quest_id, question_id):
 
     return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
+@app.route('/preview_question', methods=['POST'])
+@login_required
+def preview_question():
+    """ 問題編集画面からのPOSTデータを受け取り、プレビューを表示する """
+    q_type = request.form.get('type')
+    text = request.form.get('text', '')
+    explanation = request.form.get('explanation', '')
+    
+    question_data = {
+        'type': q_type,
+        'text': text,
+        'explanation': explanation,
+        'choices': None,
+        'answer': None,
+        'answers': None,
+        'svg_content': None,
+        'sub_questions': None
+    }
+
+    if q_type == 'choice' or q_type == 'multiple_choice':
+        question_data['choices'] = [request.form.get(f'choice{i}', '') for i in range(4)]
+        question_data['answer'] = request.form.get('answer', '')
+    
+    elif q_type == 'sort':
+        question_data['answer'] = request.form.get('answer_sort', '')
+        # For sorting questions, the choices are generated from the answer
+        answer_text = question_data['answer']
+        if answer_text:
+            # A simple shuffle of characters or words can be done here if needed.
+            # For preview, we can just show the elements that will be sorted.
+            question_data['choices'] = sorted(answer_text.split(' '), key=lambda k: random.random())
+
+
+    elif q_type == 'fill_in_the_blank_en':
+        question_data['answer'] = request.form.get('answer_fill_in_the_blank_en', '')
+
+    elif q_type == 'numeric':
+        answers = []
+        for i in range(4):
+            label = request.form.get(f'label{i}', '')
+            value_str = request.form.get(f'num_answer{i}', '')
+            if label: # label or value might be present
+                answers.append({'label': label, 'answer': value_str})
+        question_data['answers'] = answers
+
+    elif q_type == 'svg_interactive':
+        question_data['svg_content'] = request.form.get('svg_content', '')
+        sub_ids = request.form.getlist('sub_id')
+        sub_prompts = request.form.getlist('sub_prompt')
+        sub_answers = request.form.getlist('sub_answer')
+        
+        sub_questions = []
+        for i in range(len(sub_ids)):
+            # Ensure all fields for a sub-question are present before adding
+            if sub_prompts[i]:
+                sub_questions.append({
+                    'id': sub_ids[i],
+                    'prompt': sub_prompts[i],
+                    'answer': sub_answers[i]
+                })
+        question_data['sub_questions'] = sub_questions
+        # The 'answer' field for svg_interactive in the database is the sub_questions JSON
+        question_data['answer'] = sub_questions
+
+    elif q_type == 'function_graph':
+        json_string = request.form.get('answer_function_graph', '[]')
+        try:
+            # The answer is a list of function definitions
+            question_data['answer'] = json.loads(json_string)
+        except json.JSONDecodeError:
+            question_data['answer'] = []
+
+    return render_template('question_preview.html', question=question_data)
+
+
 # タイトル一覧表示（ステップ1）
 @app.route('/select_title_admin')
 @login_required

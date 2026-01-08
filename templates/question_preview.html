@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+{% block title %}問題プレビュー{% endblock %}
+
+{% block content %}
+<style>
+    /* General container styles */
+    .question-container {
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    .explanation-container {
+        background-color: #f9f9f9;
+        border: 1px dashed #aaa;
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 8px;
+    }
+    .correct-answer {
+        background-color: #e8f5e9;
+        padding: 10px;
+        margin-top: 15px;
+        border-left: 5px solid #4CAF50;
+    }
+
+    /* Styles from quest_run.html */
+    .choice-option { padding: 1rem; border: 1px solid #ccc; border-radius: 8px; margin: 0.5rem 0; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; display: flex; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .choice-option:hover, .choice-option:active { background-color: #f7f7f7; }
+    .choice-option.selected { background-color: #d0ebff; border-color: #339af0; }
+    .choice-option .markdown { display: inline-block; white-space: normal; word-break: break-word; margin-left: 0.5rem; flex: 1; }
+    .markdown p { margin: 0; display: inline; }
+    .sortable-item { padding: 8px; border: 1px solid #ccc; margin-bottom: 4px; background-color: #f9f9f9; border-radius: 4px; user-select: none; touch-action: none; -webkit-user-drag: element; cursor: grab; }
+    .sortable-ghost { opacity: 0.4; }
+    .sortable-container { list-style-type: none; padding: 0; }
+    label { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; max-width: 100%; }
+    .numeric-input, .en-fill-in-the-blank-input { font-size: 1.2rem; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 0.5rem; text-align: center; }
+    .keypad { margin-top: 1rem; padding: 10px; border: 1px solid #ccc; border-radius: 8px; display: inline-block; }
+    .virtual-keyboard { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
+    .keyboard-row { margin-bottom: 5px; }
+    .key-btn, .key-btn-en { padding: 10px 15px; margin: 2px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: #f9f9f9; font-size: 1.2rem; min-width: 40px; text-align: center; }
+    .key-btn:active, .key-btn-en:active { background-color: #e0e0e0; }
+
+    /* Graph styles */
+    #function-plot { height: 400px; width: 100%; }
+    .graph-legend { margin-top: 1rem; }
+    .legend-item { display: flex; align-items: center; margin-bottom: 0.5rem; }
+    .legend-color { width: 20px; height: 10px; margin-right: 10px; border: 1px solid #ccc; }
+    .legend-text { flex: 1; }
+
+</style>
+
+<h2>問題プレビュー</h2>
+
+<div class="question-container">
+    <div class="question-text">
+        <h3>問題文</h3>
+        <div class="markdown" data-content="{{ question.text | e }}"></div>
+    </div>
+
+    <hr>
+
+    <div class="question-body">
+        {% set q_index = 0 %} {# Use a fixed index for preview #}
+
+        {% if question.type == 'choice' %}
+            <div class="choice-block">
+                {% for choice in question.choices %}
+                    {% if choice %}
+                    <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
+                        <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
+                        <span class="markdown" data-content="{{ choice | e }}"></span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+        {% elif question.type == 'multiple_choice' %}
+            <div class="choice-block">
+                 {% for choice in question.choices %}
+                    {% if choice %}
+                    <div class="choice-option multiple-choice" data-qname="q{{ q_index }}">
+                        <input type="checkbox" name="q{{ q_index }}" value="{{ choice | e }}" style="margin-right: 0.5rem;">
+                        <span class="markdown" data-content="{{ choice | e }}"></span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+        {% elif question.type == 'sort' %}
+            {% set text_parts = question.text.split('（', 1) %}
+            {% set sortable_text = text_parts[0] %}
+            <ul class="sortable-container sortable" id="q{{ q_index }}_sortable" data-name="q{{ q_index }}">
+                {% for part in sortable_text.split('/') %}
+                    {% set cleaned = part.strip() %}
+                    {% if cleaned %}
+                        <li class="sortable-item" data-id="item{{ loop.index0 }}">{{ cleaned }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            <input type="hidden" name="q{{ q_index }}" id="q{{ q_index }}_input">
+
+        {% elif question.type == 'numeric' %}
+            {% for ans in question.answers %}
+                <div class="numeric-block">
+                    <label class="markdown" data-content="{{ ans.label | e }}："></label>
+                    <input type="text" name="q{{ q_index }}_{{ loop.index0 }}" class="numeric-input" data-qid="{{ q_index }}" readonly>
+                </div>
+            {% endfor %}
+            <div style="height: 1rem;"></div>
+            <div class="keypad" data-qid="{{ q_index }}" style="display: none;">
+                <!-- Keypad buttons -->
+                <div class="keyboard-row">
+                    <button type="button" class="key-btn" data-num="1">1</button> <button type="button" class="key-btn" data-num="2">2</button> <button type="button" class="key-btn" data-num="3">3</button>
+                </div>
+                <div class="keyboard-row">
+                    <button type="button" class="key-btn" data-num="4">4</button> <button type="button" class="key-btn" data-num="5">5</button> <button type="button" class="key-btn" data-num="6">6</button>
+                </div>
+                <div class="keyboard-row">
+                    <button type="button" class="key-btn" data-num="7">7</button> <button type="button" class="key-btn" data-num="8">8</button> <button type="button" class="key-btn" data-num="9">9</button>
+                </div>
+                <div class="keyboard-row">
+                    <button type="button" class="key-btn" data-num="0">0</button> <button type="button" class="key-btn" data-num=".">.</button> <button type="button" class="key-btn" data-num="-">-</button> <button type="button" class="key-btn" data-num="/">/</button>
+                </div>
+                <div class="keyboard-row">
+                    <button type="button" class="key-btn" data-num="del">⌫</button> <button type="button" class="key-btn" data-num="clear">CL</button>
+                </div>
+            </div>
+
+        {% elif question.type == 'fill_in_the_blank_en' %}
+            <div class="en-fill-in-the-blank-block">
+                <input type="text" name="q{{ q_index }}" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" autocomplete="off" readonly>
+                <div class="virtual-keyboard" data-qid="{{ q_index }}" style="display: none;">
+                    <div class="keyboard-row">
+                        {% for key in 'qwertyuiop' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+                    </div>
+                    <div class="keyboard-row">
+                        {% for key in 'asdfghjkl' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+                        <button type="button" class="key-btn-en" data-key="'" >'</button>
+                    </div>
+                    <div class="keyboard-row">
+                        {% for key in 'zxcvbnm' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+                        <button type="button" class="key-btn-en" data-key="del">⌫</button> <button type="button" class="key-btn-en" data-key="clear">CL</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button type="button" class="key-btn-en" data-key=" ">space</button>
+                    </div>
+                </div>
+            </div>
+            
+        {% elif question.type == 'svg_interactive' %}
+            <div class="svg-interactive-container" data-question-index="{{ q_index }}">
+                {{ question.svg_content | safe }}
+            </div>
+            <div class="sub-questions-container">
+                {% for sub_q in question.sub_questions %}
+                    <div class="sub-question" style="margin-bottom: 1rem;">
+                        <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+                        <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" readonly style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+                    </div>
+                {% endfor %}
+                <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
+                    <!-- Keypad buttons -->
+                    <div class="keyboard-row">
+                        <button type="button" class="key-btn" data-num="1">1</button> <button type="button" class="key-btn" data-num="2">2</button> <button type="button" class="key-btn" data-num="3">3</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button type="button" class="key-btn" data-num="4">4</button> <button type="button" class="key-btn" data-num="5">5</button> <button type="button" class="key-btn" data-num="6">6</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button type="button" class="key-btn" data-num="7">7</button> <button type="button" class="key-btn" data-num="8">8</button> <button type="button" class="key-btn" data-num="9">9</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button type="button" class="key-btn" data-num="0">0</button> <button type="button" class="key-btn" data-num=".">.</button> <button type="button" class="key-btn" data-num="-">-</button> <button type="button" class="key-btn" data-num="/">/</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button type="button" class="key-btn" data-num="del">⌫</button> <button type="button" class="key-btn" data-num="clear">CL</button>
+                    </div>
+                </div>
+            </div>
+
+        {% elif question.type == 'function_graph' %}
+            {# The user mentioned a preview button not working, but this renders the graph directly. 
+               This aligns with quest_run.html behavior and avoids confusion. #}
+            <div class="function-graph-container" data-functions='{{ question.answer | tojson }}'>
+                <div id="graph-target-{{ q_index }}"></div>
+                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+            </div>
+        
+        {% endif %}
+    </div>
+</div>
+
+<div class="explanation-container">
+    <h3>解説</h3>
+    <div class="markdown" data-content="{{ question.explanation | e }}"></div>
+    <div class="correct-answer">
+        <strong>正解:</strong>
+        <span id="correct-answer-content">
+            {% if question.type in ['choice', 'multiple_choice', 'sort'] %}
+                <div class="markdown" data-content="{{ question.answer | e }}"></div>
+            {% elif question.type == 'fill_in_the_blank_en' %}
+                 <div class="markdown" data-content="{{ question.answer | e }}"></div>
+            {% elif question.type == 'numeric' %}
+                <ul>
+                {% for ans in question.answers %}
+                    <li><span class="markdown" data-content="{{ ans.label | e }}: {{ ans.answer }}"></span></li>
+                {% endfor %}
+                </ul>
+            {% elif question.type == 'svg_interactive' %}
+                 <ul>
+                {% for sub_q in question.answer %}
+                    <li><span class="markdown" data-content="{{ sub_q.prompt | e }}: {{ sub_q.answer }}"></span></li>
+                {% endfor %}
+                </ul>
+            {% elif question.type == 'function_graph' %}
+                <ul>
+                {% for func in question.answer %}
+                    <li>
+                        方程式: <code>{{ func.fn }}</code><br>
+                        キャプション: <span class="markdown" data-content="{{ func.caption | e }}"></span>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </span>
+    </div>
+</div>
+
+<div style="margin-top: 2rem;">
+  <button onclick="window.close();" class="button">閉じる</button>
+</div>
+
+<!-- Required JS libraries -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/function-plot/dist/function-plot.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+<script>
+    function htmlDecode(input) {
+        var doc = new DOMParser().parseFromString(input, "text/html");
+        return doc.documentElement.textContent;
+    }
+
+    function renderMarkdownAndMath() {
+        marked.setOptions({ breaks: true });
+        document.querySelectorAll('.markdown').forEach(div => {
+            let md = div.getAttribute('data-content');
+            if (!md) return;
+            md = htmlDecode(md.replace(/\\n/g, '\n'));
+            div.innerHTML = marked.parse(md);
+        });
+        if (window.MathJax && MathJax.typesetPromise) {
+            MathJax.typesetPromise();
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        renderMarkdownAndMath();
+
+        // --- Choice selection logic ---
+        document.querySelectorAll('.choice-option').forEach(option => {
+            option.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (event.target.tagName === 'INPUT') {
+                    if (event.target.type === 'checkbox') {
+                       option.classList.toggle('selected');
+                    }
+                    return;
+                }
+                if (option.classList.contains('multiple-choice')) {
+                    option.classList.toggle('selected');
+                    const input = option.querySelector('input[type="checkbox"]');
+                    if (input) input.checked = !input.checked;
+                } else {
+                    const qname = option.dataset.qname;
+                    document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => {
+                        el.classList.remove('selected');
+                        const input = el.querySelector('input[type="radio"]');
+                        if (input) input.checked = false;
+                    });
+                    option.classList.add('selected');
+                    const input = option.querySelector('input[type="radio"]');
+                    if (input) input.checked = true;
+                }
+            });
+        });
+
+        // --- Sortable logic ---
+        document.querySelectorAll('.sortable').forEach(list => {
+            const name = list.dataset.name;
+            const hiddenInput = document.getElementById(`${name}_input`);
+            Sortable.create(list, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: () => {
+                    if (!hiddenInput) return; // No input to update in preview
+                    const order = Array.from(list.children).map(li => li.textContent.trim());
+                    hiddenInput.value = order.join(' ');
+                }
+            });
+        });
+
+        // --- Virtual Keyboard/Keypad Logic ---
+        let activeInput = null, activeEnInput = null;
+
+        const showKeyboard = (input) => {
+            const isNumeric = input.classList.contains('numeric-input');
+            const isEn = input.classList.contains('en-fill-in-the-blank-input');
+            if (!isNumeric && !isEn) return;
+
+            const qid = input.dataset.qid;
+            const questionBlock = input.closest('.question-body');
+            if (!questionBlock) return;
+
+            // For svg_interactive, the keypad is inside a different container
+            const container = input.closest('.sub-questions-container') || questionBlock;
+            const selector = isNumeric ? `.keypad[data-qid="${qid}"]` : `.virtual-keyboard[data-qid="${qid}"]`;
+            const keyboard = container.querySelector(selector);
+            
+            if (keyboard && keyboard.style.display !== 'none' && ((isNumeric && activeInput === input) || (isEn && activeEnInput === input))) {
+                return;
+            }
+
+            document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
+
+            if (keyboard) {
+                if (isNumeric) {
+                    activeInput = input;
+                    activeEnInput = null;
+                    keyboard.style.display = 'inline-block';
+                } else if (isEn) {
+                    activeInput = null;
+                    activeEnInput = input;
+                    keyboard.style.display = 'flex';
+                }
+            }
+        };
+
+        document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input').forEach(input => {
+            input.addEventListener('click', (event) => {
+                event.stopPropagation();
+                showKeyboard(input);
+            });
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.numeric-input, .en-fill-in-the-blank-input, .keypad, .virtual-keyboard')) {
+                document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
+                activeInput = null;
+                activeEnInput = null;
+            }
+        });
+
+        document.querySelectorAll('.keypad').forEach(keypad => {
+            const qid = keypad.dataset.qid;
+            keypad.querySelectorAll('.key-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    let currentActiveInput = activeInput || activeEnInput;
+                    if (!currentActiveInput || currentActiveInput.dataset.qid !== qid) return;
+                    
+                    const char = btn.dataset.num;
+                    const currentValue = currentActiveInput.value;
+                    if (char === 'del') currentActiveInput.value = currentValue.slice(0, -1);
+                    else if (char === 'clear') currentActiveInput.value = '';
+                    else if (char === '-') { if (currentValue.length === 0) currentActiveInput.value += char; }
+                    else if (char === '.') { if (!currentValue.includes('.')) currentActiveInput.value += char; }
+                    else if (char === '/') { if (!currentValue.includes('/')) currentActiveInput.value += char; }
+                    else currentActiveInput.value += char;
+                });
+            });
+        });
+
+        document.querySelectorAll('.virtual-keyboard').forEach(keyboard => {
+            const qid = keyboard.dataset.qid;
+            keyboard.querySelectorAll('.key-btn-en').forEach(btn => {
+                btn.addEventListener('click', () => {
+                     if (!activeEnInput || activeEnInput.dataset.qid !== qid) return;
+                    const key = btn.dataset.key;
+                    if (key === 'del') activeEnInput.value = activeEnInput.value.slice(0, -1);
+                    else if (key === 'clear') activeEnInput.value = '';
+                    else activeEnInput.value += key;
+                });
+            });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (activeInput) { // For numeric inputs
+                const key = event.key;
+                const currentValue = activeInput.value;
+                if ((key >= '0' && key <= '9') ||
+                    (key === '.' && !currentValue.includes('.')) ||
+                    (key === '/' && !currentValue.includes('/')) ||
+                    (key === '-' && currentValue.length === 0)) {
+                    event.preventDefault();
+                    activeInput.value += key;
+                } else if (key === 'Backspace') {
+                    event.preventDefault();
+                    activeInput.value = currentValue.slice(0, -1);
+                }
+            } else if (activeEnInput) { // For English fill-in-the-blank inputs
+                const key = event.key;
+                if ((key.length === 1 && key.match(/[a-z' ]/i)) || key === ' ') {
+                    event.preventDefault();
+                    activeEnInput.value += key.toLowerCase();
+                } else if (key === 'Backspace') {
+                    event.preventDefault();
+                    activeEnInput.value = activeEnInput.value.slice(0, -1);
+                }
+            }
+        });
+        
+        // --- SVG interactive logic ---
+        document.querySelectorAll('.svg-interactive-container').forEach(container => {
+            // In preview mode, this can be simplified as we are not submitting answers.
+            // You can add visual feedback on click if desired.
+            container.querySelectorAll('[id]').forEach(shape => {
+                shape.style.cursor = 'pointer';
+                shape.addEventListener('click', () => {
+                    // Example: highlight on click
+                    if (shape.style.stroke === 'orange') {
+                        shape.style.stroke = '';
+                        shape.style.strokeWidth = '';
+                    } else {
+                        shape.style.stroke = 'orange';
+                        shape.style.strokeWidth = '5px';
+                    }
+                });
+            });
+        });
+
+        // --- Function Plotting Logic ---
+        const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
+        document.querySelectorAll('.function-graph-container').forEach((container, i) => {
+            const functionsDataRaw = container.dataset.functions;
+            const targetId = `#graph-target-${i}`;
+            const legendId = `graph-legend-${i}`;
+            
+            if (functionsDataRaw && document.querySelector(targetId)) {
+                try {
+                    const functionsData = JSON.parse(functionsDataRaw);
+                    const plotData = functionsData.map((item, index) => {
+                        let fnString = item.fn.trim().replace(/^y\s*=\s*/, '');
+                        fnString = fnString.replace(/(\d)([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])(\d)/g, '$1*$2').replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
+                        return { fn: fnString, color: colors[index % colors.length] };
+                    });
+
+                    functionPlot({ target: targetId, data: plotData, grid: true });
+
+                    const legendContainer = document.getElementById(legendId);
+                    if(legendContainer) {
+                        legendContainer.innerHTML = '';
+                        functionsData.forEach((item, index) => {
+                            if (item.caption) {
+                                const legendItem = document.createElement('div');
+                                legendItem.classList.add('legend-item');
+                                legendItem.innerHTML = `
+                                    <div class="legend-color" style="background-color: ${colors[index % colors.length]}"></div>
+                                    <div class="legend-text markdown" data-content="${item.caption.replace(/"/g, '&quot;')}"></div>
+                                `;
+                                legendContainer.appendChild(legendItem);
+                            }
+                        });
+                        // Re-run markdown and mathjax for the new legend items
+                        renderMarkdownAndMath();
+                    }
+
+                } catch (e) {
+                    console.error(`Error processing function data:`, e);
+                    container.querySelector(targetId).textContent = 'グラフの描画に失敗しました。';
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
