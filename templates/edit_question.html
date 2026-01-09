@@ -196,37 +196,6 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <script>
-<<<<<<< HEAD
-=======
-  document.addEventListener('DOMContentLoaded', () => {
-    // --- Function Definitions ---
-    function serializeFunctionEntries() {
-        if (typeSelect.value !== 'function_graph') return;
-        const functionEntriesContainer = document.getElementById('function-entries-container');
-        const hiddenInput = document.getElementById('answer_function_graph_hidden');
-        
-        const entries = Array.from(functionEntriesContainer.querySelectorAll('.function-entry')).map(entryEl => {
-            const fnInput = entryEl.querySelector('.function-fn-input');
-            const captionInput = entryEl.querySelector('.function-caption-input');
-            return { fn: fnInput.value, caption: captionInput.value };
-        });
-        hiddenInput.value = JSON.stringify(entries);
-    }
-
-    function serializeFunctionGraphAnswers() {
-        if (typeSelect.value !== 'function_graph') return;
-        const container = document.getElementById('function-graph-answers-container');
-        const hiddenInput = document.getElementById('answers_function_graph_hidden');
-        
-        const answers = Array.from(container.querySelectorAll('.sub-question')).map(answerEl => {
-            const promptInput = answerEl.querySelector('textarea[name="function_graph_answer_prompt"]');
-            const correctAnswerInput = answerEl.querySelector('input[name="function_graph_correct_answer"]');
-            return { prompt: promptInput.value, answer: correctAnswerInput.value };
-        });
-        hiddenInput.value = JSON.stringify(answers);
-    }
-
->>>>>>> f97fc732c8fbc087ced2e0d0207057ce706e764c
     marked.setOptions({
         gfm: true,
         breaks: true
@@ -260,7 +229,6 @@
       }
     }
 
-<<<<<<< HEAD
   document.addEventListener('DOMContentLoaded', () => {
     // --- Function Definitions ---
     function serializeFunctionEntries() {
@@ -289,8 +257,6 @@
         hiddenInput.value = JSON.stringify(answers);
     }
 
-=======
->>>>>>> f97fc732c8fbc087ced2e0d0207057ce706e764c
     function updateSections() {
         const selectedType = typeSelect.value;
         // Hide all sections
@@ -307,13 +273,9 @@
       if (!inputElement || !inputElement.nextElementSibling) return;
       const preview = inputElement.nextElementSibling;
       preview.innerHTML = marked.parse(inputElement.value);
-<<<<<<< HEAD
       if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
         await MathJax.typesetPromise([preview]);
       }
-=======
-      await MathJax.typesetPromise([preview]);
->>>>>>> f97fc732c8fbc087ced2e0d0207057ce706e764c
     }
 
     function createFunctionEntry(fn = '', caption = '') {
@@ -387,7 +349,6 @@
         });
 
         document.getElementById('add-sub-question').addEventListener('click', () => {
-<<<<<<< HEAD
             const subQuestionCounter = subQuestionsContainer.querySelectorAll('.sub-question').length;
             const newSubQuestion = document.createElement('div');
             newSubQuestion.classList.add('sub-question');
@@ -408,9 +369,6 @@
             const newInput = newSubQuestion.querySelector('.sub-prompt-input');
             updateSubQuestionPreview(newInput);
             newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
-=======
-            // Logic to add sub-question for svg_interactive
->>>>>>> f97fc732c8fbc087ced2e0d0207057ce706e764c
         });
 
         subQuestionsContainer.addEventListener('click', (e) => {
@@ -423,7 +381,21 @@
     // SVG Preview Logic
     const svgPreviewButton = document.getElementById('svg-preview-button');
     if (svgPreviewButton) {
-      svgPreviewButton.addEventListener('click', () => { /* SVG preview logic */ });
+      svgPreviewButton.addEventListener('click', () => {
+        const svgContent = document.getElementById('svg-content-textarea').value;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for('main.svg_preview') }}';
+        form.target = '_blank';
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'svg_data';
+        hiddenField.value = svgContent;
+        form.appendChild(hiddenField);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      });
     }
 
     // --- Function Graph Section Logic ---
