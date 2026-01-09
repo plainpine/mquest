@@ -196,8 +196,6 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // --- Function Definitions ---
     marked.setOptions({
         gfm: true,
         breaks: true
@@ -351,7 +349,26 @@
         });
 
         document.getElementById('add-sub-question').addEventListener('click', () => {
-            // Logic to add sub-question for svg_interactive
+            const subQuestionCounter = subQuestionsContainer.querySelectorAll('.sub-question').length;
+            const newSubQuestion = document.createElement('div');
+            newSubQuestion.classList.add('sub-question');
+            newSubQuestion.innerHTML = `
+                <input type="hidden" name="sub_id" value="sub${subQuestionCounter}">
+                <div>
+                  <label>問題文 (Markdown):</label>
+                  <textarea name="sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
+                  <div class="markdown-preview sub-prompt-preview"></div>
+                </div>
+                <div>
+                  <label>正答:</label>
+                  <input type="text" name="sub_answer" placeholder="正答">
+                </div>
+                <button type="button" class="remove-sub-question">削除</button>
+            `;
+            subQuestionsContainer.appendChild(newSubQuestion);
+            const newInput = newSubQuestion.querySelector('.sub-prompt-input');
+            updateSubQuestionPreview(newInput);
+            newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
         });
 
         subQuestionsContainer.addEventListener('click', (e) => {
@@ -364,7 +381,21 @@
     // SVG Preview Logic
     const svgPreviewButton = document.getElementById('svg-preview-button');
     if (svgPreviewButton) {
-      svgPreviewButton.addEventListener('click', () => { /* SVG preview logic */ });
+      svgPreviewButton.addEventListener('click', () => {
+        const svgContent = document.getElementById('svg-content-textarea').value;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for('main.svg_preview') }}';
+        form.target = '_blank';
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'svg_data';
+        hiddenField.value = svgContent;
+        form.appendChild(hiddenField);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      });
     }
 
     // --- Function Graph Section Logic ---
