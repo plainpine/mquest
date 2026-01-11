@@ -936,6 +936,11 @@ def edit_question(quest_id, question_id):
         if question.type == 'function_graph' and question.answer:
             # Escape backslashes for the JavaScript template literal in edit_question.html
             question.answer = question.answer.replace('\\', '\\\\')
+            # NEW: Load sub-questions from the 'choices' field
+            try:
+                answers = json.loads(question.choices) if question.choices else []
+            except json.JSONDecodeError:
+                answers = []
 
         # question.answers にセット（テンプレートで読みやすくする）
         if answers is not None:
@@ -948,8 +953,9 @@ def edit_question(quest_id, question_id):
         return render_template('edit_question.html', quest_id=quest.id, question=question, choices=choices, answers=answers, title=title, level=level)
 
 # 問題の保存画面
-@app.route('/admin/question/save/<int:quest_id>/<question_id>', methods=['POST'])
-def save_question(quest_id, question_id):
+@app.route('/admin/question/save/<int:quest_id>', methods=['POST'])
+def save_question(quest_id):
+    question_id = request.form.get('question_id')
     title = request.form.get('title', '')
     level = request.form.get('level', '')
 
@@ -1015,16 +1021,23 @@ def save_question(quest_id, question_id):
             question.answer = json.dumps(sub_questions)
 
         elif q_type == 'function_graph':
-            question.choices = None
-            # The client-side JS already formats this into a JSON string.
-            json_string_from_client = request.form.get('answer_function_graph', '[]')
-            # Validate that it's valid JSON before saving.
+            # The 'answer' field stores the function definitions for the graph
+            graph_definitions_json = request.form.get('answer_function_graph', '[]')
             try:
-                json.loads(json_string_from_client)
-                question.answer = json_string_from_client
+                json.loads(graph_definitions_json)
+                question.answer = graph_definitions_json
             except json.JSONDecodeError:
                 question.answer = '[]'
-                flash('方程式グラフのデータ形式が無効だったため、保存されませんでした。', 'error')
+                flash('方程式グラフの定義データ形式が無効だったため、保存されませんでした。', 'error')
+
+            # The 'choices' field stores the sub-questions (prompts and answers)
+            sub_questions_json = request.form.get('answers', '[]')
+            try:
+                json.loads(sub_questions_json)
+                question.choices = sub_questions_json
+            except json.JSONDecodeError:
+                question.choices = '[]'
+                flash('方程式グラフの回答データ形式が無効だったため、保存されませんでした。', 'error')
 
         if question_id == 'new':
             db.session.add(question)
@@ -1099,12 +1112,21 @@ def preview_question():
         question_data['answer'] = sub_questions
 
     elif q_type == 'function_graph':
-        json_string = request.form.get('answer_function_graph', '[]')
+        # Get graph definitions
+        graph_json_string = request.form.get('answer_function_graph', '[]')
         try:
             # The answer is a list of function definitions
-            question_data['answer'] = json.loads(json_string)
+            question_data['answer'] = json.loads(graph_json_string)
         except json.JSONDecodeError:
             question_data['answer'] = []
+        
+        # Get sub-questions (prompts and answers)
+        answers_json_string = request.form.get('answers', '[]')
+        try:
+            # Put sub-questions into 'choices' to align with how quest_run handles it
+            question_data['choices'] = json.loads(answers_json_string)
+        except json.JSONDecodeError:
+            question_data['choices'] = []
 
     return render_template('question_preview.html', question=question_data)
 
