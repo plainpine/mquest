@@ -1005,20 +1005,17 @@ def edit_question(quest_id, question_id):
             except json.JSONDecodeError:
                 answers = []
         elif question.type == 'function_graph_choice':
-            # Choices for the select box are stored in question.choices
+            # Graph definitions are stored in question.choices (database field)
             try:
-                choices = json.loads(question.choices) if question.choices else []
+                choices = json.loads(question.choices) if question.choices else [] # This is correct for graph definitions
             except json.JSONDecodeError:
                 choices = []
             
-            # Graph definitions and correct answer are stored in question.answer
+            # Sub-questions (prompts, choices, answer) are stored in question.answer (database field)
             try:
-                answer_data = json.loads(question.answer) if question.answer else {}
-                answers = answer_data.get('graph_data', []) # Use 'answers' for graph data to reuse JS logic
-                question.correct_answer_text = answer_data.get('correct_answer', '') # Store correct answer separately
+                answers = json.loads(question.answer) if question.answer else [] # This should be the list of sub-questions
             except json.JSONDecodeError:
                 answers = []
-                question.correct_answer_text = ''
 
 
         # question.answers にセット（テンプレートで読みやすくする）
@@ -1136,23 +1133,28 @@ def save_question(quest_id):
             flash('方程式グラフの回答データ形式が無効だったため、保存されませんでした。', 'error')
 
     elif q_type == 'function_graph_choice':
-        # Choices are stored in question.choices as a JSON array
-        choices = [request.form.get(f'fgc_choice{i}', '') for i in range(4)]
-        question.choices = json.dumps(choices)
-
-        # Graph definitions and the correct answer text are stored in question.answer
+        # Graph definitions are stored in question.choices
         graph_definitions_json = request.form.get('function_graph_choice_definitions', '[]')
-        correct_answer = request.form.get('fgc_answer', '')
         try:
-            graph_data = json.loads(graph_definitions_json)
-            answer_data = {
-                'graph_data': graph_data,
-                'correct_answer': correct_answer
-            }
-            question.answer = json.dumps(answer_data)
+            json.loads(graph_definitions_json)
+            question.choices = graph_definitions_json
         except json.JSONDecodeError:
-            question.answer = '{}'
-            flash('方程式グラフ（選択）の定義データ形式が無効だったため、保存されませんでした。', 'error')
+            question.choices = '[]'
+            flash('方程式グラフ（選択）のグラフ定義データ形式が無効だったため、保存されませんでした。', 'error')
+
+        # Sub-questions are stored in question.answer
+        sub_prompts = request.form.getlist('fgc_sub_prompt')
+        sub_answers = request.form.getlist('fgc_sub_answer')
+        sub_questions = []
+        for i in range(len(sub_prompts)):
+            if sub_prompts[i]:
+                choices = [request.form.get(f'fgc_sub_choice_{i}_{j}', '') for j in range(4)]
+                sub_questions.append({
+                    'prompt': sub_prompts[i],
+                    'choices': choices,
+                    'answer': sub_answers[i] if i < len(sub_answers) else ''
+                })
+        question.answer = json.dumps(sub_questions)
     if question_id == 'new':
         db.session.add(question)
     

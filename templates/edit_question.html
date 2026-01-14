@@ -144,7 +144,8 @@
             <div>
               <label>選択肢:</label><br>
               {% for i in range(4) %}
-                <input type="text" name="figure_choice_sub_choice_{{ outer_loop_index }}_{{ i }}" value="{{ sub_q.choices[i] if sub_q.choices is iterable and sub_q.choices|length > i else '' }}"><br>
+                <input type="text" name="figure_choice_sub_choice_{{ outer_loop_index }}_{{ i }}" id="figure_choice_sub_choice_{{ outer_loop_index }}_{{ i }}" value="{{ sub_q.choices[i] if sub_q.choices is iterable and sub_q.choices|length > i else '' }}"><br>
+                <div id="figure_choice_sub_choice_{{ outer_loop_index }}_{{ i }}_preview" class="markdown-preview sub-choice-preview" style="margin-bottom: 0.5rem;"></div>
               {% endfor %}
             </div>
             <div>
@@ -214,7 +215,8 @@
               <div>
                 <label>選択肢:</label><br>
                 {% for i in range(4) %}
-                  <input type="text" name="fgc_sub_choice_{{ outer_loop_index }}_{{ i }}" value="{{ sub_q.choices[i] if sub_q.choices and sub_q.choices|length > i else '' }}"><br>
+                  <input type="text" name="fgc_sub_choice_{{ outer_loop_index }}_{{ i }}" id="fgc_sub_choice_{{ outer_loop_index }}_{{ i }}" value="{{ sub_q.choices[i] if sub_q.choices and sub_q.choices|length > i else '' }}"><br>
+                  <div id="fgc_sub_choice_{{ outer_loop_index }}_{{ i }}_preview" class="markdown-preview sub-choice-preview" style="margin-bottom: 0.5rem;"></div>
                 {% endfor %}
               </div>
               <div>
@@ -360,12 +362,19 @@
         }
     }
     
-    async function updateSubQuestionPreview(inputElement) {
-      if (!inputElement || !inputElement.nextElementSibling) return;
-      const preview = inputElement.nextElementSibling;
-      preview.innerHTML = marked.parse(inputElement.value);
-      if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
-        await MathJax.typesetPromise([preview]);
+    async function updateSubQuestionPreview(inputElement, previewElement = null) {
+      const targetPreview = previewElement || inputElement.nextElementSibling;
+      if (!inputElement || !targetPreview) return;
+      
+      try {
+        const markdown = inputElement.value || '';
+        targetPreview.innerHTML = marked.parse(markdown);
+        if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
+          await MathJax.typesetPromise([targetPreview]);
+        }
+      } catch (e) {
+        console.error(`Error updating sub-question preview:`, e);
+        if(targetPreview) targetPreview.innerHTML = "<p style='color: red;'>プレビューの生成中にエラーが発生しました。</p>";
       }
     }
 
@@ -626,6 +635,21 @@
                 <button type="button" class="remove-sub-question">削除</button>
             `;
             fgcSubQuestionsContainer.appendChild(newSubQuestion);
+            // Attach event listeners for the newly added choice inputs
+            for (let i = 0; i < 4; i++) {
+              const choiceInput = newSubQuestion.querySelector(`input[name="fgc_sub_choice_${subQuestionCounter}_${i}"]`);
+              if (choiceInput) {
+                const previewEl = document.createElement('div');
+                previewEl.id = `fgc_sub_choice_${subQuestionCounter}_${i}_preview`;
+                previewEl.classList.add('markdown-preview', 'sub-choice-preview');
+                previewEl.style.marginBottom = '0.5rem';
+                choiceInput.parentNode.insertBefore(previewEl, choiceInput.nextSibling); // Insert after the input
+                choiceInput.parentNode.insertBefore(document.createElement('br'), previewEl); // Insert <br> before the preview
+
+                updateSubQuestionPreview(choiceInput, previewEl); // Initial render
+                choiceInput.addEventListener('input', () => updateSubQuestionPreview(choiceInput, previewEl));
+              }
+            }
             const newInput = newSubQuestion.querySelector('.sub-prompt-input');
             updateSubQuestionPreview(newInput);
             newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
@@ -679,8 +703,8 @@
 
     // Initial population for function_graph_choice
     if (typeSelect.value === 'function_graph_choice') {
-        // 'answers' variable holds the graph_data for this type
-        const existingGraphData = {{ answers | default('[]') | tojson | safe }};
+        // 'choices' variable now holds the graph_data for this type
+        const existingGraphData = {{ choices | default('[]') | tojson | safe }}; // Corrected variable
         if (Array.isArray(existingGraphData) && existingGraphData.length > 0) {
             existingGraphData.forEach(item => createFunctionGraphChoiceEntry(item.fn || '', item.caption || ''));
         } else {
