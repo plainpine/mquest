@@ -202,11 +202,11 @@
       <h3 style="margin-top: 1rem;">選択肢と正答</h3>
       <label>選択肢 (Markdown):</label><br>
       {% for i in range(4) %}
-        <input type="text" name="fgc_choice{{ i }}" id="fgc_choice{{ i }}" value=""><br>
+        <input type="text" name="fgc_choice{{ i }}" id="fgc_choice{{ i }}" value="{{ choices[i] if choices and choices|length > i else '' }}"><br>
         <div id="fgc_choice{{ i }}_preview" class="markdown-preview" style="margin-bottom: 0.5rem;"></div>
       {% endfor %}
       <label>正解:</label>
-      <input type="text" name="fgc_answer" value="" placeholder="選択肢の本文と一致させてください">
+      <input type="text" name="fgc_answer" value="{{ question.correct_answer_text or '' }}" placeholder="選択肢の本文と一致させてください">
   </div>
 
 <!-- 保存ボタン：上段 -->
@@ -610,6 +610,17 @@
                 existingAnswers.forEach(item => createFunctionGraphAnswerEntry(item.prompt || '', item.answer || ''));
             }
         } catch(e) { console.error("Error parsing existing function graph answers:", e); }
+    }
+
+    // Initial population for function_graph_choice
+    if (typeSelect.value === 'function_graph_choice') {
+        // 'answers' variable holds the graph_data for this type
+        const existingGraphData = {{ answers | default('[]') | tojson | safe }};
+        if (Array.isArray(existingGraphData) && existingGraphData.length > 0) {
+            existingGraphData.forEach(item => createFunctionGraphChoiceEntry(item.fn || '', item.caption || ''));
+        } else {
+            createFunctionGraphChoiceEntry(); // Create one empty entry if none exist
+        }
     }
     
     // Preview Button Logic
