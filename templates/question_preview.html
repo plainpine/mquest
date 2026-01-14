@@ -69,14 +69,23 @@
         {% set q_index = 0 %} {# Use a fixed index for preview #}
 
         {% if question.type == 'choice' %}
-            <div class="choice-block">
-                {% for choice in question.choices %}
-                    {% if choice %}
-                    <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
-                        <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
+            {# Display sub-questions with their choices #}
+            <div class="sub-questions-container">
+                {% for sub_q in question.answers %} {# question.answers now contains sub-questions for function_graph_choice type #}
+                {% set outer_loop_index = loop.index0 %}
+                <div class="sub-question" style="margin-bottom: 1rem;">
+                    <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+                    <div class="choice-block">
+                    {% for choice in sub_q.choices %}
+                        {% if choice %}
+                        <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
+                        <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
                         <span class="markdown" data-content="{{ choice | e }}"></span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
                     </div>
-                    {% endif %}
+                </div>
                 {% endfor %}
             </div>
 
@@ -216,14 +225,23 @@
                 <div id="graph-target-{{ q_index }}"></div>
                 <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
             </div>
-            <div class="choice-block">
-                {% for choice in question.choices %}
-                    {% if choice %}
-                    <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
-                        <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
+            {# Display sub-questions with their choices #}
+            <div class="sub-questions-container">
+                {% for sub_q in question.answers %} {# question.answers now contains sub-questions for function_graph_choice type #}
+                {% set outer_loop_index = loop.index0 %}
+                <div class="sub-question" style="margin-bottom: 1rem;">
+                    <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+                    <div class="choice-block">
+                    {% for choice in sub_q.choices %}
+                        {% if choice %}
+                        <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
+                        <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
                         <span class="markdown" data-content="{{ choice | e }}"></span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
                     </div>
-                    {% endif %}
+                </div>
                 {% endfor %}
             </div>
 

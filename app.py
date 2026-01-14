@@ -1271,12 +1271,25 @@ def preview_question():
         except json.JSONDecodeError:
             question_data['graph_data'] = []
         
-        # Get choices
-        choices = [request.form.get(f'fgc_choice{i}', '') for i in range(4)]
-        question_data['choices'] = choices
+        # Get sub-questions (prompts, choices, answers)
+        sub_prompts = request.form.getlist('fgc_sub_prompt')
+        sub_answers = request.form.getlist('fgc_sub_answer')
         
-        # Get correct answer
-        question_data['correct_answer_text'] = request.form.get('fgc_answer', '')
+        sub_questions_list = []
+        for i in range(len(sub_prompts)):
+            if sub_prompts[i]:
+                choices_for_sub_q = [request.form.get(f'fgc_sub_choice_{i}_{j}', '') for j in range(4)]
+                sub_questions_list.append({
+                    'id': f'new{i}', # Assign a temporary ID for preview
+                    'prompt': sub_prompts[i],
+                    'choices': choices_for_sub_q,
+                    'answer': sub_answers[i] if i < len(sub_answers) else ''
+                })
+        question_data['answers'] = sub_questions_list # Store sub-questions in 'answers' for template
+        
+        # No general 'correct_answer_text' for the whole FGC question type from form submission,
+        # as answers are tied to each sub_question.
+        question_data['correct_answer_text'] = None # Clear this or set appropriately if needed for overall FGC.
 
     return render_template('question_preview.html', question=question_data)
 
