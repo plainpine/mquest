@@ -55,8 +55,8 @@
     <option value="sort" {% if question and question.type == 'sort' %}selected{% endif %}>並び替え</option>
     <option value="numeric" {% if question and question.type == 'numeric' %}selected{% endif %}>数値入力</option>
     <option value="fill_in_the_blank_en" {% if question and question.type == 'fill_in_the_blank_en' %}selected{% endif %}>英語穴埋め</option>
-    <option value="svg_interactive" {% if question and question.type == 'svg_interactive' %}selected{% endif %}>図形問題</option>
-    <option value="figure_choice" {% if question and question.type == 'figure_choice' %}selected{% endif %}>図形選択問題</option>
+    <option value="svg_interactive" {% if question and question.type == 'svg_interactive' %}selected{% endif %}>図形問題（入力）</option>
+    <option value="figure_choice" {% if question and question.type == 'figure_choice' %}selected{% endif %}>図形問題（選択）</option>
     <option value="function_graph" {% if question and question.type == 'function_graph' %}selected{% endif %}>方程式グラフ</option>
   </select>
 
