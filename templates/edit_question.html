@@ -58,6 +58,7 @@
     <option value="svg_interactive" {% if question and question.type == 'svg_interactive' %}selected{% endif %}>図形問題（入力）</option>
     <option value="figure_choice" {% if question and question.type == 'figure_choice' %}selected{% endif %}>図形問題（選択）</option>
     <option value="function_graph" {% if question and question.type == 'function_graph' %}selected{% endif %}>方程式グラフ</option>
+    <option value="function_graph_choice" {% if question and question.type == 'function_graph_choice' %}selected{% endif %}>方程式グラフ（選択）</option>
   </select>
 
   <label for="text-input">問題文（Markdown）:</label>
@@ -190,6 +191,24 @@
       <input type="hidden" name="answers" id="answers_function_graph_hidden">
   </div>
 
+  <div id="function-graph-choice-section" style="display:none;">
+      <h3>グラフ定義</h3>
+      <div id="function-graph-choice-entries-container">
+          {# JavaScript will populate this section #}
+      </div>
+      <button type="button" id="add-function-graph-choice-entry">方程式を追加</button>
+      <input type="hidden" name="function_graph_choice_definitions" id="function_graph_choice_definitions_hidden">
+
+      <h3 style="margin-top: 1rem;">選択肢と正答</h3>
+      <label>選択肢 (Markdown):</label><br>
+      {% for i in range(4) %}
+        <input type="text" name="fgc_choice{{ i }}" id="fgc_choice{{ i }}" value=""><br>
+        <div id="fgc_choice{{ i }}_preview" class="markdown-preview" style="margin-bottom: 0.5rem;"></div>
+      {% endfor %}
+      <label>正解:</label>
+      <input type="text" name="fgc_answer" value="" placeholder="選択肢の本文と一致させてください">
+  </div>
+
 <!-- 保存ボタン：上段 -->
 <br>
 <button type="submit">保存</button>
@@ -243,6 +262,7 @@
       ];
       for (let i = 0; i < 4; i++) {
         allPreviews.push({ inputId: `choice${i}`, previewId: `choice${i}_preview` });
+        allPreviews.push({ inputId: `fgc_choice${i}`, previewId: `fgc_choice${i}_preview` });
       }
 
       for (const item of allPreviews) {
@@ -272,6 +292,19 @@
         const hiddenInput = document.getElementById('answer_function_graph_hidden');
         
         const entries = Array.from(functionEntriesContainer.querySelectorAll('.function-entry')).map(entryEl => {
+            const fnInput = entryEl.querySelector('.function-fn-input');
+            const captionInput = entryEl.querySelector('.function-caption-input');
+            return { fn: fnInput.value, caption: captionInput.value };
+        });
+        hiddenInput.value = JSON.stringify(entries);
+    }
+
+    function serializeFunctionGraphChoiceEntries() {
+        if (typeSelect.value !== 'function_graph_choice') return;
+        const container = document.getElementById('function-graph-choice-entries-container');
+        const hiddenInput = document.getElementById('function_graph_choice_definitions_hidden');
+        
+        const entries = Array.from(container.querySelectorAll('.function-entry')).map(entryEl => {
             const fnInput = entryEl.querySelector('.function-fn-input');
             const captionInput = entryEl.querySelector('.function-caption-input');
             return { fn: fnInput.value, caption: captionInput.value };
@@ -329,6 +362,19 @@
         container.appendChild(entryDiv);
     }
 
+    function createFunctionGraphChoiceEntry(fn = '', caption = '') {
+        const container = document.getElementById('function-graph-choice-entries-container');
+        const entryDiv = document.createElement('div');
+        entryDiv.classList.add('function-entry');
+
+        entryDiv.innerHTML = `
+            <input type="text" class="function-fn-input" placeholder="方程式 (例: 2*x, x^2)" value="${fn}">
+            <input type="text" class="function-caption-input" placeholder="キャプション (Markdown/LaTeX)" value="${caption}">
+            <button type="button" class="remove-function-entry">削除</button>
+        `;
+        container.appendChild(entryDiv);
+    }
+
     function createFunctionGraphAnswerEntry(prompt = '', answer = '') {
         const container = document.getElementById('function-graph-answers-container');
         const entryDiv = document.createElement('div');
@@ -364,7 +410,8 @@
         fill_in_the_blank_en: document.getElementById('fill-in-the-blank-en-section'),
         svg_interactive: document.getElementById('svg-interactive-section'),
         figure_choice: document.getElementById('figure-choice-section'),
-        function_graph: document.getElementById('function-graph-section')
+        function_graph: document.getElementById('function-graph-section'),
+        function_graph_choice: document.getElementById('function-graph-choice-section')
     };
     const mainForm = document.querySelector('form');
 
@@ -377,6 +424,8 @@
     for (let i = 0; i < 4; i++) {
       const choiceInput = document.getElementById(`choice${i}`);
       if (choiceInput) choiceInput.addEventListener("input", updatePreviews);
+      const fgcChoiceInput = document.getElementById(`fgc_choice${i}`);
+      if (fgcChoiceInput) fgcChoiceInput.addEventListener("input", updatePreviews);
     }
     
     // Sub-question logic (for svg_interactive)
@@ -513,6 +562,17 @@
         });
     }
 
+    // --- Function Graph Choice Section Logic ---
+    const functionGraphChoiceEntriesContainer = document.getElementById('function-graph-choice-entries-container');
+    if (functionGraphChoiceEntriesContainer) {
+        document.getElementById('add-function-graph-choice-entry').addEventListener('click', () => createFunctionGraphChoiceEntry());
+        functionGraphChoiceEntriesContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-function-entry')) {
+                e.target.closest('.function-entry').remove();
+            }
+        });
+    }
+
     // --- Function Graph Answer Section Logic ---
     const functionGraphAnswersContainer = document.getElementById('function-graph-answers-container');
     if (functionGraphAnswersContainer) {
@@ -529,6 +589,7 @@
         mainForm.addEventListener('submit', (e) => {
             serializeFunctionEntries();
             serializeFunctionGraphAnswers();
+            serializeFunctionGraphChoiceEntries();
         });
     }
 
@@ -556,6 +617,9 @@
         if (document.getElementById('type-select').value === 'function_graph') {
             serializeFunctionEntries();
             serializeFunctionGraphAnswers();
+        }
+        if (document.getElementById('type-select').value === 'function_graph_choice') {
+            serializeFunctionGraphChoiceEntries();
         }
         
         const form = document.querySelector('form');

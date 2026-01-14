@@ -173,6 +173,22 @@
               </div>
               {# This type is for display only, no answer input needed #}
               <input type="hidden" name="q{{ q_index }}" value="seen">
+            {% elif question.type == 'function_graph_choice' %}
+              <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}'>
+                <div id="graph-target-{{ q_index }}"></div>
+                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+              </div>
+              <div class="choice-block">
+                <div style="height: 0.5rem;"></div>
+                {% for choice in question.choices %}
+                  {% if choice %}
+                  <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
+                    <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
+                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
             {% endif %}
             </div>
           {% endfor %}

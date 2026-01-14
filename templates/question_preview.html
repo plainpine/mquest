@@ -211,6 +211,22 @@
                 <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
             </div>
         
+        {% elif question.type == 'function_graph_choice' %}
+            <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}'>
+                <div id="graph-target-{{ q_index }}"></div>
+                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+            </div>
+            <div class="choice-block">
+                {% for choice in question.choices %}
+                    {% if choice %}
+                    <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
+                        <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
+                        <span class="markdown" data-content="{{ choice | e }}"></span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
         {% endif %}
     </div>
 </div>
@@ -251,6 +267,18 @@
                         キャプション: <span class="markdown" data-content="{{ func.caption | e }}"></span>
                     </li>
                 {% endfor %}
+                </ul>
+            {% elif question.type == 'function_graph_choice' %}
+                <ul>
+                    <li>
+                        グラフ定義:
+                        <ul>
+                            {% for func in question.graph_data %}
+                                <li>方程式: <code>{{ func.fn }}</code><br>キャプション: <span class="markdown" data-content="{{ func.caption | e }}"></span></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li>正解: <span class="markdown" data-content="{{ question.correct_answer_text | e }}"></span></li>
                 </ul>
             {% endif %}
         </span>

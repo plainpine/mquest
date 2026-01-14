@@ -327,6 +327,29 @@ def quest_run(quest_id):
                 "choices": choices,
                 "answers": None
             })
+        elif q.type == 'function_graph_choice':
+            # q.answer contains {"graph_data": [], "correct_answer": "text"}
+            # q.choices contains JSON array of choices
+            try:
+                answer_data = json.loads(q.answer)
+                graph_data = answer_data.get('graph_data', [])
+                correct_answer_text = answer_data.get('correct_answer', '')
+            except json.JSONDecodeError:
+                graph_data = []
+                correct_answer_text = ''
+            
+            try:
+                choices = json.loads(q.choices) if q.choices else []
+            except json.JSONDecodeError:
+                choices = []
+
+            questions.append({
+                "type": q.type,
+                "text": q.text,
+                "graph_data": graph_data,
+                "choices": choices,
+                "correct_answer_text": correct_answer_text # For grading if needed later
+            })
         else:
             questions.append({
                 "type": q.type,  
@@ -483,6 +506,17 @@ def quest_result(quest_id):
                     if user_val != expected_val:
                         correct = False
                 user_answer = user_input
+
+            elif question_type == 'function_graph_choice':
+                user_answer = request.form.get(f'q{i}', '').strip()
+                try:
+                    answer_data = json.loads(q.answer)
+                    correct_answer = answer_data.get('correct_answer', '')
+                except (json.JSONDecodeError, TypeError):
+                    correct_answer = ''
+                
+                correct = user_answer == correct_answer
+                expected = correct_answer
 
             results.append({
                 'question_id': q.id,
@@ -962,7 +996,7 @@ def edit_question(quest_id, question_id):
             except json.JSONDecodeError:
                 answers = [] # Invalid JSON in DB, treat as empty
 
-        if question.type == 'function_graph' and question.answer:
+        elif question.type == 'function_graph' and question.answer:
             # Escape backslashes for the JavaScript template literal in edit_question.html
             question.answer = question.answer.replace('\\', '\\\\')
             # NEW: Load sub-questions from the 'choices' field
@@ -970,6 +1004,22 @@ def edit_question(quest_id, question_id):
                 answers = json.loads(question.choices) if question.choices else []
             except json.JSONDecodeError:
                 answers = []
+        elif question.type == 'function_graph_choice':
+            # Choices for the select box are stored in question.choices
+            try:
+                choices = json.loads(question.choices) if question.choices else []
+            except json.JSONDecodeError:
+                choices = []
+            
+            # Graph definitions and correct answer are stored in question.answer
+            try:
+                answer_data = json.loads(question.answer) if question.answer else {}
+                answers = answer_data.get('graph_data', []) # Use 'answers' for graph data to reuse JS logic
+                question.correct_answer_text = answer_data.get('correct_answer', '') # Store correct answer separately
+            except json.JSONDecodeError:
+                answers = []
+                question.correct_answer_text = ''
+
 
         # question.answers にセット（テンプレートで読みやすくする）
         if answers is not None:
@@ -1085,6 +1135,24 @@ def save_question(quest_id):
             question.choices = '[]'
             flash('方程式グラフの回答データ形式が無効だったため、保存されませんでした。', 'error')
 
+    elif q_type == 'function_graph_choice':
+        # Choices are stored in question.choices as a JSON array
+        choices = [request.form.get(f'fgc_choice{i}', '') for i in range(4)]
+        question.choices = json.dumps(choices)
+
+        # Graph definitions and the correct answer text are stored in question.answer
+        graph_definitions_json = request.form.get('function_graph_choice_definitions', '[]')
+        correct_answer = request.form.get('fgc_answer', '')
+        try:
+            graph_data = json.loads(graph_definitions_json)
+            answer_data = {
+                'graph_data': graph_data,
+                'correct_answer': correct_answer
+            }
+            question.answer = json.dumps(answer_data)
+        except json.JSONDecodeError:
+            question.answer = '{}'
+            flash('方程式グラフ（選択）の定義データ形式が無効だったため、保存されませんでした。', 'error')
     if question_id == 'new':
         db.session.add(question)
     
@@ -1192,6 +1260,21 @@ def preview_question():
             question_data['choices'] = json.loads(answers_json_string)
         except json.JSONDecodeError:
             question_data['choices'] = []
+
+    elif q_type == 'function_graph_choice':
+        # Get graph definitions
+        graph_json_string = request.form.get('function_graph_choice_definitions', '[]')
+        try:
+            question_data['graph_data'] = json.loads(graph_json_string)
+        except json.JSONDecodeError:
+            question_data['graph_data'] = []
+        
+        # Get choices
+        choices = [request.form.get(f'fgc_choice{i}', '') for i in range(4)]
+        question_data['choices'] = choices
+        
+        # Get correct answer
+        question_data['correct_answer_text'] = request.form.get('fgc_answer', '')
 
     return render_template('question_preview.html', question=question_data)
 
