@@ -988,111 +988,108 @@ def save_question(quest_id):
     title = request.form.get('title', '')
     level = request.form.get('level', '')
 
-    action = request.form.get('action')
+    q_type = request.form['type']
+    text = request.form['text']
+    if question_id == 'new':
+        question = Question(quest_id=quest_id, type=q_type, text=text)
+    else:
+        question = Question.query.get_or_404(int(question_id))
+        question.type = q_type
+        question.text = text
+    question.explanation = request.form.get('explanation', '').strip()
 
-    if action == 'save_question':
-        q_type = request.form['type']
-        text = request.form['text']
-        if question_id == 'new':
-            question = Question(quest_id=quest_id, type=q_type, text=text)
-        else:
-            question = Question.query.get_or_404(int(question_id))
-            question.type = q_type
-            question.text = text
-        question.explanation = request.form.get('explanation', '').strip()
+    if q_type == 'choice' or q_type == 'multiple_choice':
+        choices = [request.form.get(f'choice{i}', '') for i in range(4)]
+        answer = request.form['answer']
+        question.choices = json.dumps(choices)
+        question.answer = answer
 
-        if q_type == 'choice' or q_type == 'multiple_choice':
-            choices = [request.form.get(f'choice{i}', '') for i in range(4)]
-            answer = request.form['answer']
-            question.choices = json.dumps(choices)
-            question.answer = answer
+    elif q_type == 'sort':
+        question.choices = None
+        question.answer = request.form.get('answer_sort', '')
 
-        elif q_type == 'sort':
-            question.choices = None
-            question.answer = request.form.get('answer_sort', '')
+    elif q_type == 'fill_in_the_blank_en':
+        question.choices = None
+        question.answer = request.form['answer_fill_in_the_blank_en']
 
-        elif q_type == 'fill_in_the_blank_en':
-            question.choices = None
-            question.answer = request.form['answer_fill_in_the_blank_en']
+    elif q_type == 'numeric':
+        answers = []
+        for i in range(4):
+            label = request.form.get(f'label{i}', '')
+            value_str = request.form.get(f'num_answer{i}', '')
+            if label and value_str:
+                try:
+                    # Ensure value is a valid number before converting
+                    answers.append({'label': label, 'answer': int(value_str)})
+                except (ValueError, TypeError):
+                    # Skip invalid entries gracefully
+                    flash(f'数値入力の解答「{value_str}」は無効なため、スキップされました。', 'warning')
+                    pass
+        question.choices = None
+        question.answer = json.dumps(answers)
 
-        elif q_type == 'numeric':
-            answers = []
-            for i in range(4):
-                label = request.form.get(f'label{i}', '')
-                value_str = request.form.get(f'num_answer{i}', '')
-                if label and value_str:
-                    try:
-                        # Ensure value is a valid number before converting
-                        answers.append({'label': label, 'answer': int(value_str)})
-                    except (ValueError, TypeError):
-                        # Skip invalid entries gracefully
-                        flash(f'数値入力の解答「{value_str}」は無効なため、スキップされました。', 'warning')
-                        pass
-            question.choices = None
-            question.answer = json.dumps(answers)
+    elif q_type == 'svg_interactive':
+        svg_content = request.form.get('svg_content', '')
+        sub_ids = request.form.getlist('sub_id')
+        sub_prompts = request.form.getlist('sub_prompt')
+        sub_answers = request.form.getlist('sub_answer')
 
-        elif q_type == 'svg_interactive':
-            svg_content = request.form.get('svg_content', '')
-            sub_ids = request.form.getlist('sub_id')
-            sub_prompts = request.form.getlist('sub_prompt')
-            sub_answers = request.form.getlist('sub_answer')
+        sub_questions = []
+        for i in range(len(sub_ids)):
+            if sub_ids[i] and sub_prompts[i] and sub_answers[i]:
+                sub_questions.append({
+                    'id': sub_ids[i],
+                    'prompt': sub_prompts[i],
+                    'answer': sub_answers[i]
+                })
 
-            sub_questions = []
-            for i in range(len(sub_ids)):
-                if sub_ids[i] and sub_prompts[i] and sub_answers[i]:
-                    sub_questions.append({
-                        'id': sub_ids[i],
-                        'prompt': sub_prompts[i],
-                        'answer': sub_answers[i]
-                    })
+        question.choices = svg_content
+        question.answer = json.dumps(sub_questions)
 
-            question.choices = svg_content
-            question.answer = json.dumps(sub_questions)
+    elif q_type == 'figure_choice':
+        svg_content = request.form.get('figure_choice_svg_content', '')
+        sub_ids = request.form.getlist('figure_choice_sub_id')
+        sub_prompts = request.form.getlist('figure_choice_sub_prompt')
+        sub_answers = request.form.getlist('figure_choice_sub_answer')
 
-        elif q_type == 'figure_choice':
-            svg_content = request.form.get('figure_choice_svg_content', '')
-            sub_ids = request.form.getlist('figure_choice_sub_id')
-            sub_prompts = request.form.getlist('figure_choice_sub_prompt')
-            sub_answers = request.form.getlist('figure_choice_sub_answer')
-
-            sub_questions = []
-            for i in range(len(sub_prompts)):
-                if sub_prompts[i]:
-                    choices = [request.form.get(f'figure_choice_sub_choice_{i}_{j}', '') for j in range(4)]
-                    sub_questions.append({
-                        'id': sub_ids[i] if i < len(sub_ids) else f'new{i}',
-                        'prompt': sub_prompts[i],
-                        'choices': choices,
-                        'answer': sub_answers[i] if i < len(sub_answers) else ''
-                    })
-            
-            question.choices = svg_content # SVG content is stored in choices
-            question.answer = json.dumps(sub_questions)
-
-        elif q_type == 'function_graph':
-            # The 'answer' field stores the function definitions for the graph
-            graph_definitions_json = request.form.get('answer_function_graph', '[]')
-            try:
-                json.loads(graph_definitions_json)
-                question.answer = graph_definitions_json
-            except json.JSONDecodeError:
-                question.answer = '[]'
-                flash('方程式グラフの定義データ形式が無効だったため、保存されませんでした。', 'error')
-
-            # The 'choices' field stores the sub-questions (prompts and answers)
-            sub_questions_json = request.form.get('answers', '[]')
-            try:
-                json.loads(sub_questions_json)
-                question.choices = sub_questions_json
-            except json.JSONDecodeError:
-                question.choices = '[]'
-                flash('方程式グラフの回答データ形式が無効だったため、保存されませんでした。', 'error')
-
-        if question_id == 'new':
-            db.session.add(question)
+        sub_questions = []
+        for i in range(len(sub_prompts)):
+            if sub_prompts[i]:
+                choices = [request.form.get(f'figure_choice_sub_choice_{i}_{j}', '') for j in range(4)]
+                sub_questions.append({
+                    'id': sub_ids[i] if i < len(sub_ids) else f'new{i}',
+                    'prompt': sub_prompts[i],
+                    'choices': choices,
+                    'answer': sub_answers[i] if i < len(sub_answers) else ''
+                })
         
-        db.session.commit()
-        flash('問題を保存しました', 'success')
+        question.choices = svg_content # SVG content is stored in choices
+        question.answer = json.dumps(sub_questions)
+
+    elif q_type == 'function_graph':
+        # The 'answer' field stores the function definitions for the graph
+        graph_definitions_json = request.form.get('answer_function_graph', '[]')
+        try:
+            json.loads(graph_definitions_json)
+            question.answer = graph_definitions_json
+        except json.JSONDecodeError:
+            question.answer = '[]'
+            flash('方程式グラフの定義データ形式が無効だったため、保存されませんでした。', 'error')
+
+        # The 'choices' field stores the sub-questions (prompts and answers)
+        sub_questions_json = request.form.get('answers', '[]')
+        try:
+            json.loads(sub_questions_json)
+            question.choices = sub_questions_json
+        except json.JSONDecodeError:
+            question.choices = '[]'
+            flash('方程式グラフの回答データ形式が無効だったため、保存されませんでした。', 'error')
+
+    if question_id == 'new':
+        db.session.add(question)
+    
+    db.session.commit()
+    flash('問題を保存しました', 'success')
 
     return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 

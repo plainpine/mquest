@@ -56,6 +56,11 @@
     <div class="question-text">
         <h3>問題文</h3>
         <div class="markdown" data-content="{{ question.text | e }}"></div>
+        {% if question.type == 'figure_choice' and question.svg_content %}
+            <div class="svg-container" style="margin-top: 1rem;">
+                {{ question.svg_content | safe }}
+            </div>
+        {% endif %}
     </div>
 
     <hr>
@@ -178,6 +183,25 @@
                     </div>
                 </div>
             </div>
+        {% elif question.type == 'figure_choice' %}
+            <div class="sub-questions-container">
+                {% for sub_q in question.sub_questions %}
+                {% set outer_loop_index = loop.index0 %}
+                <div class="sub-question" style="margin-bottom: 1rem;">
+                    <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+                    <div class="choice-block">
+                    {% for choice in sub_q.choices %}
+                        {% if choice %}
+                        <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
+                        <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
+                        <span class="markdown" data-content="{{ choice | e }}"></span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
 
         {% elif question.type == 'function_graph' %}
             {# The user mentioned a preview button not working, but this renders the graph directly. 
@@ -209,6 +233,12 @@
                 </ul>
             {% elif question.type == 'svg_interactive' %}
                  <ul>
+                {% for sub_q in question.answer %}
+                    <li><span class="markdown" data-content="{{ sub_q.prompt | e }}: {{ sub_q.answer }}"></span></li>
+                {% endfor %}
+                </ul>
+            {% elif question.type == 'figure_choice' %}
+                <ul>
                 {% for sub_q in question.answer %}
                     <li><span class="markdown" data-content="{{ sub_q.prompt | e }}: {{ sub_q.answer }}"></span></li>
                 {% endfor %}
