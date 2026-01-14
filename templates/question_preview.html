@@ -213,12 +213,6 @@
             </div>
 
         {% elif question.type == 'function_graph' %}
-            {# The user mentioned a preview button not working, but this renders the graph directly. 
-               This aligns with quest_run.html behavior and avoids confusion. #}
-            <div class="function-graph-container" data-functions='{{ question.answer | tojson }}'>
-                <div id="graph-target-{{ q_index }}"></div>
-                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
-            </div>
             <div class="sub-questions-container">
                 {% for sub_q in question.choices %} {# question.choices now contains sub-questions for function_graph type #}
                     <div class="sub-question" style="margin-bottom: 1rem;">
@@ -245,12 +239,9 @@
                     </div>
                 </div>
             </div>
+
         
         {% elif question.type == 'function_graph_choice' %}
-            <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}'>
-                <div id="graph-target-{{ q_index }}"></div>
-                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
-            </div>
             {# Display sub-questions with their choices #}
             <div class="sub-questions-container">
                 {% for sub_q in question.answers %} {# question.answers now contains sub-questions for function_graph_choice type #}
@@ -305,25 +296,22 @@
                 </ul>
             {% elif question.type == 'function_graph' %}
                 <ul>
-                {% for func in question.answer %}
+                {% for sub_q in question.choices %}
                     <li>
-                        方程式: <code>{{ func.fn }}</code><br>
-                        キャプション: <span class="markdown" data-content="{{ func.caption | e }}"></span>
+                        問題文: <span class="markdown" data-content="{{ sub_q.prompt | e }}"></span><br>
+                        正解: <span class="markdown" data-content="{{ sub_q.answer | e }}"></span>
                     </li>
                 {% endfor %}
                 </ul>
-            {% elif question.type == 'function_graph_choice' %}
-                <ul>
-                    <li>
-                        グラフ定義:
-                        <ul>
-                            {% for func in question.graph_data %}
-                                <li>方程式: <code>{{ func.fn }}</code><br>キャプション: <span class="markdown" data-content="{{ func.caption | e }}"></span></li>
-                            {% endfor %}
-                        </ul>
-                    </li>
-                    <li>正解: <span class="markdown" data-content="{{ question.correct_answer_text | e }}"></span></li>
-                </ul>
+                        {% elif question.type == 'function_graph_choice' %}
+                            <ul>
+                                {% for sub_q in question.answers %}
+                                    <li>
+                                        問題文: <span class="markdown" data-content="{{ sub_q.prompt | e }}"></span><br>
+                                        正解: <span class="markdown" data-content="{{ sub_q.answer | e }}"></span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
             {% endif %}
         </span>
     </div>
