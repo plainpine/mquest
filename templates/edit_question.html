@@ -199,14 +199,34 @@
       <button type="button" id="add-function-graph-choice-entry">方程式を追加</button>
       <input type="hidden" name="function_graph_choice_definitions" id="function_graph_choice_definitions_hidden">
 
-      <h3 style="margin-top: 1rem;">選択肢と正答</h3>
-      <label>選択肢 (Markdown):</label><br>
-      {% for i in range(4) %}
-        <input type="text" name="fgc_choice{{ i }}" id="fgc_choice{{ i }}" value="{{ choices[i] if choices and choices|length > i else '' }}"><br>
-        <div id="fgc_choice{{ i }}_preview" class="markdown-preview" style="margin-bottom: 0.5rem;"></div>
-      {% endfor %}
-      <label>正解:</label>
-      <input type="text" name="fgc_answer" value="{{ question.correct_answer_text or '' }}" placeholder="選択肢の本文と一致させてください">
+      <h3 style="margin-top: 1rem;">問題と選択肢</h3>
+      <div id="fgc-sub-questions-container">
+        {% if question and question.type == 'function_graph_choice' and answers %}
+          {% for sub_q in answers %}
+            {% set outer_loop_index = loop.index0 %}
+            <div class="sub-question">
+              <input type="hidden" name="fgc_sub_id" value="sub{{ outer_loop_index }}">
+              <div>
+                <label>問題文 (Markdown):</label>
+                <textarea name="fgc_sub_prompt" rows="2" cols="50" class="sub-prompt-input">{{ sub_q.prompt }}</textarea>
+                <div class="markdown-preview sub-prompt-preview"></div>
+              </div>
+              <div>
+                <label>選択肢:</label><br>
+                {% for i in range(4) %}
+                  <input type="text" name="fgc_sub_choice_{{ outer_loop_index }}_{{ i }}" value="{{ sub_q.choices[i] if sub_q.choices and sub_q.choices|length > i else '' }}"><br>
+                {% endfor %}
+              </div>
+              <div>
+                <label>正答:</label>
+                <input type="text" name="fgc_sub_answer" placeholder="正答" value="{{ sub_q.answer }}">
+              </div>
+              <button type="button" class="remove-sub-question">削除</button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <button type="button" id="add-fgc-sub-question">追加文を追加</button>
   </div>
 
 <!-- 保存ボタン：上段 -->
@@ -569,6 +589,51 @@
         functionGraphChoiceEntriesContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('remove-function-entry')) {
                 e.target.closest('.function-entry').remove();
+            }
+        });
+    }
+
+    // FGC Sub-question logic
+    const fgcSubQuestionsContainer = document.getElementById('fgc-sub-questions-container');
+    if (fgcSubQuestionsContainer) {
+        fgcSubQuestionsContainer.querySelectorAll('.sub-prompt-input').forEach(input => {
+            updateSubQuestionPreview(input);
+            input.addEventListener('input', () => updateSubQuestionPreview(input));
+        });
+
+        document.getElementById('add-fgc-sub-question').addEventListener('click', () => {
+            const subQuestionCounter = fgcSubQuestionsContainer.querySelectorAll('.sub-question').length;
+            const newSubQuestion = document.createElement('div');
+            newSubQuestion.classList.add('sub-question');
+            newSubQuestion.innerHTML = `
+                <input type="hidden" name="fgc_sub_id" value="new${subQuestionCounter}">
+                <div>
+                    <label>問題文 (Markdown):</label>
+                    <textarea name="fgc_sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
+                    <div class="markdown-preview sub-prompt-preview"></div>
+                </div>
+                <div>
+                    <label>選択肢:</label><br>
+                    <input type="text" name="fgc_sub_choice_${subQuestionCounter}_0" placeholder="選択肢A"><br>
+                    <input type="text" name="fgc_sub_choice_${subQuestionCounter}_1" placeholder="選択肢B"><br>
+                    <input type="text" name="fgc_sub_choice_${subQuestionCounter}_2" placeholder="選択肢C"><br>
+                    <input type="text" name="fgc_sub_choice_${subQuestionCounter}_3" placeholder="選択肢D"><br>
+                </div>
+                <div>
+                    <label>正答:</label>
+                    <input type="text" name="fgc_sub_answer" placeholder="正答">
+                </div>
+                <button type="button" class="remove-sub-question">削除</button>
+            `;
+            fgcSubQuestionsContainer.appendChild(newSubQuestion);
+            const newInput = newSubQuestion.querySelector('.sub-prompt-input');
+            updateSubQuestionPreview(newInput);
+            newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
+        });
+
+        fgcSubQuestionsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-sub-question')) {
+                e.target.closest('.sub-question').remove();
             }
         });
     }
