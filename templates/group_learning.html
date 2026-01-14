@@ -64,6 +64,26 @@
             </div>
           {% endfor %}
         </div>
+      {% elif question.type == 'figure_choice' %}
+        <div class="figure-choice-container">
+          {{ question.text | safe }}
+        </div>
+        <div class="sub-questions-container" style="margin-top: 1rem;">
+          {% for sub_q in question.sub_questions %}
+            <div class="sub-question" style="margin-bottom: 0.5rem;">
+              <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+               <div class="choice-block">
+                {% for choice in sub_q.choices %}
+                  {% if choice %}
+                  <div class="choice-option">
+                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
 
       <!-- 答え表示・隠すボタン -->
@@ -80,6 +100,10 @@
               <div>{{ ans.label }}: {{ ans.answer }}</div>
             {% endfor %}
           {% elif question.type == 'svg_interactive' %}
+            {% for sub_q in question.sub_questions %}
+              <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
+            {% endfor %}
+          {% elif question.type == 'figure_choice' %}
             {% for sub_q in question.sub_questions %}
               <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
             {% endfor %}

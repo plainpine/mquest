@@ -67,7 +67,7 @@ class Question(db.Model):
     __tablename__ = 'questions'
     id = db.Column(db.Integer, primary_key=True)
     quest_id = db.Column(db.Integer, db.ForeignKey('quests.id'), nullable=False)
-    type = db.Column(db.String(20), nullable=False)       # 'choice', 'numeric', 'sort'
+    type = db.Column(db.String(20), nullable=False)       # 'choice', 'numeric', 'sort', 'figure_choice'
     text = db.Column(db.Text, nullable=False)
     choices = db.Column(db.Text)  # JSON文字列（list）として格納
     answer = db.Column(db.Text)   # JSON文字列（int, list, dictなど）

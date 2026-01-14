@@ -56,10 +56,11 @@
     <option value="numeric" {% if question and question.type == 'numeric' %}selected{% endif %}>数値入力</option>
     <option value="fill_in_the_blank_en" {% if question and question.type == 'fill_in_the_blank_en' %}selected{% endif %}>英語穴埋め</option>
     <option value="svg_interactive" {% if question and question.type == 'svg_interactive' %}selected{% endif %}>図形問題</option>
+    <option value="figure_choice" {% if question and question.type == 'figure_choice' %}selected{% endif %}>図形選択問題</option>
     <option value="function_graph" {% if question and question.type == 'function_graph' %}selected{% endif %}>方程式グラフ</option>
   </select>
 
-  <label>問題文（Markdown）:</label>
+  <label for="text-input">問題文（Markdown）:</label>
   <textarea name="text" id="text-input" rows="4" cols="60">{{ question.text if question else '' }}</textarea>
   <div id="text-preview" class="markdown-preview" style="margin-bottom: 1rem;"></div>
 
@@ -121,6 +122,40 @@
       {% endif %}
     </div>
     <button type="button" id="add-sub-question">追加文を追加</button>
+  </div>
+
+  <div id="figure-choice-section" style="display:none;">
+    <label for="figure-choice-svg-content">SVGコンテンツ:</label>
+    <textarea name="figure_choice_svg_content" id="figure-choice-svg-content" rows="10" cols="60">{{ question.choices if question and question.type == 'figure_choice' else '' }}</textarea><br>
+    <button type="button" id="figure-choice-svg-preview-button" class="button">SVGプレビュー</button><br>
+    <label>追加文:</label>
+    <div id="figure-choice-sub-questions-container">
+      {% if question and question.type == 'figure_choice' and answers %}
+        {% for sub_q in answers %}
+          {% set outer_loop_index = loop.index0 %}
+          <div class="sub-question">
+            <input type="hidden" name="figure_choice_sub_id" value="sub{{ loop.index0 }}">
+            <div>
+              <label>問題文 (Markdown):</label>
+              <textarea name="figure_choice_sub_prompt" rows="2" cols="50" class="sub-prompt-input">{{ sub_q.prompt }}</textarea>
+              <div class="markdown-preview sub-prompt-preview"></div>
+            </div>
+            <div>
+              <label>選択肢:</label><br>
+              {% for i in range(4) %}
+                <input type="text" name="figure_choice_sub_choice_{{ outer_loop_index }}_{{ i }}" value="{{ sub_q.choices[i] if sub_q.choices is iterable and sub_q.choices|length > i else '' }}"><br>
+              {% endfor %}
+            </div>
+            <div>
+              <label>正答:</label>
+              <input type="text" name="figure_choice_sub_answer" placeholder="正答" value="{{ sub_q.answer }}">
+            </div>
+            <button type="button" class="remove-sub-question">削除</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <button type="button" id="add-figure-choice-sub-question">追加文を追加</button>
   </div>
 
   <div id="function-graph-section" style="display:none;">
@@ -259,10 +294,13 @@
 
     function updateSections() {
         const selectedType = typeSelect.value;
+        const textInputLabel = document.querySelector('label[for="text-input"]');
+        
         // Hide all sections
         Object.values(sections).forEach(section => {
             if (section) section.style.display = 'none';
         });
+
         // Show the correct one
         if (sections[selectedType]) {
             sections[selectedType].style.display = 'block';
@@ -325,6 +363,7 @@
         numeric: document.getElementById('numeric-section'),
         fill_in_the_blank_en: document.getElementById('fill-in-the-blank-en-section'),
         svg_interactive: document.getElementById('svg-interactive-section'),
+        figure_choice: document.getElementById('figure-choice-section'),
         function_graph: document.getElementById('function-graph-section')
     };
     const mainForm = document.querySelector('form');
@@ -378,6 +417,51 @@
         });
     }
 
+    // Figure Choice Sub-question logic
+    const figureChoiceSubQuestionsContainer = document.getElementById('figure-choice-sub-questions-container');
+    if (figureChoiceSubQuestionsContainer) {
+        figureChoiceSubQuestionsContainer.querySelectorAll('.sub-prompt-input').forEach(input => {
+            updateSubQuestionPreview(input);
+            input.addEventListener('input', () => updateSubQuestionPreview(input));
+        });
+
+        document.getElementById('add-figure-choice-sub-question').addEventListener('click', () => {
+            const subQuestionCounter = figureChoiceSubQuestionsContainer.querySelectorAll('.sub-question').length;
+            const newSubQuestion = document.createElement('div');
+            newSubQuestion.classList.add('sub-question');
+            newSubQuestion.innerHTML = `
+                <input type="hidden" name="figure_choice_sub_id" value="new${subQuestionCounter}">
+                <div>
+                    <label>問題文 (Markdown):</label>
+                    <textarea name="figure_choice_sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
+                    <div class="markdown-preview sub-prompt-preview"></div>
+                </div>
+                <div>
+                    <label>選択肢:</label><br>
+                    <input type="text" name="figure_choice_sub_choice_${subQuestionCounter}_0" placeholder="選択肢A"><br>
+                    <input type="text" name="figure_choice_sub_choice_${subQuestionCounter}_1" placeholder="選択肢B"><br>
+                    <input type="text" name="figure_choice_sub_choice_${subQuestionCounter}_2" placeholder="選択肢C"><br>
+                    <input type="text" name="figure_choice_sub_choice_${subQuestionCounter}_3" placeholder="選択肢D"><br>
+                </div>
+                <div>
+                    <label>正答:</label>
+                    <input type="text" name="figure_choice_sub_answer" placeholder="正答 (例: A)">
+                </div>
+                <button type="button" class="remove-sub-question">削除</button>
+            `;
+            figureChoiceSubQuestionsContainer.appendChild(newSubQuestion);
+            const newInput = newSubQuestion.querySelector('.sub-prompt-input');
+            updateSubQuestionPreview(newInput);
+            newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
+        });
+
+        figureChoiceSubQuestionsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-sub-question')) {
+                e.target.closest('.sub-question').remove();
+            }
+        });
+    }
+
     // SVG Preview Logic
     const svgPreviewButton = document.getElementById('svg-preview-button');
     if (svgPreviewButton) {
@@ -397,6 +481,26 @@
         document.body.removeChild(form);
       });
     }
+
+    const figureChoiceSvgPreviewButton = document.getElementById('figure-choice-svg-preview-button');
+    if (figureChoiceSvgPreviewButton) {
+      figureChoiceSvgPreviewButton.addEventListener('click', () => {
+        const svgContent = document.getElementById('figure-choice-svg-content').value; // Use new svg content text area
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for('main.svg_preview') }}';
+        form.target = '_blank';
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'svg_data';
+        hiddenField.value = svgContent;
+        form.appendChild(hiddenField);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      });
+    }
+
 
     // --- Function Graph Section Logic ---
     const functionEntriesContainer = document.getElementById('function-entries-container');

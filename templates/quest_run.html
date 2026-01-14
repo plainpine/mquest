@@ -144,6 +144,28 @@
             </div>
           </div>
         </div>
+      {% elif question.type == 'figure_choice' %}
+        <div class="figure-choice-container" data-question-index="{{ q_index }}">
+          {{ question.svg_content | safe }}
+        </div>
+        <div class="sub-questions-container">
+          {% for sub_q in question.sub_questions %}
+            {% set outer_loop_index = loop.index0 %}
+            <div class="sub-question" style="margin-bottom: 1rem;">
+              <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+              <div class="choice-block">
+                {% for choice in sub_q.choices %}
+                  {% if choice %}
+                  <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
+                    <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
+                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
       {% elif question.type == 'function_graph' %}
         <div class="function-graph-container" data-functions='{{ question.answer | tojson }}'>
                 <div id="graph-target-{{ q_index }}"></div>

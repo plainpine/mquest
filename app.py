@@ -312,6 +312,13 @@ def quest_run(quest_id):
                 "svg_content": q.choices, # choicesにSVGコンテンツを格納
                 "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
             })
+        elif q.type == 'figure_choice':
+            questions.append({
+                "type": q.type,
+                "text": q.text,
+                "svg_content": q.choices, # choicesにSVGコンテンツを格納
+                "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
+            })
         elif q.type == 'function_graph':
             questions.append({
                 "type": q.type,
@@ -435,6 +442,23 @@ def quest_result(quest_id):
                 for sub_q in sub_questions:
                     sub_q_id = sub_q['id']
                     form_field_name = f"q{i}_{sub_q_id}"
+                    user_val = request.form.get(form_field_name, '').strip()
+                    expected_val = str(sub_q['answer'])
+                    user_answers_list.append({sub_q['prompt']: user_val})
+                    expected_answers_list.append({sub_q['prompt']: expected_val})
+                    if user_val != expected_val:
+                        all_sub_correct = False
+                correct = all_sub_correct
+                user_answer = user_answers_list
+                expected = expected_answers_list
+
+            elif question_type == 'figure_choice':
+                sub_questions = json.loads(q.answer)
+                all_sub_correct = True
+                user_answers_list = []
+                expected_answers_list = []
+                for sub_q_index, sub_q in enumerate(sub_questions):
+                    form_field_name = f"q{i}_{sub_q_index}"
                     user_val = request.form.get(form_field_name, '').strip()
                     expected_val = str(sub_q['answer'])
                     user_answers_list.append({sub_q['prompt']: user_val})
@@ -932,6 +956,11 @@ def edit_question(quest_id, question_id):
                 answers = json.loads(question.answer) if question.answer else []
             except json.JSONDecodeError:
                 answers = [] # Invalid JSON in DB, treat as empty
+        elif question.type == 'figure_choice':
+            try:
+                answers = json.loads(question.answer) if question.answer else []
+            except json.JSONDecodeError:
+                answers = [] # Invalid JSON in DB, treat as empty
 
         if question.type == 'function_graph' and question.answer:
             # Escape backslashes for the JavaScript template literal in edit_question.html
@@ -955,7 +984,7 @@ def edit_question(quest_id, question_id):
 # 問題の保存画面
 @app.route('/admin/question/save/<int:quest_id>', methods=['POST'])
 def save_question(quest_id):
-    question_id = request.form.get('question_id')
+    question_id = request.values.get('question_id')
     title = request.form.get('title', '')
     level = request.form.get('level', '')
 
@@ -1018,6 +1047,26 @@ def save_question(quest_id):
                     })
 
             question.choices = svg_content
+            question.answer = json.dumps(sub_questions)
+
+        elif q_type == 'figure_choice':
+            svg_content = request.form.get('figure_choice_svg_content', '')
+            sub_ids = request.form.getlist('figure_choice_sub_id')
+            sub_prompts = request.form.getlist('figure_choice_sub_prompt')
+            sub_answers = request.form.getlist('figure_choice_sub_answer')
+
+            sub_questions = []
+            for i in range(len(sub_prompts)):
+                if sub_prompts[i]:
+                    choices = [request.form.get(f'figure_choice_sub_choice_{i}_{j}', '') for j in range(4)]
+                    sub_questions.append({
+                        'id': sub_ids[i] if i < len(sub_ids) else f'new{i}',
+                        'prompt': sub_prompts[i],
+                        'choices': choices,
+                        'answer': sub_answers[i] if i < len(sub_answers) else ''
+                    })
+            
+            question.choices = svg_content # SVG content is stored in choices
             question.answer = json.dumps(sub_questions)
 
         elif q_type == 'function_graph':
@@ -1109,6 +1158,25 @@ def preview_question():
                 })
         question_data['sub_questions'] = sub_questions
         # The 'answer' field for svg_interactive in the database is the sub_questions JSON
+        question_data['answer'] = sub_questions
+
+    elif q_type == 'figure_choice':
+        question_data['svg_content'] = request.form.get('figure_choice_svg_content', '')
+        sub_ids = request.form.getlist('figure_choice_sub_id')
+        sub_prompts = request.form.getlist('figure_choice_sub_prompt')
+        sub_answers = request.form.getlist('figure_choice_sub_answer')
+        
+        sub_questions = []
+        for i in range(len(sub_prompts)):
+            if sub_prompts[i]:
+                choices = [request.form.get(f'figure_choice_sub_choice_{i}_{j}', '') for j in range(4)]
+                sub_questions.append({
+                    'id': sub_ids[i] if i < len(sub_ids) else f'new{i}',
+                    'prompt': sub_prompts[i],
+                    'choices': choices,
+                    'answer': sub_answers[i] if i < len(sub_answers) else ''
+                })
+        question_data['sub_questions'] = sub_questions
         question_data['answer'] = sub_questions
 
     elif q_type == 'function_graph':
@@ -1203,6 +1271,12 @@ def quest_run_group(quest_id):
                 "type": q.type,
                 "text": q.text,
                 "svg_content": q.choices, # choicesにSVGコンテンツを格納
+                "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
+            })
+        elif q.type == 'figure_choice':
+            questions.append({
+                "type": q.type,
+                "text": q.text, # textにSVGコンテンツを格納
                 "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
             })
         else:
