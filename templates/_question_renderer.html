@@ -1,0 +1,169 @@
+{# templates/_question_renderer.html #}
+{% for question in questions %}
+  <div class="question-block" style="margin-bottom: 2rem;">
+    <div><strong>Q{{ loop.index }}:</strong></div>
+    <div class="markdown" data-content="{{ question.text | e }}"></div>
+    {% set q_index = loop.index0 %}
+
+    {% if question.type == 'choice' %}
+      <div class="choice-block">
+        <div style="height: 0.5rem;"></div>
+        {% for choice in question.choices %}
+          {% if choice %}
+          <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
+            <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
+            <span class="markdown" data-content="{{ choice | e }}"></span>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% elif question.type == 'multiple_choice' %}
+      <div class="choice-block">
+        <div style="height: 0.5rem;"></div>
+        {% for choice in question.choices %}
+          {% if choice %}
+          <div class="choice-option multiple-choice" data-qname="q{{ q_index }}">
+            <input type="checkbox" name="q{{ q_index }}" value="{{ choice | e }}" style="margin-right: 0.5rem;">
+            <span class="markdown" data-content="{{ choice | e }}"></span>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% elif question.type == 'sort' %}
+      {% set text_parts = question.text.split('（', 1) %}
+      {% set sortable_text = text_parts[0] %}
+      <ul class="sortable" id="q{{ q_index }}_sortable" data-name="q{{ q_index }}">
+        {% for part in sortable_text.split('/') %}
+          {% set cleaned = part.strip() %}
+          {% if cleaned %}
+            <li class="sortable-item" data-id="item{{ loop.index0 }}">{{ cleaned }}</li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+      <input type="hidden" name="q{{ q_index }}" id="q{{ q_index }}_input">
+    {% elif question.type == 'numeric' %}
+      {% for ans in question.answers %}
+        <div class="numeric-block">
+          <label>{{ ans.label }}：</label>
+          <input type="text" name="q{{ q_index }}_{{ loop.index0 }}" class="numeric-input" data-qid="{{ q_index }}" readonly>
+        </div>
+      {% endfor %}
+      <div style="height: 1rem;"></div>
+      <div class="keypad" data-qid="{{ q_index }}" style="display: none;">
+        <div class="keyboard-row">
+          <button type="button" class="key-btn" data-num="1">1</button>
+          <button type="button" class="key-btn" data-num="2">2</button>
+          <button type="button" class="key-btn" data-num="3">3</button>
+        </div>
+        <div class="keyboard-row">
+          <button type="button" class="key-btn" data-num="4">4</button>
+          <button type="button" class="key-btn" data-num="5">5</button>
+          <button type="button" class="key-btn" data-num="6">6</button>
+        </div>
+        <div class="keyboard-row">
+          <button type="button" class="key-btn" data-num="7">7</button>
+          <button type="button" class="key-btn" data-num="8">8</button>
+          <button type="button" class="key-btn" data-num="9">9</button>
+        </div>
+        <div class="keyboard-row">
+          <button type="button" class="key-btn" data-num="0">0</button>
+          <button type="button" class="key-btn" data-num=".">.</button>
+          <button type="button" class="key-btn" data-num="-">-</button>
+          <button type="button" class="key-btn" data-num="/">/</button>
+        </div>
+        <div class="keyboard-row">
+          <button type="button" class="key-btn" data-num="del">⌫</button>
+          <button type="button" class="key-btn" data-num="clear">CL</button>
+        </div>
+      </div>
+    {% elif question.type == 'fill_in_the_blank_en' %}
+      <div class="en-fill-in-the-blank-block">
+        <input type="text" name="q{{ q_index }}" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" autocomplete="off" readonly>
+        <div class="virtual-keyboard" data-qid="{{ q_index }}" style="display: none;">
+          <div class="keyboard-row">
+            {% for key in 'qwertyuiop' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+          </div>
+          <div class="keyboard-row">
+            {% for key in 'asdfghjkl' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+            <button type="button" class="key-btn-en" data-key="'">'</button>
+          </div>
+          <div class="keyboard-row">
+            {% for key in 'zxcvbnm' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
+            <button type="button" class="key-btn-en" data-key="del">⌫</button>
+            <button type="button" class="key-btn-en" data-key="clear">CL</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn-en" data-key=" ">space</button>
+          </div>
+        </div>
+      </div>
+    {% elif question.type == 'svg_interactive' %}
+      <div class="svg-interactive-container" data-question-index="{{ q_index }}">
+        {{ question.svg_content | safe }}
+      </div>
+      <div class="sub-questions-container">
+        {% for sub_q in question.sub_questions %}
+          <div class="sub-question" style="margin-bottom: 1rem;">
+            <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+            <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" readonly style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+          </div>
+        {% endfor %}
+        <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="1">1</button>
+            <button type="button" class="key-btn" data-num="2">2</button>
+            <button type="button" class="key-btn" data-num="3">3</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="4">4</button>
+            <button type="button" class="key-btn" data-num="5">5</button>
+            <button type="button" class="key-btn" data-num="6">6</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="7">7</button>
+            <button type="button" class="key-btn" data-num="8">8</button>
+            <button type="button" class="key-btn" data-num="9">9</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="0">0</button>
+            <button type="button" class="key-btn" data-num=".">.</button>
+            <button type="button" class="key-btn" data-num="-">-</button>
+            <button type="button" class="key-btn" data-num="/">/</button>
+          </div>
+          <div class="keyboard-row">
+            <button type="button" class="key-btn" data-num="del">⌫</button>
+            <button type="button" class="key-btn" data-num="clear">CL</button>
+          </div>
+        </div>
+      </div>
+    {% elif question.type == 'figure_choice' %}
+      <div class="figure-choice-container" data-question-index="{{ q_index }}">
+        {{ question.text | safe }}
+      </div>
+      <div class="sub-questions-container">
+        {% for sub_q in question.sub_questions %}
+          <div class="sub-question" style="margin-bottom: 1rem;">
+            <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+            <div class="choice-block">
+              {% for choice in sub_q.choices %}
+                {% if choice %}
+                <div class="choice-option" data-qname="q{{ q_index }}_{{ loop.parent.loop.index0 }}" data-value="{{ choice | e }}">
+                  <input type="radio" name="q{{ q_index }}_{{ loop.parent.loop.index0 }}" value="{{ choice | e }}" style="display: none;">
+                  <span class="markdown" data-content="{{ choice | e }}"></span>
+                </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% elif question.type == 'function_graph' %}
+      <div class="function-graph-container" data-functions='{{ question.answer | tojson }}'>
+        <div id="graph-target-{{ q_index }}"></div>
+        <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+      </div>
+      {# This type is for display only, no answer input needed #}
+      <input type="hidden" name="q{{ q_index }}" value="seen">
+    {% endif %}
+  </div>
+{% endfor %}

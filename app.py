@@ -328,27 +328,22 @@ def quest_run(quest_id):
                 "answers": None
             })
         elif q.type == 'function_graph_choice':
-            # q.answer contains {"graph_data": [], "correct_answer": "text"}
-            # q.choices contains JSON array of choices
+            # q.choices is graph_data, q.answer is sub_questions
             try:
-                answer_data = json.loads(q.answer)
-                graph_data = answer_data.get('graph_data', [])
-                correct_answer_text = answer_data.get('correct_answer', '')
+                graph_data = json.loads(q.choices) if q.choices else []
             except json.JSONDecodeError:
                 graph_data = []
-                correct_answer_text = ''
-            
+
             try:
-                choices = json.loads(q.choices) if q.choices else []
+                sub_questions = json.loads(q.answer) if q.answer else []
             except json.JSONDecodeError:
-                choices = []
+                sub_questions = []
 
             questions.append({
                 "type": q.type,
                 "text": q.text,
                 "graph_data": graph_data,
-                "choices": choices,
-                "correct_answer_text": correct_answer_text # For grading if needed later
+                "sub_questions": sub_questions,
             })
         else:
             questions.append({
@@ -508,15 +503,29 @@ def quest_result(quest_id):
                 user_answer = user_input
 
             elif question_type == 'function_graph_choice':
-                user_answer = request.form.get(f'q{i}', '').strip()
                 try:
-                    answer_data = json.loads(q.answer)
-                    correct_answer = answer_data.get('correct_answer', '')
+                    sub_questions = json.loads(q.answer)
                 except (json.JSONDecodeError, TypeError):
-                    correct_answer = ''
+                    sub_questions = []
                 
-                correct = user_answer == correct_answer
-                expected = correct_answer
+                all_sub_correct = True
+                user_answers_list = []
+                expected_answers_list = []
+                
+                for sub_q_index, sub_q in enumerate(sub_questions):
+                    form_field_name = f"q{i}_{sub_q_index}"
+                    user_val = request.form.get(form_field_name, '').strip()
+                    expected_val = str(sub_q.get('answer', ''))
+                    
+                    user_answers_list.append({sub_q.get('prompt', ''): user_val})
+                    expected_answers_list.append({sub_q.get('prompt', ''): expected_val})
+                    
+                    if user_val != expected_val:
+                        all_sub_correct = False
+                        
+                correct = all_sub_correct
+                user_answer = user_answers_list
+                expected = expected_answers_list
 
             results.append({
                 'question_id': q.id,

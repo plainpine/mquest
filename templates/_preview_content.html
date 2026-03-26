@@ -1,0 +1,17 @@
+{# templates/_preview_content.html #}
+
+{# Render the question body #}
+{% if questions %}
+    {% include '_question_renderer.html' %}
+{% else %}
+    <p>問題のプレビューはありません。</p>
+{% endif %}
+
+{# Render the explanation part #}
+<hr style="margin: 2rem 0;">
+<h2>解説プレビュー</h2>
+{% if explanation %}
+    <div class="markdown" data-content="{{ explanation | e }}"></div>
+{% else %}
+    <p>解説はありません。</p>
+{% endif %}
