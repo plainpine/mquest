@@ -915,23 +915,101 @@ def save_quest(quest_id):
     title = request.form.get('title')
     level = request.form.get('level')
     questname = request.form.get('questname')
+    new_id_str = request.form.get('new_id')
 
     if quest_id == 'new':
-        new_quest = Quest(title=title, level=level, questname=questname)
+        if new_id_str:
+            try:
+                new_id = int(new_id_str)
+                # Check if exists
+                if Quest.query.get(new_id):
+                    flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
+                    return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
+                new_quest = Quest(id=new_id, title=title, level=level, questname=questname)
+            except ValueError:
+                flash("エラー: IDは数値で入力してください。", "danger")
+                return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
+        else:
+            new_quest = Quest(title=title, level=level, questname=questname)
+        
         db.session.add(new_quest)
         db.session.commit()
         flash("新しいクエストを保存しました", "success")
-        # After saving, we redirect to the edit page of the *new* quest
-        # We also pass the filters back so the "back" button works correctly
         return redirect(url_for('edit_quest', quest_id=new_quest.id, title=title, level=level))
     else:
-        quest = Quest.query.get_or_404(int(quest_id))
+        old_id = int(quest_id)
+        quest = Quest.query.get_or_404(old_id)
+        
+        if new_id_str and int(new_id_str) != old_id:
+            try:
+                new_id = int(new_id_str)
+                # Check if exists
+                if Quest.query.get(new_id):
+                    flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
+                    return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
+                
+                # 手動で全テーブルのIDを更新 (SQLiteでFK制約がONでない場合を考慮)
+                # 注意: 外部キー制約が有効な場合、更新順序が重要になる可能性があります
+                db.session.execute(db.text("UPDATE quest_attempt_logs SET quest_id = :new_id WHERE quest_id = :old_id"), 
+                                   {'new_id': new_id, 'old_id': old_id})
+                db.session.execute(db.text("UPDATE questions SET quest_id = :new_id WHERE quest_id = :old_id"), 
+                                   {'new_id': new_id, 'old_id': old_id})
+                db.session.execute(db.text("UPDATE quest_history SET quest_id = :new_id WHERE quest_id = :old_id"), 
+                                   {'new_id': new_id, 'old_id': old_id})
+                db.session.execute(db.text("UPDATE user_progress SET quest_id = :new_id WHERE quest_id = :old_id"), 
+                                   {'new_id': new_id, 'old_id': old_id})
+                db.session.execute(db.text("UPDATE quests SET id = :new_id WHERE id = :old_id"), 
+                                   {'new_id': new_id, 'old_id': old_id})
+                db.session.commit()
+                # 更新後のQuestオブジェクトを再取得
+                quest = Quest.query.get(new_id)
+                quest_id = str(new_id)
+            except ValueError:
+                flash("エラー: IDは数値で入力してください。", "danger")
+                return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
+            except Exception as e:
+                db.session.rollback()
+                flash(f"エラー: IDの更新に失敗しました。{str(e)}", "danger")
+                return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
+
         quest.title = title
         quest.level = level
         quest.questname = questname
         db.session.commit()
         flash("クエスト情報を保存しました", "success")
         return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
+
+@app.route('/admin/quest/renumber_questions/<int:quest_id>', methods=['POST'])
+@login_required
+def renumber_questions(quest_id):
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    title = request.form.get('title', '')
+    level = request.form.get('level', '')
+    
+    quest = Quest.query.get_or_404(quest_id)
+    # 現在のID順にソート
+    questions = sorted(quest.questions, key=lambda x: x.id)
+    
+    try:
+        # クエストIDをベースにしたID体系（QuestID * 100 + 連番）
+        base_id = quest_id * 100
+        for i, q in enumerate(questions):
+            new_id = base_id + (i + 1)
+            old_id = q.id
+            if old_id != new_id:
+                # SQLiteの場合、主キーの更新は直接可能
+                db.session.execute(db.text("UPDATE questions SET id = :new_id WHERE id = :old_id"),
+                                   {'new_id': new_id, 'old_id': old_id})
+        
+        db.session.commit()
+        flash(f"問題IDを振り直しました（{base_id + 1}〜）。", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"エラー: IDの振り直しに失敗しました。{str(e)}", "danger")
+    
+    return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
 @app.route('/admin/question/edit/<int:quest_id>', methods=['POST'])
 @login_required
@@ -1047,7 +1125,15 @@ def save_question(quest_id):
     q_type = request.form['type']
     text = request.form['text']
     if question_id == 'new':
-        question = Question(quest_id=quest_id, type=q_type, text=text)
+        # クエストIDに基づいた自動採番 (QuestID * 100 + 連番)
+        base_id = quest_id * 100
+        existing_ids = [q.id for q in Question.query.filter(Question.id > base_id, Question.id < base_id + 100).all()]
+        if existing_ids:
+            new_q_id = max(existing_ids) + 1
+        else:
+            new_q_id = base_id + 1
+        
+        question = Question(id=new_q_id, quest_id=quest_id, type=q_type, text=text)
     else:
         question = Question.query.get_or_404(int(question_id))
         question.type = q_type
