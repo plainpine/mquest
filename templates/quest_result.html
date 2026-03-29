@@ -146,8 +146,8 @@
 <script>
   window.MathJax = {
     tex: {
-      inlineMath: [['$', '$'], ['\(', '\)']],
-      displayMath: [['$$', '$$'], ['\[', '\]']]
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
     },
     svg: { fontCache: 'global' }
   };
@@ -155,19 +155,26 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
 <script>
-function htmlDecode(input) {
-    var doc = new DOMParser().parseFromString(input, "text/html");
-    return doc.documentElement.textContent;
-}
-
 function renderMarkdownAndMath() {
-    marked.setOptions({ breaks: true });
-    // Process all elements with class 'markdown' and a 'data-content' attribute
-    document.querySelectorAll('.markdown[data-content]').forEach(div => {
-        let md = div.getAttribute('data-content');
+    if (typeof marked === 'undefined') return;
+    if (marked.use) {
+      marked.use({ breaks: true });
+    } else if (marked.setOptions) {
+      marked.setOptions({ breaks: true });
+    }
+
+    // Process all elements with class 'markdown' and a 'data-content' attribute 
+    document.querySelectorAll('.markdown[data-content]').forEach(function(div) {
+        var md = div.getAttribute('data-content');
         if (md) {
-            md = htmlDecode(md.replace(/\\n/g, '\n'));
-            div.innerHTML = marked.parse(md);
+            // getAttribute() は既にHTMLエンティティをデコード済みなので、htmlDecodeは不要
+            md = md.replace(/\\n/g, '\n');
+            try {
+                div.innerHTML = marked.parse(md);
+            } catch (e) {
+                console.error('Markdown parse error:', e);
+                div.textContent = md;
+            }
         }
     });
     // Typeset MathJax on the whole page
@@ -184,36 +191,46 @@ document.addEventListener('DOMContentLoaded', function () {
     var explanationModals = document.querySelectorAll('.modal');
     explanationModals.forEach(function (modal) {
         modal.addEventListener('show.bs.modal', function (event) {
-            var modalBody = modal.querySelector('.explanation-modal-body');
+            var modalBody = modal.querySelector('.explanation-modal-body');      
 
             // Render modal content only once
             if (modalBody && !modalBody.hasAttribute('data-rendered')) {
-                let content = modalBody.innerHTML.trim();
+                var content = modalBody.innerHTML.trim();
 
                 // Protect MathJax content from marked.js
-                const mathRegex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[\s\S]+?\$|\\\([\s\S]+?\\\))/g;
-                const placeholders = [];
-                let i = 0;
+                var mathRegex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[\s\S]+?\$|\\\([\s\S]+?\\\))/g;
+                var placeholders = [];
+                var i = 0;
 
-                content = content.replace(mathRegex, (match) => {
+                content = content.replace(mathRegex, function(match) {
                     placeholders.push(match);
                     return `__MATH_PLACEHOLDER_${i++}__`;
                 });
 
                 // Convert Markdown to HTML, preserving breaks
-                let html = marked.parse(content, { breaks: true });
+                var html = '';
+                try {
+                    html = marked.parse(content, { breaks: true });
+                } catch (e) {
+                    console.error('Modal Markdown parse error:', e);
+                    html = content;
+                }
 
                 // Restore MathJax content
-                for (let j = 0; j < placeholders.length; j++) {
+                for (var j = 0; j < placeholders.length; j++) {
                     html = html.replace(`__MATH_PLACEHOLDER_${j}__`, placeholders[j]);
                 }
 
                 modalBody.innerHTML = html;
 
                 // Re-run MathJax typesetting on the modal body
-                MathJax.typesetPromise([modalBody]).then(() => {
+                if (window.MathJax && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([modalBody]).then(function() {
+                        modalBody.setAttribute('data-rendered', 'true');
+                    });
+                } else {
                     modalBody.setAttribute('data-rendered', 'true');
-                });
+                }
             }
         });
     });

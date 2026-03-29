@@ -362,24 +362,33 @@
             }
           };
         
-          function htmlDecode(input) {
-            var doc = new DOMParser().parseFromString(input, "text/html");
-            return doc.documentElement.textContent;
-          }
-        
           function renderMarkdownAndMath() {
-            marked.setOptions({ breaks: true });
-            document.querySelectorAll('.markdown').forEach(div => {
-              let md = div.getAttribute('data-content');
+            if (typeof marked === 'undefined') return;
+            if (marked.use) {
+              marked.use({ breaks: true });
+            } else if (marked.setOptions) {
+              marked.setOptions({ breaks: true });
+            }
+
+            document.querySelectorAll('.markdown').forEach(function(div) {
+              var md = div.getAttribute('data-content');
               if (!md) return;
-              md = htmlDecode(md.replace(/\\n/g, '\n'));
-              div.innerHTML = marked.parse(md);
+              // getAttribute() は既にHTMLエンティティをデコード済みなので、htmlDecodeは不要
+              // 代わりに改行コードの置換のみ行う
+              md = md.replace(/\\n/g, '\n');
+
+              try {
+                div.innerHTML = marked.parse(md);
+              } catch (e) {
+                console.error('Markdown parse error:', e);
+                div.textContent = md;
+              }
             });
+
             if (window.MathJax && MathJax.typesetPromise) {
               MathJax.typesetPromise();
             }
-          }
-        
+          }        
           document.addEventListener("DOMContentLoaded", () => {
             renderMarkdownAndMath();
         
