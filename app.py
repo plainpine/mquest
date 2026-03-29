@@ -775,11 +775,21 @@ def manage_students():
 
     for user in users:
         user_data = {
+            'id': user.id,
             'username': user.username,
-            'nickname': user.nickname,  # ←これを必ず含めるように
+            'nickname': user.nickname,
             'progress': [],
-            'medals': []
+            'medals': [],
+            'parent': None
         }
+        
+        # 保護者情報の取得
+        if user.parent:
+            user_data['parent'] = {
+                'id': user.parent.id,
+                'username': user.parent.username,
+                'nickname': user.parent.nickname
+            }
 
         # 学習進捗状況の取得（UserProgressから）
         progress_query_result = db.session.query(
@@ -807,7 +817,122 @@ def manage_students():
 
         data.append(user_data)
 
-    return render_template('manage_students.html', students=data)
+    # 全保護者のリストを取得（紐付け用）
+    all_parents = User.query.filter_by(role='parent').all()
+    parent_list = [{'id': p.id, 'username': p.username, 'nickname': p.nickname} for p in all_parents]
+
+    return render_template('manage_students.html', students=data, parents=parent_list)
+
+@app.route('/admin/user/update', methods=['POST'])
+@login_required
+def update_user():
+    # ... (既存の更新処理) ...
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    user_id = request.form.get('user_id')
+    nickname = request.form.get('nickname')
+    password = request.form.get('password')
+    
+    user = User.query.get_or_404(user_id)
+    user.nickname = nickname
+    if password:
+        user.set_password(password)
+    
+    # 生徒の場合のみ保護者の紐付けを更新
+    if user.is_student():
+        parent_id = request.form.get('parent_id')
+        if parent_id == "":
+            user.parent_id = None
+        elif parent_id:
+            user.parent_id = int(parent_id)
+    
+    db.session.commit()
+    flash(f"{user.username} ( {user.role} ) の情報を更新しました", "success")
+    return redirect(url_for('manage_students'))
+
+@app.route('/admin/user/add', methods=['POST'])
+@login_required
+def add_student_with_parent():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    # 生徒情報
+    s_username = request.form.get('student_username')
+    s_nickname = request.form.get('student_nickname')
+    s_password = request.form.get('student_password')
+    
+    # 保護者情報 (既存)
+    existing_parent_id = request.form.get('existing_parent_id')
+    
+    # 保護者情報 (新規用)
+    p_username = request.form.get('parent_username')
+    p_nickname = request.form.get('parent_nickname')
+    p_password = request.form.get('parent_password')
+
+    try:
+        # 生徒作成
+        student = User(username=s_username, nickname=s_nickname, role='student')
+        student.set_password(s_password)
+        db.session.add(student)
+        
+        # 既存の保護者が選択されている場合
+        if existing_parent_id:
+            student.parent_id = int(existing_parent_id)
+        # 新規保護者作成（入力がある場合）
+        elif p_username and p_password:
+            # 既存の保護者がいないか確認（念のためユーザー名で）
+            parent = User.query.filter_by(username=p_username, role='parent').first()
+            if not parent:
+                parent = User(username=p_username, nickname=p_nickname or p_username, role='parent')
+                parent.set_password(p_password)
+                db.session.add(parent)
+                db.session.flush() # ID確定のため
+            
+            student.parent_id = parent.id
+        
+        db.session.commit()
+        flash(f"生徒 {s_username} を登録しました", "success")
+    except IntegrityError:
+        db.session.rollback()
+        flash("エラー: ユーザー名が既に存在します", "danger")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"エラー: {str(e)}", "danger")
+
+    return redirect(url_for('manage_students'))
+
+@app.route('/admin/user/delete/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    user = User.query.get_or_404(user_id)
+    username = user.username
+    role = user.role
+
+    try:
+        # 関連データの削除（生徒の場合）
+        if role == 'student':
+            UserProgress.query.filter_by(user_id=user_id).delete()
+            QuestHistory.query.filter_by(user_id=user_id).delete()
+            QuestAttemptLog.query.filter_by(user_id=user_id).delete()
+        
+        # 保護者の場合、子供たちのparent_idをNULLにする
+        elif role == 'parent':
+            children = User.query.filter_by(parent_id=user_id).all()
+            for child in children:
+                child.parent_id = None
+
+        db.session.delete(user)
+        db.session.commit()
+        flash(f"ユーザー {username} ({role}) を削除しました", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"削除エラー: {str(e)}", "danger")
+
+    return redirect(url_for('manage_students'))
 
 # クエストの一覧　追加・削除
 @app.route('/manage_quests')

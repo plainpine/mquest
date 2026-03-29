@@ -4,41 +4,166 @@
 {% block content %}
 <h2>生徒の管理</h2>
 
+<!-- 新規生徒・保護者登録フォーム -->
+<div style="background: #e8f5e9; padding: 1.5rem; margin-bottom: 2rem; border-radius: 8px; border: 1px solid #c8e6c9;">
+    <h3>新規生徒・保護者の登録</h3>
+    <form action="{{ url_for('add_student_with_parent') }}" method="POST">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <!-- 生徒入力 -->
+            <div style="flex: 1; min-width: 250px;">
+                <h4>生徒アカウント</h4>
+                <div style="margin-bottom: 10px;">
+                    <label>ユーザーID (ログイン用):</label><br>
+                    <input type="text" name="student_username" required style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>ニックネーム:</label><br>
+                    <input type="text" name="student_nickname" required style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>パスワード:</label><br>
+                    <input type="password" name="student_password" required style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>保護者の指定 (既存から選択):</label><br>
+                    <select name="existing_parent_id" style="width: 100%;">
+                        <option value="">-- 新規作成する、または指定しない --</option>
+                        {% for p in parents %}
+                        <option value="{{ p.id }}">{{ p.nickname }} ({{ p.username }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <!-- 保護者入力 -->
+            <div style="flex: 1; min-width: 250px;">
+                <h4>保護者アカウント (新規作成用)</h4>
+                <p style="font-size: 0.85rem; color: #666;">※既存の保護者を選択した場合は無視されます</p>
+                <div style="margin-bottom: 10px;">
+                    <label>ユーザーID (ログイン用):</label><br>
+                    <input type="text" name="parent_username" placeholder="空欄なら作成しません" style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>ニックネーム:</label><br>
+                    <input type="text" name="parent_nickname" style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>パスワード:</label><br>
+                    <input type="password" name="parent_password" style="width: 100%;">
+                </div>
+            </div>
+        </div>
+        <button type="submit" style="background-color: #4CAF50; margin-top: 10px;">新規ユーザーを登録</button>
+    </form>
+</div>
+
+<hr>
+
 {% for student in students %}
-<div style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 2rem;">
-    <h3>{{ student.username + ": " + student.nickname}}</h3>
+<div style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 2rem; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+        <!-- 生徒情報編集 -->
+        <div style="flex: 1; min-width: 300px; margin-right: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>生徒: {{ student.username }}</h3>
+                <form action="{{ url_for('delete_user', user_id=student.id) }}" method="POST" onsubmit="return confirm('生徒 {{ student.username }} を削除しますか？進捗データもすべて削除されます。');">
+                    <button type="submit" style="background-color: #ff4d4d; padding: 5px 10px; font-size: 0.8rem;">生徒削除</button>
+                </form>
+            </div>
+            <form action="{{ url_for('update_user') }}" method="POST" style="background: #f9f9f9; padding: 10px; border-radius: 5px;">
+                <input type="hidden" name="user_id" value="{{ student.id }}">
+                <div style="margin-bottom: 10px;">
+                    <label>ニックネーム:</label><br>
+                    <input type="text" name="nickname" value="{{ student.nickname }}" required style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>新しいパスワード (変更する場合のみ):</label><br>
+                    <input type="password" name="password" placeholder="変更しない場合は空欄" style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>保護者の紐付け:</label><br>
+                    <select name="parent_id" style="width: 100%;">
+                        <option value="">-- 指定なし --</option>
+                        {% for p in parents %}
+                        <option value="{{ p.id }}" {% if student.parent and student.parent.id == p.id %}selected{% endif %}>
+                            {{ p.nickname }} ({{ p.username }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit">生徒情報を更新</button>
+            </form>
+        </div>
 
-    <h4>進捗状況</h4>
-    <table border="1" cellpadding="5">
-        <tr>
-            <th>タイトル</th>
-            <th>レベル</th>
-            <th>全問正解回数</th>
-        </tr>
-        {% for p in student.progress %}
-        <tr>
-            <td>{{ p.title }}</td>
-            <td>{{ p.level }}</td>
-            <td>{{ p.count }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+        <!-- 保護者情報編集 -->
+        <div style="flex: 1; min-width: 300px;">
+            {% if student.parent %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>保護者: {{ student.parent.username }}</h3>
+                    <form action="{{ url_for('delete_user', user_id=student.parent.id) }}" method="POST" onsubmit="return confirm('保護者 {{ student.parent.username }} を削除しますか？他の生徒との紐付けも解除されます。');">
+                        <button type="submit" style="background-color: #ff4d4d; padding: 5px 10px; font-size: 0.8rem;">保護者アカウントを削除</button>
+                    </form>
+                </div>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">※この保護者情報を変更すると、この保護者に紐付くすべての生徒に影響します。</p>
+                <form action="{{ url_for('update_user') }}" method="POST" style="background: #eef; padding: 10px; border-radius: 5px;">
+                    <input type="hidden" name="user_id" value="{{ student.parent.id }}">
+                    <div style="margin-bottom: 10px;">
+                        <label>ニックネーム:</label><br>
+                        <input type="text" name="nickname" value="{{ student.parent.nickname }}" required style="width: 100%;">
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>新しいパスワード (変更する場合のみ):</label><br>
+                        <input type="password" name="password" placeholder="変更しない場合は空欄" style="width: 100%;">
+                    </div>
+                    <button type="submit" style="background-color: #5c5cff;">保護者情報を更新</button>
+                </form>
+            {% else %}
+                <div style="margin-top: 3rem; text-align: center; border: 1px dashed #ccc; padding: 10px;">
+                    <p style="color: #666;">保護者が紐付いていません。<br>左のフォームから既存の保護者を選択して更新してください。</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
-    <h4>メダル取得数</h4>
-    <table border="1" cellpadding="5">
-        <tr>
-            <th>クエストID</th>
-            <th>挑戦回数（メダル数）</th>
-        </tr>
-        {% for m in student.medals %}
-        <tr>
-            <td>{{ m.quest_id }}</td>
-            <td>{{ m.count }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <hr style="margin: 20px 0;">
+
+    <h4>学習状況</h4>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1;">
+            <h5>進捗状況</h5>
+            <table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #eee;">
+                    <th>タイトル</th>
+                    <th>レベル</th>
+                    <th>全問正解回数</th>
+                </tr>
+                {% for p in student.progress %}
+                <tr>
+                    <td>{{ p.title }}</td>
+                    <td>{{ p.level }}</td>
+                    <td>{{ p.count }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div style="flex: 1;">
+            <h5>メダル取得数</h5>
+            <table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #eee;">
+                    <th>クエストID</th>
+                    <th>挑戦回数</th>
+                </tr>
+                {% for m in student.medals %}
+                <tr>
+                    <td>{{ m.quest_id }}</td>
+                    <td>{{ m.count }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
 </div>
 {% endfor %}
 
-<a href="{{ url_for('dashboard_admin') }}" class="button">管理者ダッシュボードに戻る</a>
+<p><a href="{{ url_for('dashboard_admin') }}" class="button">管理者ダッシュボードに戻る</a></p>
 {% endblock %}
