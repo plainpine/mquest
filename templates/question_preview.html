@@ -42,7 +42,7 @@
     .key-btn:active, .key-btn-en:active { background-color: #e0e0e0; }
 
     /* Graph styles */
-    #function-plot { height: 400px; width: 100%; }
+    [id^="graph-target-"] { height: 400px; width: 100%; max-width: 600px; margin: 0 auto; }
     .graph-legend { margin-top: 1rem; }
     .legend-item { display: flex; align-items: center; margin-bottom: 0.5rem; }
     .legend-color { width: 20px; height: 10px; margin-right: 10px; border: 1px solid #ccc; }
@@ -204,6 +204,10 @@
             </div>
 
         {% elif question.type == 'function_graph' %}
+            <div class="function-graph-container" data-functions='{{ question.answer | tojson }}' style="margin-bottom: 1rem;">
+                <div id="graph-target-{{ q_index }}"></div>
+                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+            </div>
             <div class="sub-questions-container">
                 {% for sub_q in question.choices %} {# question.choices now contains sub-questions for function_graph type #}
                     <div class="sub-question" style="margin-bottom: 1rem;">
@@ -233,6 +237,10 @@
 
         
         {% elif question.type == 'function_graph_choice' %}
+            <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1rem;">
+                <div id="graph-target-{{ q_index }}"></div>
+                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+            </div>
             {# Display sub-questions with their choices #}
             <div class="sub-questions-container">
                 {% for sub_q in question.answers %} {# question.answers now contains sub-questions for function_graph_choice type #}

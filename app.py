@@ -527,6 +527,31 @@ def quest_result(quest_id):
                 user_answer = user_answers_list
                 expected = expected_answers_list
 
+            elif question_type == 'function_graph':
+                try:
+                    sub_questions = json.loads(q.choices)
+                except (json.JSONDecodeError, TypeError):
+                    sub_questions = []
+                
+                all_sub_correct = True
+                user_answers_list = []
+                expected_answers_list = []
+                
+                for sub_q_index, sub_q in enumerate(sub_questions):
+                    form_field_name = f"q{i}_{sub_q_index}"
+                    user_val = request.form.get(form_field_name, '').strip()
+                    expected_val = str(sub_q.get('answer', ''))
+                    
+                    user_answers_list.append({sub_q.get('prompt', ''): user_val})
+                    expected_answers_list.append({sub_q.get('prompt', ''): expected_val})
+                    
+                    if user_val != expected_val:
+                        all_sub_correct = False
+                        
+                correct = all_sub_correct
+                user_answer = user_answers_list
+                expected = expected_answers_list
+
             results.append({
                 'question_id': q.id,
                 'user_answer': user_answer,

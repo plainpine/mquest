@@ -170,23 +170,7 @@
 
       <h3 style="margin-top: 1rem;">回答と正答</h3>
       <div id="function-graph-answers-container">
-        {% if question and question.type == 'function_graph' and answers %}
-          {% for ans in answers %}
-            <div class="sub-question">
-              <input type="hidden" name="function_graph_answer_id" value="{{ loop.index0 }}"> {# Use loop.index0 for a simple ID #}
-              <div>
-                <label>問題文 (Markdown):</label>
-                <textarea name="function_graph_answer_prompt" rows="2" cols="50" class="sub-prompt-input">{{ ans.prompt }}</textarea>
-                <div class="markdown-preview sub-prompt-preview"></div>
-              </div>
-              <div>
-                <label>正答:</label>
-                <input type="text" name="function_graph_correct_answer" placeholder="正答" value="{{ ans.answer }}">
-              </div>
-              <button type="button" class="remove-sub-question">削除</button>
-            </div>
-          {% endfor %}
-        {% endif %}
+        {# JavaScript will populate this based on existing data #}
       </div>
       <button type="button" id="add-function-graph-answer">回答項目を追加</button>
       <input type="hidden" name="answers" id="answers_function_graph_hidden">

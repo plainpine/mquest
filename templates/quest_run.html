@@ -167,29 +167,69 @@
           {% endfor %}
         </div>
       {% elif question.type == 'function_graph' %}
-        <div class="function-graph-container" data-functions='{{ question.answer | tojson }}'>
-                <div id="graph-target-{{ q_index }}"></div>
-                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
-              </div>
-              {# This type is for display only, no answer input needed #}
-              <input type="hidden" name="q{{ q_index }}" value="seen">
-            {% elif question.type == 'function_graph_choice' %}
-              <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}'>
-                <div id="graph-target-{{ q_index }}"></div>
-                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
-              </div>
+        <div class="function-graph-container" data-functions='{{ question.answer | tojson }}' style="margin-bottom: 1rem;">
+          <div id="graph-target-{{ q_index }}"></div>
+          <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+        </div>
+        <div class="sub-questions-container">
+          {% for sub_q in question.choices %}
+            <div class="sub-question" style="margin-bottom: 1rem;">
+              <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+              <input type="text" name="q{{ q_index }}_{{ loop.index0 }}" class="numeric-input" data-qid="{{ q_index }}" readonly style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+            </div>
+          {% endfor %}
+          <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="1">1</button>
+              <button type="button" class="key-btn" data-num="2">2</button>
+              <button type="button" class="key-btn" data-num="3">3</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="4">4</button>
+              <button type="button" class="key-btn" data-num="5">5</button>
+              <button type="button" class="key-btn" data-num="6">6</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="7">7</button>
+              <button type="button" class="key-btn" data-num="8">8</button>
+              <button type="button" class="key-btn" data-num="9">9</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="0">0</button>
+              <button type="button" class="key-btn" data-num=".">.</button>
+              <button type="button" class="key-btn" data-num="-">-</button>
+              <button type="button" class="key-btn" data-num="/">/</button>
+            </div>
+            <div class="keyboard-row">
+              <button type="button" class="key-btn" data-num="del">⌫</button>
+              <button type="button" class="key-btn" data-num="clear">CL</button>
+            </div>
+          </div>
+        </div>
+      {% elif question.type == 'function_graph_choice' %}
+        <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1rem;">
+          <div id="graph-target-{{ q_index }}"></div>
+          <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+        </div>
+        <div class="sub-questions-container">
+          {% for sub_q in question.sub_questions %}
+            {% set outer_loop_index = loop.index0 %}
+            <div class="sub-question" style="margin-bottom: 1rem;">
+              <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
               <div class="choice-block">
-                <div style="height: 0.5rem;"></div>
-                {% for choice in question.choices %}
+                {% for choice in sub_q.choices %}
                   {% if choice %}
-                  <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
-                    <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
-                    <span class="markdown" data-content="{{ choice | e }}"></span>
-                  </div>
+                    <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
+                      <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
+                      <span class="markdown" data-content="{{ choice | e }}"></span>
+                    </div>
                   {% endif %}
                 {% endfor %}
               </div>
-            {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
             </div>
           {% endfor %}
         
@@ -238,6 +278,9 @@
           .keyboard-row { margin-bottom: 5px; }
           .key-btn-en:active { background-color: #e0e0e0; }
         
+          /* Graph styles */
+          [id^="graph-target-"] { height: 400px; width: 100%; max-width: 600px; margin: 0 auto; }
+
           .graph-legend {
               margin-top: 1rem;
           }
