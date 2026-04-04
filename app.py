@@ -26,11 +26,23 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key'  # セッション管理に必要
 
 # データベース設定（例: SQLite）
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mquest.db?charset=utf8'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mquest.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # DBとLoginManagerの初期化
 db.init_app(app)
+
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -1200,7 +1212,7 @@ def add_question(quest_id):
     quest = Quest.query.get_or_404(quest_id)
     title = request.args.get('title', '')
     level = request.args.get('level', '')
-    return render_template('edit_question.html', question=None, quest=quest, quest_id=quest_id, title=title, level=level)
+    return render_template('edit_question.html', question=None, quest=quest, quest_id=quest_id, title=title, level=level, choices=[], answers=[])
 
 # 問題の編集画面
 @app.route('/admin/question/edit/<int:quest_id>/<question_id>', methods=['GET'])
@@ -1530,7 +1542,7 @@ def preview_question():
                     'choices': choices_for_sub_q,
                     'answer': sub_answers[i] if i < len(sub_answers) else ''
                 })
-        question_data['answers'] = sub_questions_list # Store sub-questions in 'answers' for template
+        question_data['sub_questions'] = sub_questions_list # Store sub-questions in 'sub_questions' for template
         
         # No general 'correct_answer_text' for the whole FGC question type from form submission,
         # as answers are tied to each sub_question.

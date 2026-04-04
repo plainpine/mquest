@@ -17,11 +17,13 @@
         margin-top: 20px;
         border-radius: 8px;
     }
-    .correct-answer {
+    .correct-answer-preview {
         background-color: #e8f5e9;
-        padding: 10px;
-        margin-top: 15px;
+        padding: 8px 12px;
+        margin-top: 8px;
         border-left: 5px solid #4CAF50;
+        font-size: 0.95rem;
+        border-radius: 4px;
     }
 
     /* Styles from quest_run.html */
@@ -34,7 +36,7 @@
     .sortable-ghost { opacity: 0.4; }
     .sortable-container { list-style-type: none; padding: 0; }
     label { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; max-width: 100%; }
-    .numeric-input, .en-fill-in-the-blank-input { font-size: 1.2rem; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 0.5rem; text-align: center; }
+    .numeric-input, .en-fill-in-the-blank-input { font-size: 1.2rem; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 0.5rem; text-align: center; width: 100%; max-width: 300px; }
     .keypad { margin-top: 1rem; padding: 10px; border: 1px solid #ccc; border-radius: 8px; display: inline-block; }
     .virtual-keyboard { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
     .keyboard-row { margin-bottom: 5px; }
@@ -42,12 +44,19 @@
     .key-btn:active, .key-btn-en:active { background-color: #e0e0e0; }
 
     /* Graph styles */
-    [id^="graph-target-"] { height: 400px; width: 100%; max-width: 600px; margin: 0 auto; }
+    [id^="graph-target-"] { height: 600px; width: 100%; max-width: 800px; margin: 0 auto; }
     .graph-legend { margin-top: 1rem; }
     .legend-item { display: flex; align-items: center; margin-bottom: 0.5rem; }
     .legend-color { width: 20px; height: 10px; margin-right: 10px; border: 1px solid #ccc; }
     .legend-text { flex: 1; }
 
+    /* Sub-question styles for bold numbering */
+    .sub-question-prompt {
+        font-weight: bold;
+        display: flex;
+        gap: 5px;
+        margin-bottom: 5px;
+    }
 </style>
 
 <h2>問題プレビュー</h2>
@@ -56,7 +65,7 @@
     <div class="question-text">
         <h3>問題文</h3>
         <div class="markdown" data-content="{{ question.text | e }}"></div>
-        {% if question.type == 'figure_choice' and question.svg_content %}
+        {% if (question.type == 'figure_choice' or question.type == 'svg_interactive') and question.svg_content %}
             <div class="svg-container" style="margin-top: 1rem;">
                 {{ question.svg_content | safe }}
             </div>
@@ -66,201 +75,133 @@
     <hr>
 
     <div class="question-body">
-        {% set q_index = 0 %} {# Use a fixed index for preview #}
+        {% set q_index = 0 %}
 
-        {% if question.type == 'choice' %}
+        {% if question.type == 'choice' or question.type == 'multiple_choice' %}
             <div class="choice-block">
-                {% for choice in question.choices %}
-                    {% if choice %}
-                    <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
-                        <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
+                {% for choice in (question.choices if question.choices else []) %}
+                    <div class="choice-option {{ 'multiple-choice' if question.type == 'multiple_choice' else '' }}" data-qname="q{{ q_index }}">
+                        <input type="{{ 'checkbox' if question.type == 'multiple_choice' else 'radio' }}" name="q{{ q_index }}" style="display: none;">
                         <span class="markdown" data-content="{{ choice | e }}"></span>
                     </div>
-                    {% endif %}
                 {% endfor %}
             </div>
-
-        {% elif question.type == 'multiple_choice' %}
-            <div class="choice-block">
-                 {% for choice in question.choices %}
-                    {% if choice %}
-                    <div class="choice-option multiple-choice" data-qname="q{{ q_index }}">
-                        <input type="checkbox" name="q{{ q_index }}" value="{{ choice | e }}" style="margin-right: 0.5rem;">
-                        <span class="markdown" data-content="{{ choice | e }}"></span>
-                    </div>
-                    {% endif %}
-                {% endfor %}
+            <div class="correct-answer-preview">
+                <strong>正解:</strong> {{ question.answer }}
             </div>
 
         {% elif question.type == 'sort' %}
-            {% set text_parts = question.text.split('（', 1) %}
-            {% set sortable_text = text_parts[0] %}
-            <ul class="sortable-container sortable" id="q{{ q_index }}_sortable" data-name="q{{ q_index }}">
-                {% for part in sortable_text.split('/') %}
-                    {% set cleaned = part.strip() %}
-                    {% if cleaned %}
-                        <li class="sortable-item" data-id="item{{ loop.index0 }}">{{ cleaned }}</li>
-                    {% endif %}
+            <ul class="sortable-container sortable" data-name="q{{ q_index }}">
+                {% for part in (question.choices if question.choices else []) %}
+                    <li class="sortable-item">{{ part.strip() }}</li>
                 {% endfor %}
             </ul>
-            <input type="hidden" name="q{{ q_index }}" id="q{{ q_index }}_input">
+            <div class="correct-answer-preview">
+                <strong>正解の並び順:</strong> {{ question.answer }}
+            </div>
 
         {% elif question.type == 'numeric' %}
-            {% for ans in question.answers %}
-                <div class="numeric-block">
-                    <label class="markdown" data-content="{{ ans.label | e }}："></label>
-                    <input type="text" name="q{{ q_index }}_{{ loop.index0 }}" class="numeric-input" data-qid="{{ q_index }}" readonly>
+            {% for ans in (question.answers if question.answers else []) %}
+                <div class="numeric-block" style="margin-bottom: 1rem;">
+                    <label>{{ ans.label }}：</label>
+                    <input type="text" class="numeric-input" data-qid="{{ q_index }}" readonly>
+                    <div class="correct-answer-preview">
+                        <strong>正答:</strong> {{ ans.answer }}
+                    </div>
                 </div>
             {% endfor %}
-            <div style="height: 1rem;"></div>
-            <div class="keypad" data-qid="{{ q_index }}" style="display: none;">
-                <!-- Keypad buttons -->
-                <div class="keyboard-row">
-                    <button type="button" class="key-btn" data-num="1">1</button> <button type="button" class="key-btn" data-num="2">2</button> <button type="button" class="key-btn" data-num="3">3</button>
-                </div>
-                <div class="keyboard-row">
-                    <button type="button" class="key-btn" data-num="4">4</button> <button type="button" class="key-btn" data-num="5">5</button> <button type="button" class="key-btn" data-num="6">6</button>
-                </div>
-                <div class="keyboard-row">
-                    <button type="button" class="key-btn" data-num="7">7</button> <button type="button" class="key-btn" data-num="8">8</button> <button type="button" class="key-btn" data-num="9">9</button>
-                </div>
-                <div class="keyboard-row">
-                    <button type="button" class="key-btn" data-num="0">0</button> <button type="button" class="key-btn" data-num=".">.</button> <button type="button" class="key-btn" data-num="-">-</button> <button type="button" class="key-btn" data-num="/">/</button>
-                </div>
-                <div class="keyboard-row">
-                    <button type="button" class="key-btn" data-num="del">⌫</button> <button type="button" class="key-btn" data-num="clear">CL</button>
-                </div>
-            </div>
 
         {% elif question.type == 'fill_in_the_blank_en' %}
-            <div class="en-fill-in-the-blank-block">
-                <input type="text" name="q{{ q_index }}" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" autocomplete="off" readonly>
-                <div class="virtual-keyboard" data-qid="{{ q_index }}" style="display: none;">
-                    <div class="keyboard-row">
-                        {% for key in 'qwertyuiop' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
-                    </div>
-                    <div class="keyboard-row">
-                        {% for key in 'asdfghjkl' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
-                        <button type="button" class="key-btn-en" data-key="'" >'</button>
-                    </div>
-                    <div class="keyboard-row">
-                        {% for key in 'zxcvbnm' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
-                        <button type="button" class="key-btn-en" data-key="del">⌫</button> <button type="button" class="key-btn-en" data-key="clear">CL</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn-en" data-key=" ">space</button>
-                    </div>
-                </div>
+            <input type="text" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" readonly>
+            <div class="correct-answer-preview">
+                <strong>正解:</strong> {{ question.answer }}
             </div>
-            
+
         {% elif question.type == 'svg_interactive' %}
-            <div class="svg-interactive-container" data-question-index="{{ q_index }}">
-                {{ question.svg_content | safe }}
-            </div>
             <div class="sub-questions-container">
-                {% for sub_q in question.sub_questions %}
-                    <div class="sub-question" style="margin-bottom: 1rem;">
-                        <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
-                        <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" readonly style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+                {% for sub_q in (question.sub_questions if question.sub_questions else []) %}
+                    <div class="sub-question" style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <div class="sub-question-prompt">
+                            <span>{{ loop.index }}.</span>
+                            <div class="markdown" data-content="{{ sub_q.prompt | e }}"></div>
+                        </div>
+                        <input type="text" class="numeric-input" data-qid="{{ q_index }}" readonly>
+                        <div class="correct-answer-preview">
+                            <strong>正答:</strong> {{ sub_q.answer }}
+                        </div>
                     </div>
                 {% endfor %}
-                <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
-                    <!-- Keypad buttons -->
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="1">1</button> <button type="button" class="key-btn" data-num="2">2</button> <button type="button" class="key-btn" data-num="3">3</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="4">4</button> <button type="button" class="key-btn" data-num="5">5</button> <button type="button" class="key-btn" data-num="6">6</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="7">7</button> <button type="button" class="key-btn" data-num="8">8</button> <button type="button" class="key-btn" data-num="9">9</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="0">0</button> <button type="button" class="key-btn" data-num=".">.</button> <button type="button" class="key-btn" data-num="-">-</button> <button type="button" class="key-btn" data-num="/">/</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="del">⌫</button> <button type="button" class="key-btn" data-num="clear">CL</button>
-                    </div>
-                </div>
             </div>
+
         {% elif question.type == 'figure_choice' %}
             <div class="sub-questions-container">
-                {% for sub_q in question.sub_questions %}
-                {% set outer_loop_index = loop.index0 %}
-                <div class="sub-question" style="margin-bottom: 1rem;">
-                    <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
-                    <div class="choice-block">
-                    {% for choice in sub_q.choices %}
-                        {% if choice %}
-                        <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
-                        <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
-                        <span class="markdown" data-content="{{ choice | e }}"></span>
+                {% for sub_q in (question.sub_questions if question.sub_questions else []) %}
+                    {% set outer_loop_index = loop.index0 %}
+                    <div class="sub-question" style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <div class="sub-question-prompt">
+                            <span>{{ loop.index }}.</span>
+                            <div class="markdown" data-content="{{ sub_q.prompt | e }}"></div>
                         </div>
-                        {% endif %}
-                    {% endfor %}
+                        <div class="choice-block">
+                            {% for choice in sub_q.choices %}
+                                <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}">
+                                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="correct-answer-preview">
+                            <strong>正答:</strong> {{ sub_q.answer }}
+                        </div>
                     </div>
-                </div>
                 {% endfor %}
             </div>
 
         {% elif question.type == 'function_graph' %}
-            <div class="function-graph-container" data-functions='{{ question.answer | tojson }}' style="margin-bottom: 1rem;">
+            <div class="function-graph-container" data-functions='{{ question.answer | tojson }}' style="margin-bottom: 1.5rem;">
                 <div id="graph-target-{{ q_index }}"></div>
                 <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
             </div>
             <div class="sub-questions-container">
-                {% for sub_q in question.choices %} {# question.choices now contains sub-questions for function_graph type #}
-                    <div class="sub-question" style="margin-bottom: 1rem;">
-                        <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
-                        <input type="text" name="q{{ q_index }}_{{ loop.index0 }}" class="numeric-input" data-qid="{{ q_index }}" readonly style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
-                    </div>
-                {% endfor %}
-                <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
-                    <!-- Keypad buttons -->
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="1">1</button> <button type="button" class="key-btn" data-num="2">2</button> <button type="button" class="key-btn" data-num="3">3</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="4">4</button> <button type="button" class="key-btn" data-num="5">5</button> <button type="button" class="key-btn" data-num="6">6</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="7">7</button> <button type="button" class="key-btn" data-num="8">8</button> <button type="button" class="key-btn" data-num="9">9</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="0">0</button> <button type="button" class="key-btn" data-num=".">.</button> <button type="button" class="key-btn" data-num="-">-</button> <button type="button" class="key-btn" data-num="/">/</button>
-                    </div>
-                    <div class="keyboard-row">
-                        <button type="button" class="key-btn" data-num="del">⌫</button> <button type="button" class="key-btn" data-num="clear">CL</button>
-                    </div>
-                </div>
-            </div>
-
-        
-        {% elif question.type == 'function_graph_choice' %}
-            <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1rem;">
-                <div id="graph-target-{{ q_index }}"></div>
-                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
-            </div>
-            {# Display sub-questions with their choices #}
-            <div class="sub-questions-container">
-                {% for sub_q in question.answers %} {# question.answers now contains sub-questions for function_graph_choice type #}
-                {% set outer_loop_index = loop.index0 %}
-                <div class="sub-question" style="margin-bottom: 1rem;">
-                    <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
-                    <div class="choice-block">
-                    {% for choice in sub_q.choices %}
-                        {% if choice %}
-                        <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
-                        <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
-                        <span class="markdown" data-content="{{ choice | e }}"></span>
+                {% for sub_q in (question.choices if question.choices else []) %}
+                    <div class="sub-question" style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <div class="sub-question-prompt">
+                            <span>{{ loop.index }}.</span>
+                            <div class="markdown" data-content="{{ sub_q.prompt | e }}"></div>
                         </div>
-                        {% endif %}
-                    {% endfor %}
+                        <input type="text" class="numeric-input" data-qid="{{ q_index }}" readonly style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+                        <div class="correct-answer-preview">
+                            <strong>正答:</strong> {{ sub_q.answer }}
+                        </div>
                     </div>
-                </div>
                 {% endfor %}
             </div>
 
+        {% elif question.type == 'function_graph_choice' %}
+            <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1.5rem;">
+                <div id="graph-target-{{ q_index }}"></div>
+                <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+            </div>
+            <div class="sub-questions-container">
+                {% for sub_q in (question.sub_questions if question.sub_questions else []) %}
+                    {% set outer_loop_index = loop.index0 %}
+                    <div class="sub-question" style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <div class="sub-question-prompt">
+                            <span>{{ loop.index }}.</span>
+                            <div class="markdown" data-content="{{ sub_q.prompt | e }}"></div>
+                        </div>
+                        <div class="choice-block">
+                            {% for choice in sub_q.choices %}
+                                <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}">
+                                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="correct-answer-preview">
+                            <strong>正答:</strong> {{ sub_q.answer }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
     </div>
 </div>
@@ -268,272 +209,34 @@
 <div class="explanation-container">
     <h3>解説</h3>
     <div class="markdown" data-content="{{ question.explanation | e }}"></div>
-    <div class="correct-answer">
-        <strong>正解:</strong>
-        <span id="correct-answer-content">
-            {% if question.type in ['choice', 'multiple_choice', 'sort'] %}
-                <div class="markdown" data-content="{{ question.answer | e }}"></div>
-            {% elif question.type == 'fill_in_the_blank_en' %}
-                 <div class="markdown" data-content="{{ question.answer | e }}"></div>
-            {% elif question.type == 'numeric' %}
-                <ul>
-                {% for ans in question.answers %}
-                    <li><span class="markdown" data-content="{{ ans.label | e }}: {{ ans.answer }}"></span></li>
-                {% endfor %}
-                </ul>
-            {% elif question.type == 'svg_interactive' %}
-                 <ul>
-                {% for sub_q in question.answer %}
-                    <li><span class="markdown" data-content="{{ sub_q.prompt | e }}: {{ sub_q.answer }}"></span></li>
-                {% endfor %}
-                </ul>
-            {% elif question.type == 'figure_choice' %}
-                <ul>
-                {% for sub_q in question.answer %}
-                    <li><span class="markdown" data-content="{{ sub_q.prompt | e }}: {{ sub_q.answer }}"></span></li>
-                {% endfor %}
-                </ul>
-            {% elif question.type == 'function_graph' %}
-                <ul>
-                {% for sub_q in question.choices %}
-                    <li>
-                        問題文: <span class="markdown" data-content="{{ sub_q.prompt | e }}"></span><br>
-                        正解: <span class="markdown" data-content="{{ sub_q.answer | e }}"></span>
-                    </li>
-                {% endfor %}
-                </ul>
-                        {% elif question.type == 'function_graph_choice' %}
-                            <ul>
-                                {% for sub_q in question.answers %}
-                                    <li>
-                                        問題文: <span class="markdown" data-content="{{ sub_q.prompt | e }}"></span><br>
-                                        正解: <span class="markdown" data-content="{{ sub_q.answer | e }}"></span>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-            {% endif %}
-        </span>
-    </div>
 </div>
 
 <div style="margin-top: 2rem;">
   <button onclick="window.close();" class="button">閉じる</button>
 </div>
 
-<!-- Required JS libraries -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/function-plot/dist/function-plot.js"></script>
-
 <script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']]
-    },
-    svg: { fontCache: 'global' }
-  };
+  window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <script>
     function renderMarkdownAndMath() {
         if (typeof marked === 'undefined') return;
-        if (marked.use) {
-          marked.use({ breaks: true });
-        } else if (marked.setOptions) {
-          marked.setOptions({ breaks: true });
-        }
-
+        marked.setOptions({ breaks: true });
         document.querySelectorAll('.markdown').forEach(function(div) {
             var md = div.getAttribute('data-content');
             if (!md) return;
-            // getAttribute() は既にHTMLエンティティをデコード済みなので、htmlDecodeは不要
             md = md.replace(/\\n/g, '\n');
-            try {
-                div.innerHTML = marked.parse(md);
-            } catch (e) {
-                console.error('Markdown parse error:', e);
-                div.textContent = md;
-            }
+            try { div.innerHTML = marked.parse(md); } catch (e) { div.textContent = md; }
         });
-        if (window.MathJax && MathJax.typesetPromise) {
-            MathJax.typesetPromise();
-        }
+        if (window.MathJax && MathJax.typesetPromise) { MathJax.typesetPromise(); }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
         renderMarkdownAndMath();
-
-        // --- Choice selection logic ---
-        document.querySelectorAll('.choice-option').forEach(option => {
-            option.addEventListener('click', (event) => {
-                event.stopPropagation();
-                if (event.target.tagName === 'INPUT') {
-                    if (event.target.type === 'checkbox') {
-                       option.classList.toggle('selected');
-                    }
-                    return;
-                }
-                if (option.classList.contains('multiple-choice')) {
-                    option.classList.toggle('selected');
-                    const input = option.querySelector('input[type="checkbox"]');
-                    if (input) input.checked = !input.checked;
-                } else {
-                    const qname = option.dataset.qname;
-                    document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => {
-                        el.classList.remove('selected');
-                        const input = el.querySelector('input[type="radio"]');
-                        if (input) input.checked = false;
-                    });
-                    option.classList.add('selected');
-                    const input = option.querySelector('input[type="radio"]');
-                    if (input) input.checked = true;
-                }
-            });
-        });
-
-        // --- Sortable logic ---
-        document.querySelectorAll('.sortable').forEach(list => {
-            const name = list.dataset.name;
-            const hiddenInput = document.getElementById(`${name}_input`);
-            Sortable.create(list, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                onEnd: () => {
-                    if (!hiddenInput) return; // No input to update in preview
-                    const order = Array.from(list.children).map(li => li.textContent.trim());
-                    hiddenInput.value = order.join(' ');
-                }
-            });
-        });
-
-        // --- Virtual Keyboard/Keypad Logic ---
-        let activeInput = null, activeEnInput = null;
-
-        const showKeyboard = (input) => {
-            const isNumeric = input.classList.contains('numeric-input');
-            const isEn = input.classList.contains('en-fill-in-the-blank-input');
-            if (!isNumeric && !isEn) return;
-
-            const qid = input.dataset.qid;
-            const questionBlock = input.closest('.question-body');
-            if (!questionBlock) return;
-
-            // For svg_interactive, the keypad is inside a different container
-            const container = input.closest('.sub-questions-container') || questionBlock;
-            const selector = isNumeric ? `.keypad[data-qid="${qid}"]` : `.virtual-keyboard[data-qid="${qid}"]`;
-            const keyboard = container.querySelector(selector);
-            
-            if (keyboard && keyboard.style.display !== 'none' && ((isNumeric && activeInput === input) || (isEn && activeEnInput === input))) {
-                return;
-            }
-
-            document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
-
-            if (keyboard) {
-                if (isNumeric) {
-                    activeInput = input;
-                    activeEnInput = null;
-                    keyboard.style.display = 'inline-block';
-                } else if (isEn) {
-                    activeInput = null;
-                    activeEnInput = input;
-                    keyboard.style.display = 'flex';
-                }
-            }
-        };
-
-        document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input').forEach(input => {
-            input.addEventListener('click', (event) => {
-                event.stopPropagation();
-                showKeyboard(input);
-            });
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!event.target.closest('.numeric-input, .en-fill-in-the-blank-input, .keypad, .virtual-keyboard')) {
-                document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
-                activeInput = null;
-                activeEnInput = null;
-            }
-        });
-
-        document.querySelectorAll('.keypad').forEach(keypad => {
-            const qid = keypad.dataset.qid;
-            keypad.querySelectorAll('.key-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    let currentActiveInput = activeInput || activeEnInput;
-                    if (!currentActiveInput || currentActiveInput.dataset.qid !== qid) return;
-                    
-                    const char = btn.dataset.num;
-                    const currentValue = currentActiveInput.value;
-                    if (char === 'del') currentActiveInput.value = currentValue.slice(0, -1);
-                    else if (char === 'clear') currentActiveInput.value = '';
-                    else if (char === '-') { if (currentValue.length === 0) currentActiveInput.value += char; }
-                    else if (char === '.') { if (!currentValue.includes('.')) currentActiveInput.value += char; }
-                    else if (char === '/') { if (!currentValue.includes('/')) currentActiveInput.value += char; }
-                    else currentActiveInput.value += char;
-                });
-            });
-        });
-
-        document.querySelectorAll('.virtual-keyboard').forEach(keyboard => {
-            const qid = keyboard.dataset.qid;
-            keyboard.querySelectorAll('.key-btn-en').forEach(btn => {
-                btn.addEventListener('click', () => {
-                     if (!activeEnInput || activeEnInput.dataset.qid !== qid) return;
-                    const key = btn.dataset.key;
-                    if (key === 'del') activeEnInput.value = activeEnInput.value.slice(0, -1);
-                    else if (key === 'clear') activeEnInput.value = '';
-                    else activeEnInput.value += key;
-                });
-            });
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (activeInput) { // For numeric inputs
-                const key = event.key;
-                const currentValue = activeInput.value;
-                if ((key >= '0' && key <= '9') ||
-                    (key === '.' && !currentValue.includes('.')) ||
-                    (key === '/' && !currentValue.includes('/')) ||
-                    (key === '-' && currentValue.length === 0)) {
-                    event.preventDefault();
-                    activeInput.value += key;
-                } else if (key === 'Backspace') {
-                    event.preventDefault();
-                    activeInput.value = currentValue.slice(0, -1);
-                }
-            } else if (activeEnInput) { // For English fill-in-the-blank inputs
-                const key = event.key;
-                if ((key.length === 1 && key.match(/[a-z' ]/i)) || key === ' ') {
-                    event.preventDefault();
-                    activeEnInput.value += key.toLowerCase();
-                } else if (key === 'Backspace') {
-                    event.preventDefault();
-                    activeEnInput.value = activeEnInput.value.slice(0, -1);
-                }
-            }
-        });
-        
-        // --- SVG interactive logic ---
-        document.querySelectorAll('.svg-interactive-container').forEach(container => {
-            // In preview mode, this can be simplified as we are not submitting answers.
-            // You can add visual feedback on click if desired.
-            container.querySelectorAll('[id]').forEach(shape => {
-                shape.style.cursor = 'pointer';
-                shape.addEventListener('click', () => {
-                    // Example: highlight on click
-                    if (shape.style.stroke === 'orange') {
-                        shape.style.stroke = '';
-                        shape.style.strokeWidth = '';
-                    } else {
-                        shape.style.stroke = 'orange';
-                        shape.style.strokeWidth = '5px';
-                    }
-                });
-            });
-        });
 
         // --- Function Plotting Logic ---
         const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
@@ -545,36 +248,118 @@
             if (functionsDataRaw && document.querySelector(targetId)) {
                 try {
                     const functionsData = JSON.parse(functionsDataRaw);
-                    const plotData = functionsData.map((item, index) => {
-                        let fnString = item.fn.trim().replace(/^y\s*=\s*/, '');
-                        fnString = fnString.replace(/(\d)([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])(\d)/g, '$1*$2').replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
-                        return { fn: fnString, color: colors[index % colors.length] };
+                    if (!functionsData || !Array.isArray(functionsData)) return;
+
+                    let xAxisConfig = { domain: [-10.1, 10.1] }, yAxisConfig = { domain: [-10.1, 10.1] };
+                    const containerWidth = container.clientWidth;
+                    let plotWidth = 800;
+                    if (containerWidth > 0 && containerWidth < 800) plotWidth = containerWidth;
+                    let plotHeight = 600;
+
+                    // 設定コマンドを先に処理（range, size を優先）
+                    functionsData.forEach(item => {
+                        if (!item.fn) return;
+                        const fn = item.fn.trim();
+                        if (fn.startsWith('range:')) {
+                            const p = fn.replace('range:', '').split(',').map(parseFloat);
+                            if (p.length === 4) { xAxisConfig.domain = [p[0], p[1]]; yAxisConfig.domain = [p[2], p[3]]; }
+                        } else if (fn.startsWith('size:')) {
+                            const p = fn.replace('size:', '').split(',').map(parseFloat);
+                            if (p.length === 2) { plotWidth = Math.min(p[0], containerWidth || p[0]); plotHeight = p[1] * (plotWidth / p[0]); }
+                        }
                     });
 
-                    functionPlot({ target: targetId, data: plotData, grid: true });
+                    // その他の設定を処理
+                    functionsData.forEach(item => {
+                        if (!item.fn) return;
+                        const fn = item.fn.trim();
+                        if (fn.startsWith('label:')) {
+                            const p = fn.replace('label:', '').split(',');
+                            if (p.length >= 1) xAxisConfig.label = p[0].trim();
+                            if (p.length >= 2) yAxisConfig.label = p[1].trim();
+                        } else if (fn.startsWith('step:')) {
+                            const p = fn.replace('step:', '').split(',').map(parseFloat);
+                            if (p.length >= 1 && !isNaN(p[0]) && p[0] > 0) {
+                                const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = p[0];
+                                // Request many ticks so D3 includes all integers, then filter.
+                                xAxisConfig.ticks = Math.max(20, Math.floor(Math.abs(end - start)));
+                                xAxisConfig.tickFormat = function(d) {
+                                    return (Math.abs(d % step) < 0.000001) ? d : "";
+                                };
+                            }
+                            if (p.length >= 2 && !isNaN(p[1]) && p[1] > 0) {
+                                const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = p[1];
+                                yAxisConfig.ticks = Math.max(20, Math.floor(Math.abs(end - start)));
+                                yAxisConfig.tickFormat = function(d) {
+                                    return (Math.abs(d % step) < 0.000001) ? d : "";
+                                };
+                            }
+                        }
+                    });
 
-                    const legendContainer = document.getElementById(legendId);
-                    if(legendContainer) {
-                        legendContainer.innerHTML = '';
-                        functionsData.forEach((item, index) => {
-                            if (item.caption) {
-                                const legendItem = document.createElement('div');
-                                legendItem.classList.add('legend-item');
-                                legendItem.innerHTML = `
-                                    <div class="legend-color" style="background-color: ${colors[index % colors.length]}"></div>
-                                    <div class="legend-text markdown" data-content="${item.caption.replace(/"/g, '&quot;')}"></div>
-                                `;
-                                legendContainer.appendChild(legendItem);
+                    const targetEl = document.querySelector(targetId);
+                    targetEl.style.height = plotHeight + 'px';
+                    targetEl.style.width = plotWidth + 'px';
+                    targetEl.style.margin = '0 auto';
+
+                    const plotData = functionsData.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
+                        .map((it, idx) => {
+                            let fnStr = it.fn.trim();
+                            let domain = null;
+                            let range = null;
+                            
+                            // 個別範囲指定 [xMin, xMax] または [xMin, xMax, yMin, yMax] を抽出
+                            const rangeMatch = fnStr.match(/\[(.*?)\]/);
+                            if (rangeMatch) {
+                                const parts = rangeMatch[1].split(',').map(s => parseFloat(s.trim()));
+                                if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                                    domain = [parts[0], parts[1]];
+                                }
+                                if (parts.length >= 4 && !isNaN(parts[2]) && !isNaN(parts[3])) {
+                                    range = [parts[2], parts[3]];
+                                }
+                                fnStr = fnStr.replace(/\[.*?\]/, '').trim();
+                            }
+
+                        let entry = { 
+                            color: colors[idx % colors.length]
+                        };
+
+                        // x = 定数 の形式をチェック（例: x = 75）
+                        const xMatch = fnStr.match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
+                        if (xMatch) {
+                            const constant = xMatch[1];
+                            entry.fn = 'x - (' + constant + ')';
+                            entry.fnType = 'implicit';
+                        } else {
+                            entry.fn = fnStr.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
+                            entry.graphType = 'polyline';
+                        }
+                        
+                        // function-plot v1系では data.range が x軸のドメインを制限するために使われます
+                        if (domain) {
+                            entry.range = domain;
+                        }
+
+                        return entry;
+                        });
+
+                    functionPlot({ target: targetId, data: plotData, grid: true, xAxis: xAxisConfig, yAxis: yAxisConfig, width: plotWidth, height: plotHeight });
+
+                    const legendEl = document.getElementById(legendId);
+                    if (legendEl) {
+                        legendEl.innerHTML = '';
+                        functionsData.forEach((it, idx) => {
+                            if (it.caption) {
+                                const item = document.createElement('div');
+                                item.classList.add('legend-item');
+                                item.innerHTML = `<div class="legend-color" style="background-color: ${colors[idx % colors.length]}"></div><div class="legend-text markdown" data-content="${it.caption.replace(/"/g, '&quot;')}"></div>`;
+                                legendEl.appendChild(item);
                             }
                         });
-                        // Re-run markdown and mathjax for the new legend items
                         renderMarkdownAndMath();
                     }
-
-                } catch (e) {
-                    console.error(`Error processing function data:`, e);
-                    container.querySelector(targetId).textContent = 'グラフの描画に失敗しました。';
-                }
+                } catch (e) { console.error("Preview graph rendering error:", e); }
             }
         });
     });

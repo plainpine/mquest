@@ -10,44 +10,19 @@
       -webkit-appearance: none;
       margin: 0;
     }
-    
-    input[type=number] {
-      -webkit-appearance: none;
-      appearance: none;
-      -moz-appearance: textfield;
-    }
-    .sub-question, .function-entry {
-      border: 1px solid #ddd;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-    }
-    .sub-question > div {
-      margin-bottom: 5px;
-    }
-    .sub-question label {
-      font-weight: bold;
-    }
-    .function-entry {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .function-entry input {
-        flex: 1;
-    }
-    .remove-function-entry {
-        background: #f44336;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 4px;
-    }
+    input[type=number] { -webkit-appearance: none; appearance: none; -moz-appearance: textfield; }
+    .sub-question, .function-entry, .fg-answer-item { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+    .sub-question > div, .fg-answer-item > div { margin-bottom: 5px; }
+    .sub-question label, .fg-answer-item label { font-weight: bold; }
+    .function-entry { display: flex; align-items: center; gap: 10px; }
+    .function-entry input { flex: 1; }
+    .remove-function-entry, .remove-fg-answer { background: #f44336; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
 </style>
+
 <form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
   <input type="hidden" name="title" value="{{ title }}">
   <input type="hidden" name="level" value="{{ level }}">
+  
   <label>タイプ:</label>
   <select name="type" id="type-select">
     <option value="choice" {% if question and question.type == 'choice' %}selected{% endif %}>4択問題</option>
@@ -69,27 +44,28 @@
   <textarea name="explanation" id="explanation-input" rows="4" cols="60">{{ question.explanation or '' }}</textarea>
   <div id="explanation-preview" class="markdown-preview" style="margin-bottom: 1rem;"></div>
 
+  <!-- Sections -->
   <div id="choice-section" style="display:none;">
     <label>選択肢:</label><br>
     {% for i in range(4) %}
-      <input type="text" name="choice{{ i }}" id="choice{{ i }}" value="{{ choices[i] if question and (question.type == 'choice' or question.type == 'multiple_choice') and question.choices|length > i else '' }}"><br>
+      <input type="text" name="choice{{ i }}" id="choice{{ i }}" value="{{ choices[i] if choices and choices|length > i else '' }}"><br>
       <div id="choice{{ i }}_preview" class="markdown-preview" style="margin-bottom: 0.5rem;"></div>
     {% endfor %}
     <label>正解:</label>
-    <input type="text" name="answer" value="{{ question.answer if question and (question.type == 'choice' or question.type == 'multiple_choice') else '' }}" placeholder="単一選択は正解、複数選択はカンマ区切り（例: A,C）">
+    <input type="text" name="answer" value="{{ question.answer if question and (question.type == 'choice' or question.type == 'multiple_choice') else '' }}" placeholder="A, B, C, Dなど">
   </div>
 
   <div id="sort-section" style="display:none;">
-    <label>正解の並び順（文字列）:</label>
-    <input type="text" name="answer_sort" value="{% if question and question.type == 'sort' %}{{ question.answer or '' }}{% endif %}">
+    <label>正解の並び順（/区切り）:</label>
+    <input type="text" name="answer_sort" value="{{ question.answer if question and question.type == 'sort' else '' }}">
   </div>
 
   <div id="numeric-section" style="display:none;">
     {% for i in range(4) %}
-      <label>Label {{ i + 1 }}:</label>
-      <input type="text" name="label{{ i }}" value="{{ question.answers[i]['label'] if question and question.type == 'numeric' and question.answers|length > i else '' }}">
-      <label>Answer {{ i + 1 }}:</label>
-      <input type="number" name="num_answer{{ i }}" value="{{ question.answers[i]['answer'] if question and question.type == 'numeric' and question.answers|length > i else '' }}"><br>
+      <label>ラベル {{ i + 1 }}:</label>
+      <input type="text" name="label{{ i }}" value="{{ answers[i]['label'] if answers and answers|length > i and question.type == 'numeric' else '' }}">
+      <label>解答 {{ i + 1 }}:</label>
+      <input type="text" name="num_answer{{ i }}" value="{{ answers[i]['answer'] if answers and answers|length > i and question.type == 'numeric' else '' }}"><br>
     {% endfor %}
   </div>
 
@@ -102,620 +78,253 @@
     <label>SVGコンテンツ:</label>
     <textarea name="svg_content" id="svg-content-textarea" rows="10" cols="60">{{ question.choices if question and question.type == 'svg_interactive' else '' }}</textarea><br>
     <button type="button" id="svg-preview-button" class="button">SVGプレビュー</button><br>
-    <label>追加文:</label>
     <div id="sub-questions-container">
       {% if question and question.type == 'svg_interactive' and answers %}
         {% for sub_q in answers %}
           <div class="sub-question">
             <input type="hidden" name="sub_id" value="{{ sub_q.id }}">
-            <div>
-              <label>問題文 (Markdown):</label>
-              <textarea name="sub_prompt" rows="2" cols="50" class="sub-prompt-input">{{ sub_q.prompt }}</textarea>
-              <div class="markdown-preview sub-prompt-preview"></div>
-            </div>
-            <div>
-              <label>正答:</label>
-              <input type="text" name="sub_answer" placeholder="正答" value="{{ sub_q.answer }}">
-            </div>
+            <textarea name="sub_prompt" rows="2" class="sub-prompt-input">{{ sub_q.prompt }}</textarea>
+            <input type="text" name="sub_answer" value="{{ sub_q.answer }}">
             <button type="button" class="remove-sub-question">削除</button>
           </div>
         {% endfor %}
       {% endif %}
     </div>
-    <button type="button" id="add-sub-question">追加文を追加</button>
+    <button type="button" id="add-sub-question">小問を追加</button>
   </div>
 
   <div id="figure-choice-section" style="display:none;">
-    <label for="figure-choice-svg-content">SVGコンテンツ:</label>
-    <textarea name="figure_choice_svg_content" id="figure-choice-svg-content" rows="10" cols="60">{{ question.choices if question and question.type == 'figure_choice' else '' }}</textarea><br>
-    <button type="button" id="figure-choice-svg-preview-button" class="button">SVGプレビュー</button><br>
-    <label>追加文:</label>
+    <label>SVGコンテンツ:</label>
+    <textarea name="figure_choice_svg_content" id="figure-choice-svg-content" rows="10" cols="60">{{ question.choices if question and question.type == 'figure_choice' else '' }}</textarea>
+    <button type="button" id="figure-choice-svg-preview-button" class="button">SVGプレビュー</button>
     <div id="figure-choice-sub-questions-container">
-      {% if question and question.type == 'figure_choice' and answers %}
-        {% for sub_q in answers %}
-          {% set outer_loop_index = loop.index0 %}
-          <div class="sub-question">
-            <input type="hidden" name="figure_choice_sub_id" value="sub{{ loop.index0 }}">
-            <div>
-              <label>問題文 (Markdown):</label>
-              <textarea name="figure_choice_sub_prompt" rows="2" cols="50" class="sub-prompt-input">{{ sub_q.prompt }}</textarea>
-              <div class="markdown-preview sub-prompt-preview"></div>
-            </div>
-            <div>
-              <label>選択肢:</label><br>
-              {% for i in range(4) %}
-                <input type="text" name="figure_choice_sub_choice_{{ outer_loop_index }}_{{ i }}" id="figure_choice_sub_choice_{{ outer_loop_index }}_{{ i }}" value="{{ sub_q.choices[i] if sub_q.choices is iterable and sub_q.choices|length > i else '' }}"><br>
-                <div id="figure_choice_sub_choice_{{ outer_loop_index }}_{{ i }}_preview" class="markdown-preview sub-choice-preview" style="margin-bottom: 0.5rem;"></div>
-              {% endfor %}
-            </div>
-            <div>
-              <label>正答:</label>
-              <input type="text" name="figure_choice_sub_answer" placeholder="正答" value="{{ sub_q.answer }}">
-            </div>
-            <button type="button" class="remove-sub-question">削除</button>
-          </div>
-        {% endfor %}
-      {% endif %}
+      {# JavaScript will handle dynamic items for complex nested structures to avoid Jinja issues #}
     </div>
-    <button type="button" id="add-figure-choice-sub-question">追加文を追加</button>
+    <button type="button" id="add-figure-choice-sub-question">小問を追加</button>
   </div>
 
   <div id="function-graph-section" style="display:none;">
       <h3>グラフ定義</h3>
-      <div id="function-entries-container">
-          {# JavaScript will populate this #}
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; font-size: 0.9rem;">
+        <h6 style="margin-top: 0; color: #0056b3;"><i class="fas fa-info-circle"></i> 設定方法</h6>
+        <ul style="margin-bottom: 0; padding-left: 1.2rem;">
+          <li><strong>個別範囲指定:</strong> 方程式の後に <code>[x最小, x最大]</code> を付けると、その範囲のみ描画します。<br>例: <code>y = 2x + 3 [0, 5]</code></li>
+          <li><strong>全体表示範囲:</strong> <code>range:xMin,xMax,yMin,yMax</code> でグラフの表示枠を設定できます。<br>例: <code>range:-10,10,-10,10</code></li>
+          <li><strong>軸のラベル:</strong> <code>label:x軸名,y軸名</code> で各軸に説明文を表示できます。<br>例: <code>label:時間(秒),距離(m)</code></li>
+          <li><strong>目盛の間隔:</strong> <code>step:xの間隔,yの間隔</code> で目盛の刻みを指定できます。<br>例: <code>step:5,10</code></li>
+          <li><strong>グラフサイズ:</strong> <code>size:幅,高さ</code> で表示サイズを指定できます。<br>例: <code>size:400,300</code></li>
+        </ul>
       </div>
+      <div id="function-entries-container"></div>
       <button type="button" id="add-function-entry">方程式を追加</button>
       <input type="hidden" name="answer_function_graph" id="answer_function_graph_hidden">
 
       <h3 style="margin-top: 1rem;">回答と正答</h3>
-      <div id="function-graph-answers-container">
-        {# JavaScript will populate this based on existing data #}
-      </div>
+      <div id="function-graph-answers-container"></div>
       <button type="button" id="add-function-graph-answer">回答項目を追加</button>
       <input type="hidden" name="answers" id="answers_function_graph_hidden">
   </div>
 
   <div id="function-graph-choice-section" style="display:none;">
       <h3>グラフ定義</h3>
-      <div id="function-graph-choice-entries-container">
-          {# JavaScript will populate this section #}
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; font-size: 0.9rem;">
+        <h6 style="margin-top: 0; color: #0056b3;"><i class="fas fa-info-circle"></i> 設定方法</h6>
+        <p style="margin-bottom: 0;"><code>[x最小, x最大]</code> や <code>range:</code> コマンドが使用可能です。</p>
       </div>
+      <div id="function-graph-choice-entries-container"></div>
       <button type="button" id="add-function-graph-choice-entry">方程式を追加</button>
       <input type="hidden" name="function_graph_choice_definitions" id="function_graph_choice_definitions_hidden">
-
-      <h3 style="margin-top: 1rem;">問題と選択肢</h3>
-      <div id="fgc-sub-questions-container">
-        {% if question and question.type == 'function_graph_choice' and answers %}
-          {% for sub_q in answers %}
-            {% set outer_loop_index = loop.index0 %}
-            <div class="sub-question">
-              <input type="hidden" name="fgc_sub_id" value="sub{{ outer_loop_index }}">
-              <div>
-                <label>問題文 (Markdown):</label>
-                <textarea name="fgc_sub_prompt" rows="2" cols="50" class="sub-prompt-input">{{ sub_q.prompt }}</textarea>
-                <div class="markdown-preview sub-prompt-preview"></div>
-              </div>
-              <div>
-                <label>選択肢:</label><br>
-                {% for i in range(4) %}
-                  <input type="text" name="fgc_sub_choice_{{ outer_loop_index }}_{{ i }}" id="fgc_sub_choice_{{ outer_loop_index }}_{{ i }}" value="{{ sub_q.choices[i] if sub_q.choices and sub_q.choices|length > i else '' }}"><br>
-                  <div id="fgc_sub_choice_{{ outer_loop_index }}_{{ i }}_preview" class="markdown-preview sub-choice-preview" style="margin-bottom: 0.5rem;"></div>
-                {% endfor %}
-              </div>
-              <div>
-                <label>正答:</label>
-                <input type="text" name="fgc_sub_answer" placeholder="正答" value="{{ sub_q.answer }}">
-              </div>
-              <button type="button" class="remove-sub-question">削除</button>
-            </div>
-          {% endfor %}
-        {% endif %}
-      </div>
-      <button type="button" id="add-fgc-sub-question">追加文を追加</button>
+      <h3>問題と選択肢</h3>
+      <div id="fgc-sub-questions-container"></div>
+      <button type="button" id="add-fgc-sub-question">小問を追加</button>
   </div>
 
-<!-- 保存ボタン：上段 -->
-<br>
-<button type="submit">保存</button>
-<button type="button" id="preview-button">プレビュー</button>
-<!-- 戻るボタン：下段 -->
-<div style="margin-top: 1rem;">
-  <a href="{{ url_for('edit_quest', quest_id=quest_id, title=title, level=level) }}" class="button">クエスト編集に戻る</a>
-</div>
+  <br>
+  <button type="submit">保存</button>
+  <button type="button" id="preview-button">プレビュー</button>
+  <div style="margin-top: 1rem;">
+    <a href="{{ url_for('edit_quest', quest_id=quest_id, title=title, level=level) }}" class="button">戻る</a>
+  </div>
 </form>
 
-<style>
-  .markdown-preview {
-    border: 1px solid #ccc;
-    padding: 0.5rem;
-    background-color: #f9f9f9;
-    border-radius: 4px;
-  }
-</style>
-
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
 <script>
+  // MathJax Config
   window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\(', '\)']],
-      displayMath: [['$$', '$$'], ['\[', '\]']]
-    },
-    svg: { fontCache: 'global' },
-    startup: {
-      ready: () => {
-        console.log('MathJax is now ready to process math.');
-        // Initial preview rendering after MathJax is fully loaded
-        updatePreviews();
-        MathJax.startup.defaultReady();
-      }
-    }
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+    startup: { ready: () => { MathJax.startup.defaultReady(); if(window.updatePreviews) updatePreviews(); } }
   };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <script>
-    marked.setOptions({
-        gfm: true,
-        breaks: true
-    });
-
-    async function updatePreviews() {
-      const allPreviews = [
-        { inputId: "text-input", previewId: "text-preview" },
-        { inputId: "explanation-input", previewId: "explanation-preview" },
-      ];
-      for (let i = 0; i < 4; i++) {
-        allPreviews.push({ inputId: `choice${i}`, previewId: `choice${i}_preview` });
-        allPreviews.push({ inputId: `fgc_choice${i}`, previewId: `fgc_choice${i}_preview` });
-      }
-
-      for (const item of allPreviews) {
-        const inputEl = document.getElementById(item.inputId);
-        const previewEl = document.getElementById(item.previewId);
-
-        if (inputEl && previewEl) {
-          try {
-            const markdown = inputEl.value || '';
-            previewEl.innerHTML = marked.parse(markdown);
-            if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
-              await MathJax.typesetPromise([previewEl]);
-            }
-          } catch (e) {
-            console.error(`Error updating preview for #${item.inputId}:`, e);
-            if(previewEl) previewEl.innerHTML = "<p style='color: red;'>プレビューの生成中にエラーが発生しました。</p>";
-          }
-        }
+  // Definitions that must exist early
+  async function updatePreviews() {
+    const ids = ["text-input", "explanation-input"];
+    for(let i=0; i<4; i++) { ids.push(`choice${i}`); }
+    
+    for (const id of ids) {
+      const input = document.getElementById(id);
+      const preview = document.getElementById(id + "_preview") || document.getElementById(id.replace("-input", "-preview"));
+      if (input && preview) {
+        preview.innerHTML = marked.parse(input.value || '');
+        if (window.MathJax && MathJax.typesetPromise) await MathJax.typesetPromise([preview]);
       }
     }
+  }
 
   document.addEventListener('DOMContentLoaded', () => {
-    // --- Function Definitions ---
-    function serializeFunctionEntries() {
-        if (typeSelect.value !== 'function_graph') return;
-        const functionEntriesContainer = document.getElementById('function-entries-container');
-        const hiddenInput = document.getElementById('answer_function_graph_hidden');
-        
-        const entries = Array.from(functionEntriesContainer.querySelectorAll('.function-entry')).map(entryEl => {
-            const fnInput = entryEl.querySelector('.function-fn-input');
-            const captionInput = entryEl.querySelector('.function-caption-input');
-            return { fn: fnInput.value, caption: captionInput.value };
-        });
-        hiddenInput.value = JSON.stringify(entries);
-    }
+    marked.setOptions({ gfm: true, breaks: true });
+    const typeSelect = document.getElementById('type-select');
+    const mainForm = document.querySelector('form');
 
-    function serializeFunctionGraphChoiceEntries() {
-        if (typeSelect.value !== 'function_graph_choice') return;
-        const container = document.getElementById('function-graph-choice-entries-container');
-        const hiddenInput = document.getElementById('function_graph_choice_definitions_hidden');
-        
-        const entries = Array.from(container.querySelectorAll('.function-entry')).map(entryEl => {
-            const fnInput = entryEl.querySelector('.function-fn-input');
-            const captionInput = entryEl.querySelector('.function-caption-input');
-            return { fn: fnInput.value, caption: captionInput.value };
-        });
-        hiddenInput.value = JSON.stringify(entries);
-    }
+    // Serialization
+    function serialize() {
+        if (typeSelect.value === 'function_graph') {
+            const fns = Array.from(document.querySelectorAll('#function-entries-container .function-entry')).map(el => ({
+                fn: el.querySelector('.function-fn-input').value,
+                caption: el.querySelector('.function-caption-input').value
+            }));
+            document.getElementById('answer_function_graph_hidden').value = JSON.stringify(fns);
 
-    function serializeFunctionGraphAnswers() {
-        if (typeSelect.value !== 'function_graph') return;
-        const container = document.getElementById('function-graph-answers-container');
-        const hiddenInput = document.getElementById('answers_function_graph_hidden');
-        
-        const answers = Array.from(container.querySelectorAll('.sub-question')).map(answerEl => {
-            const promptInput = answerEl.querySelector('textarea[name="function_graph_answer_prompt"]');
-            const correctAnswerInput = answerEl.querySelector('input[name="function_graph_correct_answer"]');
-            return { prompt: promptInput.value, answer: correctAnswerInput.value };
-        });
-        hiddenInput.value = JSON.stringify(answers);
-    }
-
-    function updateSections() {
-        const selectedType = typeSelect.value;
-        const textInputLabel = document.querySelector('label[for="text-input"]');
-        
-        // Hide all sections
-        Object.values(sections).forEach(section => {
-            if (section) section.style.display = 'none';
-        });
-
-        // Show the correct one
-        if (sections[selectedType]) {
-            sections[selectedType].style.display = 'block';
+            const ans = Array.from(document.querySelectorAll('#function-graph-answers-container .fg-answer-item')).map(el => ({
+                prompt: el.querySelector('.fg-answer-prompt').value,
+                answer: el.querySelector('.fg-correct-answer').value
+            }));
+            document.getElementById('answers_function_graph_hidden').value = JSON.stringify(ans);
+        } else if (typeSelect.value === 'function_graph_choice') {
+            const fns = Array.from(document.querySelectorAll('#function-graph-choice-entries-container .function-entry')).map(el => ({
+                fn: el.querySelector('.function-fn-input').value,
+                caption: el.querySelector('.function-caption-input').value
+            }));
+            document.getElementById('function_graph_choice_definitions_hidden').value = JSON.stringify(fns);
+            // sub-questions are handled by standard form fields fgc_sub_prompt etc.
         }
     }
-    
-    async function updateSubQuestionPreview(inputElement, previewElement = null) {
-      const targetPreview = previewElement || inputElement.nextElementSibling;
-      if (!inputElement || !targetPreview) return;
-      
-      try {
-        const markdown = inputElement.value || '';
-        targetPreview.innerHTML = marked.parse(markdown);
-        if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
-          await MathJax.typesetPromise([targetPreview]);
+
+    // Dynamic UI
+    async function renderMarkdown(element, text) {
+        if (!element) return;
+        element.innerHTML = marked.parse(text || '');
+        if (window.MathJax && MathJax.typesetPromise) {
+            await MathJax.typesetPromise([element]);
         }
-      } catch (e) {
-        console.error(`Error updating sub-question preview:`, e);
-        if(targetPreview) targetPreview.innerHTML = "<p style='color: red;'>プレビューの生成中にエラーが発生しました。</p>";
-      }
     }
 
-    function createFunctionEntry(fn = '', caption = '') {
-        const container = document.getElementById('function-entries-container');
-        const entryDiv = document.createElement('div');
-        entryDiv.classList.add('function-entry');
-
-        entryDiv.innerHTML = `
-            <input type="text" class="function-fn-input" placeholder="方程式 (例: 2*x, x^2)" value="${fn}">
-            <input type="text" class="function-caption-input" placeholder="キャプション (Markdown/LaTeX)" value="${caption}">
-            <button type="button" class="remove-function-entry">削除</button>
-        `;
-        container.appendChild(entryDiv);
-    }
-
-    function createFunctionGraphChoiceEntry(fn = '', caption = '') {
-        const container = document.getElementById('function-graph-choice-entries-container');
-        const entryDiv = document.createElement('div');
-        entryDiv.classList.add('function-entry');
-
-        entryDiv.innerHTML = `
-            <input type="text" class="function-fn-input" placeholder="方程式 (例: 2*x, x^2)" value="${fn}">
-            <input type="text" class="function-caption-input" placeholder="キャプション (Markdown/LaTeX)" value="${caption}">
-            <button type="button" class="remove-function-entry">削除</button>
-        `;
-        container.appendChild(entryDiv);
+    function createFunctionEntry(containerId, fn = '', caption = '') {
+        const div = document.createElement('div');
+        div.className = 'function-entry';
+        div.innerHTML = `<input type="text" class="function-fn-input" value="${fn.replace(/"/g, '&quot;')}" placeholder="方程式">
+                         <input type="text" class="function-caption-input" value="${caption.replace(/"/g, '&quot;')}" placeholder="説明">
+                         <button type="button" class="remove-function-entry">削除</button>`;
+        document.getElementById(containerId).appendChild(div);
     }
 
     function createFunctionGraphAnswerEntry(prompt = '', answer = '') {
-        const container = document.getElementById('function-graph-answers-container');
-        const entryDiv = document.createElement('div');
-        entryDiv.classList.add('sub-question');
+        const div = document.createElement('div');
+        div.className = 'fg-answer-item';
+        div.innerHTML = `<div>
+                            <label>問題文 (Markdown):</label>
+                            <textarea class="fg-answer-prompt" rows="4" style="width: 100%; box-sizing: border-box; padding: 8px; font-family: inherit; font-size: 1rem;">${prompt}</textarea>
+                            <div class="markdown-preview fg-answer-preview" style="margin-top: 5px; min-height: 1em; background: #fdfdfd; padding: 8px; border: 1px dashed #eee;"></div>
+                         </div>
+                         <div style="margin-top: 10px;">
+                            <label>正答:</label>
+                            <input type="text" class="fg-correct-answer" value="${answer.replace(/"/g, '&quot;')}" style="width: 100%; box-sizing: border-box; padding: 8px;">
+                         </div>
+                         <button type="button" class="remove-fg-answer" style="margin-top: 10px;">削除</button>`;
+        document.getElementById('function-graph-answers-container').appendChild(div);
+        
+        const textarea = div.querySelector('.fg-answer-prompt');
+        const preview = div.querySelector('.fg-answer-preview');
+        
+        const update = () => renderMarkdown(preview, textarea.value);
+        textarea.addEventListener('input', update);
+        update(); // 初期表示
+    }
 
-        entryDiv.innerHTML = `
-            <input type="hidden" name="function_graph_answer_id" value="">
+    function createFgcSubQuestion(prompt = '', choices = ['', '', '', ''], answer = '') {
+        const container = document.getElementById('fgc-sub-questions-container');
+        const index = container.children.length;
+        const div = document.createElement('div');
+        div.className = 'sub-question';
+        div.innerHTML = `
             <div>
-              <label>問題文 (Markdown):</label>
-              <textarea name="function_graph_answer_prompt" rows="2" cols="50" class="sub-prompt-input">${prompt}</textarea>
-              <div class="markdown-preview sub-prompt-preview"></div>
+                <label>小問プロンプト (Markdown):</label>
+                <textarea name="fgc_sub_prompt" rows="2" style="width:100%">${prompt}</textarea>
+            </div>
+            <div style="margin: 10px 0;">
+                <label>選択肢:</label><br>
+                ${choices.map((c, i) => `
+                    <input type="text" name="fgc_sub_choice_${index}_${i}" value="${c.replace(/"/g, '&quot;')}" placeholder="選択肢 ${i+1}" style="width:23%; margin-right:1%;">
+                `).join('')}
             </div>
             <div>
-              <label>正答:</label>
-              <input type="text" name="function_graph_correct_answer" placeholder="正答" value="${answer}">
+                <label>正答:</label>
+                <input type="text" name="fgc_sub_answer" value="${answer.replace(/"/g, '&quot;')}" placeholder="正答">
             </div>
             <button type="button" class="remove-sub-question">削除</button>
         `;
-        container.appendChild(entryDiv);
-        
-        const promptInput = entryDiv.querySelector('.sub-prompt-input');
-        updateSubQuestionPreview(promptInput);
-        promptInput.addEventListener('input', () => updateSubQuestionPreview(promptInput));
+        container.appendChild(div);
     }
 
-    // --- Main Execution ---
-    const typeSelect = document.getElementById('type-select');
-    const sections = {
-        choice: document.getElementById('choice-section'),
-        multiple_choice: document.getElementById('choice-section'),
-        sort: document.getElementById('sort-section'),
-        numeric: document.getElementById('numeric-section'),
-        fill_in_the_blank_en: document.getElementById('fill-in-the-blank-en-section'),
-        svg_interactive: document.getElementById('svg-interactive-section'),
-        figure_choice: document.getElementById('figure-choice-section'),
-        function_graph: document.getElementById('function-graph-section'),
-        function_graph_choice: document.getElementById('function-graph-choice-section')
-    };
-    const mainForm = document.querySelector('form');
+    // Initial State
+    function updateSections() {
+        const sections = ["choice", "sort", "numeric", "fill-in-the-blank-en", "svg-interactive", "figure-choice", "function-graph", "function-graph-choice"];
+        sections.forEach(s => { 
+            const el = document.getElementById(s + "-section");
+            if(el) el.style.display = (typeSelect.value.replace(/_/g, '-') === s || (typeSelect.value === 'multiple_choice' && s === 'choice')) ? 'block' : 'none';
+        });
+    }
 
-    updateSections(); // Initial display update
-    
-    // Event Listeners
     typeSelect.addEventListener('change', updateSections);
-    document.getElementById("text-input").addEventListener("input", updatePreviews);
-    document.getElementById("explanation-input").addEventListener("input", updatePreviews);
-    for (let i = 0; i < 4; i++) {
-      const choiceInput = document.getElementById(`choice${i}`);
-      if (choiceInput) choiceInput.addEventListener("input", updatePreviews);
-      const fgcChoiceInput = document.getElementById(`fgc_choice${i}`);
-      if (fgcChoiceInput) fgcChoiceInput.addEventListener("input", updatePreviews);
-    }
-    
-    // Sub-question logic (for svg_interactive)
-    const subQuestionsContainer = document.getElementById('sub-questions-container');
-    if (subQuestionsContainer) {
-        subQuestionsContainer.querySelectorAll('.sub-prompt-input').forEach(input => {
-            updateSubQuestionPreview(input);
-            input.addEventListener('input', () => updateSubQuestionPreview(input));
-        });
-
-        document.getElementById('add-sub-question').addEventListener('click', () => {
-            const subQuestionCounter = subQuestionsContainer.querySelectorAll('.sub-question').length;
-            const newSubQuestion = document.createElement('div');
-            newSubQuestion.classList.add('sub-question');
-            newSubQuestion.innerHTML = `
-                <input type="hidden" name="sub_id" value="sub${subQuestionCounter}">
-                <div>
-                  <label>問題文 (Markdown):</label>
-                  <textarea name="sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
-                  <div class="markdown-preview sub-prompt-preview"></div>
-                </div>
-                <div>
-                  <label>正答:</label>
-                  <input type="text" name="sub_answer" placeholder="正答">
-                </div>
-                <button type="button" class="remove-sub-question">削除</button>
-            `;
-            subQuestionsContainer.appendChild(newSubQuestion);
-            const newInput = newSubQuestion.querySelector('.sub-prompt-input');
-            updateSubQuestionPreview(newInput);
-            newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
-        });
-
-        subQuestionsContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-sub-question')) {
-                e.target.parentElement.remove();
-            }
-        });
+    document.getElementById('text-input').addEventListener('input', updatePreviews);
+    document.getElementById('explanation-input').addEventListener('input', updatePreviews);
+    for(let i=0; i<4; i++) { 
+        const el = document.getElementById(`choice${i}`);
+        if(el) el.addEventListener('input', updatePreviews);
     }
 
-    // Figure Choice Sub-question logic
-    const figureChoiceSubQuestionsContainer = document.getElementById('figure-choice-sub-questions-container');
-    if (figureChoiceSubQuestionsContainer) {
-        figureChoiceSubQuestionsContainer.querySelectorAll('.sub-prompt-input').forEach(input => {
-            updateSubQuestionPreview(input);
-            input.addEventListener('input', () => updateSubQuestionPreview(input));
-        });
+    document.getElementById('add-function-entry').addEventListener('click', () => createFunctionEntry('function-entries-container'));
+    document.getElementById('add-function-graph-choice-entry').addEventListener('click', () => createFunctionEntry('function-graph-choice-entries-container'));
+    document.getElementById('add-function-graph-answer').addEventListener('click', () => createFunctionGraphAnswerEntry());
+    document.getElementById('add-fgc-sub-question').addEventListener('click', () => createFgcSubQuestion());
 
-        document.getElementById('add-figure-choice-sub-question').addEventListener('click', () => {
-            const subQuestionCounter = figureChoiceSubQuestionsContainer.querySelectorAll('.sub-question').length;
-            const newSubQuestion = document.createElement('div');
-            newSubQuestion.classList.add('sub-question');
-            newSubQuestion.innerHTML = `
-                <input type="hidden" name="figure_choice_sub_id" value="new${subQuestionCounter}">
-                <div>
-                    <label>問題文 (Markdown):</label>
-                    <textarea name="figure_choice_sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
-                    <div class="markdown-preview sub-prompt-preview"></div>
-                </div>
-                <div>
-                    <label>選択肢:</label><br>
-                    <input type="text" name="figure_choice_sub_choice_${subQuestionCounter}_0" placeholder="選択肢A"><br>
-                    <input type="text" name="figure_choice_sub_choice_${subQuestionCounter}_1" placeholder="選択肢B"><br>
-                    <input type="text" name="figure_choice_sub_choice_${subQuestionCounter}_2" placeholder="選択肢C"><br>
-                    <input type="text" name="figure_choice_sub_choice_${subQuestionCounter}_3" placeholder="選択肢D"><br>
-                </div>
-                <div>
-                    <label>正答:</label>
-                    <input type="text" name="figure_choice_sub_answer" placeholder="正答 (例: A)">
-                </div>
-                <button type="button" class="remove-sub-question">削除</button>
-            `;
-            figureChoiceSubQuestionsContainer.appendChild(newSubQuestion);
-            const newInput = newSubQuestion.querySelector('.sub-prompt-input');
-            updateSubQuestionPreview(newInput);
-            newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
-        });
+    document.addEventListener('click', e => {
+        if (e.target.classList.contains('remove-function-entry') || e.target.classList.contains('remove-fg-answer') || e.target.classList.contains('remove-sub-question')) e.target.parentElement.remove();
+    });
 
-        figureChoiceSubQuestionsContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-sub-question')) {
-                e.target.closest('.sub-question').remove();
-            }
-        });
-    }
+    // Load Data
+    updateSections();
+    const qData = {{ question.answer | tojson | safe if question else 'null' }};
+    const cData = {{ choices | tojson | safe if choices else 'null' }};
+    const aData = {{ answers | tojson | safe if answers else 'null' }};
 
-    // SVG Preview Logic
-    const svgPreviewButton = document.getElementById('svg-preview-button');
-    if (svgPreviewButton) {
-      svgPreviewButton.addEventListener('click', () => {
-        const svgContent = document.getElementById('svg-content-textarea').value;
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ url_for('main.svg_preview') }}';
-        form.target = '_blank';
-        const hiddenField = document.createElement('input');
-        hiddenField.type = 'hidden';
-        hiddenField.name = 'svg_data';
-        hiddenField.value = svgContent;
-        form.appendChild(hiddenField);
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-      });
-    }
-
-    const figureChoiceSvgPreviewButton = document.getElementById('figure-choice-svg-preview-button');
-    if (figureChoiceSvgPreviewButton) {
-      figureChoiceSvgPreviewButton.addEventListener('click', () => {
-        const svgContent = document.getElementById('figure-choice-svg-content').value; // Use new svg content text area
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ url_for('main.svg_preview') }}';
-        form.target = '_blank';
-        const hiddenField = document.createElement('input');
-        hiddenField.type = 'hidden';
-        hiddenField.name = 'svg_data';
-        hiddenField.value = svgContent;
-        form.appendChild(hiddenField);
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-      });
-    }
-
-
-    // --- Function Graph Section Logic ---
-    const functionEntriesContainer = document.getElementById('function-entries-container');
-    if (functionEntriesContainer) {
-        document.getElementById('add-function-entry').addEventListener('click', () => createFunctionEntry());
-        functionEntriesContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-function-entry')) {
-                e.target.closest('.function-entry').remove();
-            }
-        });
-    }
-
-    // --- Function Graph Choice Section Logic ---
-    const functionGraphChoiceEntriesContainer = document.getElementById('function-graph-choice-entries-container');
-    if (functionGraphChoiceEntriesContainer) {
-        document.getElementById('add-function-graph-choice-entry').addEventListener('click', () => createFunctionGraphChoiceEntry());
-        functionGraphChoiceEntriesContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-function-entry')) {
-                e.target.closest('.function-entry').remove();
-            }
-        });
-    }
-
-    // FGC Sub-question logic
-    const fgcSubQuestionsContainer = document.getElementById('fgc-sub-questions-container');
-    if (fgcSubQuestionsContainer) {
-        fgcSubQuestionsContainer.querySelectorAll('.sub-prompt-input').forEach(input => {
-            updateSubQuestionPreview(input);
-            input.addEventListener('input', () => updateSubQuestionPreview(input));
-        });
-
-        document.getElementById('add-fgc-sub-question').addEventListener('click', () => {
-            const subQuestionCounter = fgcSubQuestionsContainer.querySelectorAll('.sub-question').length;
-            const newSubQuestion = document.createElement('div');
-            newSubQuestion.classList.add('sub-question');
-            newSubQuestion.innerHTML = `
-                <input type="hidden" name="fgc_sub_id" value="new${subQuestionCounter}">
-                <div>
-                    <label>問題文 (Markdown):</label>
-                    <textarea name="fgc_sub_prompt" rows="2" cols="50" class="sub-prompt-input"></textarea>
-                    <div class="markdown-preview sub-prompt-preview"></div>
-                </div>
-                <div>
-                    <label>選択肢:</label><br>
-                    <input type="text" name="fgc_sub_choice_${subQuestionCounter}_0" placeholder="選択肢A"><br>
-                    <input type="text" name="fgc_sub_choice_${subQuestionCounter}_1" placeholder="選択肢B"><br>
-                    <input type="text" name="fgc_sub_choice_${subQuestionCounter}_2" placeholder="選択肢C"><br>
-                    <input type="text" name="fgc_sub_choice_${subQuestionCounter}_3" placeholder="選択肢D"><br>
-                </div>
-                <div>
-                    <label>正答:</label>
-                    <input type="text" name="fgc_sub_answer" placeholder="正答">
-                </div>
-                <button type="button" class="remove-sub-question">削除</button>
-            `;
-            fgcSubQuestionsContainer.appendChild(newSubQuestion);
-            // Attach event listeners for the newly added choice inputs
-            for (let i = 0; i < 4; i++) {
-              const choiceInput = newSubQuestion.querySelector(`input[name="fgc_sub_choice_${subQuestionCounter}_${i}"]`);
-              if (choiceInput) {
-                const previewEl = document.createElement('div');
-                previewEl.id = `fgc_sub_choice_${subQuestionCounter}_${i}_preview`;
-                previewEl.classList.add('markdown-preview', 'sub-choice-preview');
-                previewEl.style.marginBottom = '0.5rem';
-                choiceInput.parentNode.insertBefore(previewEl, choiceInput.nextSibling); // Insert after the input
-                choiceInput.parentNode.insertBefore(document.createElement('br'), previewEl); // Insert <br> before the preview
-
-                updateSubQuestionPreview(choiceInput, previewEl); // Initial render
-                choiceInput.addEventListener('input', () => updateSubQuestionPreview(choiceInput, previewEl));
-              }
-            }
-            const newInput = newSubQuestion.querySelector('.sub-prompt-input');
-            updateSubQuestionPreview(newInput);
-            newInput.addEventListener('input', () => updateSubQuestionPreview(newInput));
-        });
-
-        fgcSubQuestionsContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-sub-question')) {
-                e.target.closest('.sub-question').remove();
-            }
-        });
-    }
-
-    // --- Function Graph Answer Section Logic ---
-    const functionGraphAnswersContainer = document.getElementById('function-graph-answers-container');
-    if (functionGraphAnswersContainer) {
-        document.getElementById('add-function-graph-answer').addEventListener('click', () => createFunctionGraphAnswerEntry());
-        functionGraphAnswersContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-sub-question')) {
-                e.target.closest('.sub-question').remove();
-            }
-        });
-    }
-
-    // Form Submission Logic
-    if (mainForm) {
-        mainForm.addEventListener('submit', (e) => {
-            serializeFunctionEntries();
-            serializeFunctionGraphAnswers();
-            serializeFunctionGraphChoiceEntries();
-        });
-    }
-
-    // Initial population for function_graph
     if (typeSelect.value === 'function_graph') {
-        const existingGraphDataRaw = `{{ question.answer | default('[]') | safe }}`;
         try {
-            const existingGraphData = JSON.parse(existingGraphDataRaw);
-            if (Array.isArray(existingGraphData) && existingGraphData.length > 0) {
-                existingGraphData.forEach(item => createFunctionEntry(item.fn || '', item.caption || ''));
-            } else { createFunctionEntry(); }
-        } catch(e) { createFunctionEntry(); }
-
-        const existingAnswersRaw = `{{ answers | default('[]') | tojson | safe }}`;
+            const graph = typeof qData === 'string' ? JSON.parse(qData) : qData;
+            if(Array.isArray(graph)) graph.forEach(d => createFunctionEntry('function-entries-container', d.fn, d.caption));
+            if(Array.isArray(aData)) aData.forEach(d => createFunctionGraphAnswerEntry(d.prompt, d.answer));
+        } catch(e) {}
+    } else if (typeSelect.value === 'function_graph_choice') {
         try {
-            const existingAnswers = JSON.parse(existingAnswersRaw);
-            if (Array.isArray(existingAnswers)) {
-                existingAnswers.forEach(item => createFunctionGraphAnswerEntry(item.prompt || '', item.answer || ''));
-            }
-        } catch(e) { console.error("Error parsing existing function graph answers:", e); }
+            if(Array.isArray(cData)) cData.forEach(d => createFunctionEntry('function-graph-choice-entries-container', d.fn, d.caption));
+            if(Array.isArray(aData)) aData.forEach(d => createFgcSubQuestion(d.prompt, d.choices, d.answer));
+        } catch(e) {}
     }
 
-    // Initial population for function_graph_choice
-    if (typeSelect.value === 'function_graph_choice') {
-        // 'choices' variable now holds the graph_data for this type
-        const existingGraphData = {{ choices | default('[]') | tojson | safe }}; // Corrected variable
-        if (Array.isArray(existingGraphData) && existingGraphData.length > 0) {
-            existingGraphData.forEach(item => createFunctionGraphChoiceEntry(item.fn || '', item.caption || ''));
-        } else {
-            createFunctionGraphChoiceEntry(); // Create one empty entry if none exist
-        }
-    }
-    
-    // Preview Button Logic
-    document.getElementById('preview-button').addEventListener('click', function() {
-        if (document.getElementById('type-select').value === 'function_graph') {
-            serializeFunctionEntries();
-            serializeFunctionGraphAnswers();
-        }
-        if (document.getElementById('type-select').value === 'function_graph_choice') {
-            serializeFunctionGraphChoiceEntries();
-        }
-        
-        const form = document.querySelector('form');
-        const originalAction = form.action;
-        const originalTarget = form.target;
-        form.action = "{{ url_for('preview_question') }}";
-        form.target = '_blank';
-        form.submit();
-        form.action = originalAction;
-        form.target = originalTarget;
+
+    // Submit / Preview
+    mainForm.addEventListener('submit', serialize);
+    document.getElementById('preview-button').addEventListener('click', () => {
+        serialize();
+        const oldAction = mainForm.action;
+        mainForm.action = "{{ url_for('preview_question') }}";
+        mainForm.target = '_blank';
+        mainForm.submit();
+        mainForm.action = oldAction;
+        mainForm.target = '';
     });
   });
 </script>
-
 {% endblock %}

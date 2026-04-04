@@ -321,6 +321,40 @@ button,
   user-select: none;
 }
 
+/* 方程式グラフ用 */
+.function-graph-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  background: white;
+  border-radius: 4px;
+}
+
+[id^="graph-target-"] {
+  max-width: 100%;
+}
+
+.graph-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
