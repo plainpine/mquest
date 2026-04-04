@@ -281,18 +281,20 @@
                             const p = fn.replace('step:', '').split(',').map(parseFloat);
                             if (p.length >= 1 && !isNaN(p[0]) && p[0] > 0) {
                                 const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = p[0];
-                                // Request many ticks so D3 includes all integers, then filter.
-                                xAxisConfig.ticks = Math.max(20, Math.floor(Math.abs(end - start)));
-                                xAxisConfig.tickFormat = function(d) {
-                                    return (Math.abs(d % step) < 0.000001) ? d : "";
-                                };
+                                // Force exact ticks using d3.range as suggested
+                                xAxisConfig.tickValues = d3.range(
+                                    Math.ceil(start / step) * step,
+                                    end + step / 2, // Ensure the end point is included if it's a multiple
+                                    step
+                                );
                             }
                             if (p.length >= 2 && !isNaN(p[1]) && p[1] > 0) {
                                 const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = p[1];
-                                yAxisConfig.ticks = Math.max(20, Math.floor(Math.abs(end - start)));
-                                yAxisConfig.tickFormat = function(d) {
-                                    return (Math.abs(d % step) < 0.000001) ? d : "";
-                                };
+                                yAxisConfig.tickValues = d3.range(
+                                    Math.ceil(start / step) * step,
+                                    end + step / 2,
+                                    step
+                                );
                             }
                         }
                     });
