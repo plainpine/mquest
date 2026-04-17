@@ -482,6 +482,7 @@
 
                 // その他の設定を処理
                 functionsData.forEach(item => {
+                    if (!item.fn) return;
                     const fn = item.fn.trim();
                     if (fn.startsWith('label:')) {
                         const p = fn.replace('label:', '').split(',');
@@ -491,10 +492,9 @@
                         const p = fn.replace('step:', '').split(',').map(parseFloat);
                         if (p.length >= 1 && !isNaN(p[0]) && p[0] > 0) {
                             const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = p[0];
-                            // Force exact ticks using d3.range as suggested
                             xAxisConfig.tickValues = d3.range(
                                 Math.ceil(start / step) * step,
-                                end + step / 2, // Ensure the end point is included if it's a multiple
+                                end + step / 2,
                                 step
                             );
                         }
@@ -509,12 +509,23 @@
                     }
                 });
 
+                // デフォルトのステップを5に設定（設定がない場合）
+                if (!xAxisConfig.tickValues) {
+                    const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = 5;
+                    xAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
+                }
+                if (!yAxisConfig.tickValues) {
+                    const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = 5;
+                    yAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
+                }
+
                 const targetEl = document.querySelector(targetId);
                 targetEl.style.height = plotHeight + 'px';
                 targetEl.style.width = plotWidth + 'px';
                 targetEl.style.margin = '0 auto';
 
-                const plotData = functionsData.filter(it => !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
+                const annotations = [];
+                const plotData = functionsData.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
                     .map((it, idx) => {
                         let fnStr = it.fn.trim();
                         let domain = null;
@@ -534,32 +545,121 @@
                         }
 
                         let entry = { 
-                            color: colors[idx % colors.length],
-                            graphType: 'polyline'
+                            color: colors[idx % colors.length]
                         };
 
                         // x = 定数 の形式をチェック（例: x = 75）
                         const xMatch = fnStr.match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
                         if (xMatch) {
-                            const constant = xMatch[1];
+                            const constant = parseFloat(xMatch[1]);
                             entry.fn = 'x - (' + constant + ')';
                             entry.fnType = 'implicit';
+                            // x切片を表示
+                            annotations.push({ x: constant, text: `x:${constant}` });
                         } else {
-                            entry.fn = fnStr.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
+                            let cleanFn = fnStr.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
+                            entry.fn = cleanFn;
                             entry.graphType = 'polyline';
-                        }
 
-                        // function-plot v1系では data.range が x軸のドメインを制限するために使われます
+                            // 交点の計算ロジック
+                            try {
+                                // JSで評価可能な形式に変換 (0.6x -> 0.6*x, (x+1)(x-1) -> (x+1)*(x-1) など)
+                                let evalFn = cleanFn.replace(/(\d)\s*([a-z\(])/gi, '$1*$2')
+                                                   .replace(/([a-z])\s*(\d)/gi, '$1*$2')
+                                                   .replace(/\)\s*\(/g, ')*(')
+                                                   .replace(/\)\s*([a-z0-9])/gi, ')*$1')
+                                                   .replace(/\^/g, '**');
+
+                                // y切片 (x=0)
+                                let y0_expr = evalFn.replace(/\bx\b/g, '(0)');
+                                const y0 = new Function('return ' + y0_expr)();
+                                if (!isNaN(y0) && isFinite(y0)) {
+                                    annotations.push({ y: y0, text: `y:${y0.toFixed(1).replace(/\.0$/, '')}` });
+                                }
+
+                                // x切片 (y=0) 一次関数の判定を強化
+                                const simpleLinear = cleanFn.match(/^(-?[\d\.]*)\*?x\s*([\+\-]\s*[\d\.]+)$/);
+                                if (simpleLinear) {
+                                    let a_str = simpleLinear[1];
+                                    let a = (a_str === "" || a_str === undefined) ? 1 : (a_str === "-" ? -1 : parseFloat(a_str));
+                                    let b = parseFloat(simpleLinear[2].replace(/\s+/g, ''));
+                                    if (a !== 0) {
+                                        const x0 = -b / a;
+                                        annotations.push({ x: x0, text: `x:${x0.toFixed(1).replace(/\.0$/, '')}` });
+                                    }
+                                }
+                            } catch(e) {}
+                        }
+                        
                         if (domain) {
                             entry.range = domain;
                         }
-                        // y軸の制限が必要な場合は、追加の処理やグローバルなyAxisでの制限が必要ですが、
-                        // 個別関数のx範囲制限には entry.range を使用します。
 
                         return entry;
                     });
 
-                functionPlot({ target: targetId, data: plotData, grid: true, xAxis: xAxisConfig, yAxis: yAxisConfig, width: plotWidth, height: plotHeight });
+                const instance = functionPlot({ 
+                    target: targetId, 
+                    data: plotData, 
+                    grid: true, 
+                    xAxis: xAxisConfig, 
+                    yAxis: yAxisConfig, 
+                    width: plotWidth, 
+                    height: plotHeight
+                });
+
+                // 描画イベントに同期してラベルを更新
+                const drawInterceptLabels = () => {
+                    try {
+                        const svg = d3.select(targetId).select('svg');
+                        let container = svg.select('.canvas');
+                        if (container.empty()) container = svg.select('g');
+
+                        const xScale = instance.meta.xScale;
+                        const yScale = instance.meta.yScale;
+                        const y0Pos = yScale(0);
+                        const x0Pos = xScale(0);
+
+                        container.selectAll('.custom-intercept-label').remove();
+
+                        annotations.forEach(anno => {
+                            if (anno.x !== undefined) {
+                                const xPx = xScale(anno.x);
+                                if (xPx >= 0 && xPx <= plotWidth) {
+                                    container.append('text')
+                                        .attr('class', 'custom-intercept-label')
+                                        .attr('x', xPx)
+                                        .attr('y', y0Pos - 1)
+                                        .attr('text-anchor', 'middle')
+                                        .style('font-weight', 'bold')
+                                        .style('fill', '#d32f2f')
+                                        .style('font-size', '13px')
+                                        .style('pointer-events', 'none')
+                                        .style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff')
+                                        .text(anno.text.replace('x:', ''));
+                                }
+                            } else if (anno.y !== undefined) {
+                                const yPx = yScale(anno.y);
+                                if (yPx >= 0 && yPx <= plotHeight) {
+                                    container.append('text')
+                                        .attr('class', 'custom-intercept-label')
+                                        .attr('x', x0Pos + 2)
+                                        .attr('y', yPx)
+                                        .attr('dominant-baseline', 'middle')
+                                        .style('font-weight', 'bold')
+                                        .style('fill', '#1976d2')
+                                        .style('font-size', '13px')
+                                        .style('pointer-events', 'none')
+                                        .style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff')
+                                        .text(anno.text.replace('y:', ''));
+                                }
+                            }
+                        });
+                    } catch (err) {}
+                };
+
+                instance.on('draw', drawInterceptLabels);
+                drawInterceptLabels();
 
                 const legendEl = document.getElementById(legendId);
                 legendEl.innerHTML = '';
