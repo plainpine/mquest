@@ -108,11 +108,12 @@
       <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; font-size: 0.9rem;">
         <h6 style="margin-top: 0; color: #0056b3;"><i class="fas fa-info-circle"></i> 設定方法</h6>
         <ul style="margin-bottom: 0; padding-left: 1.2rem;">
-          <li><strong>個別範囲指定:</strong> 方程式の後に <code>[x最小, x最大]</code> を付けると、その範囲のみ描画します。<br>例: <code>y = 2x + 3 [0, 5]</code></li>
+          <li><strong>キャプションを表示:</strong> 方程式の後に <code>| 説明文</code> を付けると、グラフ線上に表示されます。<br>例: <code>y = 2x + 1 | 直線A</code></li>
+          <li><strong>切片を表示:</strong> <code>| show_intercepts: true</code> を付けると、x軸・y軸との交点に数値を表示します。<br>例: <code>y = -x + 4 | show_intercepts: true</code></li>
+          <li><strong>個別範囲指定:</strong> 方程式の後に <code>[x最小, xMax]</code> を付けると、その範囲のみ描画します。<br>例: <code>y = 2x + 3 [0, 5]</code></li>
           <li><strong>全体表示範囲:</strong> <code>range:xMin,xMax,yMin,yMax</code> でグラフの表示枠を設定できます。<br>例: <code>range:-10,10,-10,10</code></li>
-          <li><strong>軸のラベル:</strong> <code>label:x軸名,y軸名</code> で各軸に説明文を表示できます。<br>例: <code>label:時間(秒),距離(m)</code></li>
-          <li><strong>目盛の間隔:</strong> <code>step:xの間隔,yの間隔</code> で目盛の刻みを指定できます。<br>例: <code>step:5,10</code></li>
-          <li><strong>グラフサイズ:</strong> <code>size:幅,高さ</code> で表示サイズを指定できます。<br>例: <code>size:400,300</code></li>
+          <li><strong>軸のラベル:</strong> <code>label:x軸名,y軸名</code> で各軸に説明文を表示できます。</li>
+          <li><strong>目盛の間隔:</strong> <code>step:xの間隔,yの間隔</code> で目盛の刻みを指定できます。</li>
         </ul>
       </div>
       <div id="function-entries-container"></div>

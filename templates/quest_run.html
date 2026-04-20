@@ -531,6 +531,9 @@
                         let domain = null;
                         let range = null;
                         
+                        // 切片表示オプションの確認 (デフォルトはfalse)
+                        const showIntercepts = it.show_intercepts === true || it.show_intercepts === "true";
+                        
                         // 個別範囲指定 [xMin, xMax] または [xMin, xMax, yMin, yMax] を抽出
                         const rangeMatch = fnStr.match(/\[(.*?)\]/);
                         if (rangeMatch) {
@@ -555,8 +558,10 @@
                             const constant = parseFloat(xMatch[1]);
                             entry.fn = 'x - (' + constant + ')';
                             entry.fnType = 'implicit';
-                            // x切片を表示
-                            annotations.push({ x: constant, text: `x:${constant}` });
+                            // オプションが有効な場合のみx切片を表示
+                            if (showIntercepts) {
+                                annotations.push({ x: constant, text: `x:${constant}` });
+                            }
                         } else {
                             let cleanFn = fnStr.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
                             entry.fn = cleanFn;
@@ -572,22 +577,24 @@
                                                    .replace(/\^/g, '**');
                                 entry.evalFn = evalFn;
 
-                                // y切片 (x=0)
-                                let y0_expr = evalFn.replace(/\bx\b/g, '(0)');
-                                const y0 = new Function('return ' + y0_expr)();
-                                if (!isNaN(y0) && isFinite(y0)) {
-                                    annotations.push({ y: y0, text: `y:${y0.toFixed(1).replace(/\.0$/, '')}` });
-                                }
+                                if (showIntercepts) {
+                                    // y切片 (x=0)
+                                    let y0_expr = evalFn.replace(/\bx\b/g, '(0)');
+                                    const y0 = new Function('return ' + y0_expr)();
+                                    if (!isNaN(y0) && isFinite(y0)) {
+                                        annotations.push({ y: y0, text: `y:${y0.toFixed(1).replace(/\.0$/, '')}` });
+                                    }
 
-                                // x切片 (y=0) 一次関数の判定を強化
-                                const simpleLinear = cleanFn.match(/^(-?[\d\.]*)\*?x\s*([\+\-]\s*[\d\.]+)$/);
-                                if (simpleLinear) {
-                                    let a_str = simpleLinear[1];
-                                    let a = (a_str === "" || a_str === undefined) ? 1 : (a_str === "-" ? -1 : parseFloat(a_str));
-                                    let b = parseFloat(simpleLinear[2].replace(/\s+/g, ''));
-                                    if (a !== 0) {
-                                        const x0 = -b / a;
-                                        annotations.push({ x: x0, text: `x:${x0.toFixed(1).replace(/\.0$/, '')}` });
+                                    // x切片 (y=0) 一次関数の判定を強化
+                                    const simpleLinear = cleanFn.match(/^(-?[\d\.]*)\*?x\s*([\+\-]\s*[\d\.]+)$/);
+                                    if (simpleLinear) {
+                                        let a_str = simpleLinear[1];
+                                        let a = (a_str === "" || a_str === undefined) ? 1 : (a_str === "-" ? -1 : parseFloat(a_str));
+                                        let b = parseFloat(simpleLinear[2].replace(/\s+/g, ''));
+                                        if (a !== 0) {
+                                            const x0 = -b / a;
+                                            annotations.push({ x: x0, text: `x:${x0.toFixed(1).replace(/\.0$/, '')}` });
+                                        }
                                     }
                                 }
                             } catch(e) {}
