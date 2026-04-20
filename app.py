@@ -1102,6 +1102,7 @@ def save_quest(quest_id):
         old_id = int(quest_id)
         quest = Quest.query.get_or_404(old_id)
         
+        # IDが変更された場合
         if new_id_str and int(new_id_str) != old_id:
             try:
                 new_id = int(new_id_str)
@@ -1122,9 +1123,17 @@ def save_quest(quest_id):
                                    {'new_id': new_id, 'old_id': old_id})
                 db.session.execute(db.text("UPDATE quests SET id = :new_id WHERE id = :old_id"), 
                                    {'new_id': new_id, 'old_id': old_id})
+                
                 db.session.commit()
+                # セッション内の古いオブジェクトを期限切れにして、DBから最新の状態を読み込めるようにする
+                db.session.expire_all()
+                
                 # 更新後のQuestオブジェクトを再取得
                 quest = Quest.query.get(new_id)
+                if not quest:
+                    flash("エラー: 更新後のクエストデータの取得に失敗しました。", "danger")
+                    return redirect(url_for('manage_quests', title=title, level=level))
+                
                 quest_id = str(new_id)
             except ValueError:
                 flash("エラー: IDは数値で入力してください。", "danger")
@@ -1140,6 +1149,8 @@ def save_quest(quest_id):
         db.session.commit()
         flash("クエスト情報を保存しました", "success")
         return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
+
+
 
 @app.route('/admin/quest/renumber_questions/<int:quest_id>', methods=['POST'])
 @login_required

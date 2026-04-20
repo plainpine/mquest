@@ -26,8 +26,8 @@
 <form method="post" action="{{ url_for('save_quest', quest_id=quest_id) }}">
   <div class="form-group">
     <label for="quest-id">ID:</label>
-    <input type="number" name="new_id" id="quest-id" value="{{ quest.id if quest.id else '' }}" {% if quest.id %}placeholder="{{ quest.id }}"{% else %}placeholder="自動採番"{% endif %}>
-    {% if quest.id %}<input type="hidden" name="old_id" value="{{ quest.id }}">{% endif %}
+    <input type="number" name="new_id" id="quest-id" value="{{ quest.id if quest.id is not none else '' }}" {% if quest.id is not none %}placeholder="{{ quest.id }}"{% else %}placeholder="自動採番"{% endif %}>
+    {% if quest.id is not none %}<input type="hidden" name="old_id" value="{{ quest.id }}">{% endif %}
   </div>
   <div class="form-group">
     <label for="title-select">タイトル:</label>
