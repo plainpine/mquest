@@ -1257,8 +1257,6 @@ def edit_question(quest_id, question_id):
                 answers = [] # Invalid JSON in DB, treat as empty
 
         elif question.type == 'function_graph' and question.answer:
-            # Escape backslashes for the JavaScript template literal in edit_question.html
-            question.answer = question.answer.replace('\\', '\\\\')
             # NEW: Load sub-questions from the 'choices' field
             try:
                 answers = json.loads(question.choices) if question.choices else []
