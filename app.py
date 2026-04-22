@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, case
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from flask_login import LoginManager, login_user, login_required, logout_user, UserMixin, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone, timedelta
@@ -9,6 +9,7 @@ from models import QuestHistory, Quest, Question, QuestAttemptLog
 import json
 import logging
 import random
+import time
 from utils.svg_preview_bp import bp as svg_preview_bp # Import the blueprint
 
 # 科目キーと日本語名のマッピング
@@ -41,6 +42,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
         cursor.close()
 
 login_manager = LoginManager()
@@ -48,6 +50,30 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 app.register_blueprint(svg_preview_bp) # Register the blueprint
+
+def safe_commit(retries=3, delay=0.5):
+    """
+    Attempts to commit the current session, with retries for OperationalError (e.g., disk I/O error).
+    """
+    for i in range(retries):
+        try:
+            db.session.commit()
+            return True
+        except OperationalError as e:
+            if "disk I/O error" in str(e) or "database is locked" in str(e):
+                app.logger.warning(f"Database commit failed (attempt {i+1}/{retries}): {e}. Retrying in {delay}s...")
+                db.session.rollback()
+                time.sleep(delay)
+                continue
+            else:
+                db.session.rollback()
+                raise
+        except Exception:
+            db.session.rollback()
+            raise
+    # Final attempt
+    db.session.commit()
+    return True
 
 @app.route('/')
 def home():
@@ -99,7 +125,7 @@ def change_password():
         # パスワードを更新
         current_user.set_password(new_password)
         current_user.is_first_login = False  # 初回ログインフラグを更新
-        db.session.commit()
+        safe_commit()
         
         return redirect(url_for(f"dashboard_{current_user.role}"))
 
@@ -127,7 +153,7 @@ def create_user():
         user = User(username=username, role=role)
         user.set_password(password)
         db.session.add(user)
-        db.session.commit()
+        safe_commit()
         return f"{role}ユーザー {username} を作成しました"
 
     return '''
@@ -627,7 +653,7 @@ def quest_result(quest_id):
                         )
                         db.session.add(new_progress)
                 
-                db.session.commit()
+                safe_commit()
 
             except IntegrityError as e:
                 db.session.rollback()
@@ -884,7 +910,7 @@ def update_user():
         elif parent_id:
             user.parent_id = int(parent_id)
     
-    db.session.commit()
+    safe_commit()
     flash(f"{user.username} ( {user.role} ) の情報を更新しました", "success")
     return redirect(url_for('manage_students'))
 
@@ -928,7 +954,7 @@ def add_student_with_parent():
             
             student.parent_id = parent.id
         
-        db.session.commit()
+        safe_commit()
         flash(f"生徒 {s_username} を登録しました", "success")
     except IntegrityError:
         db.session.rollback()
@@ -963,7 +989,7 @@ def delete_user(user_id):
                 child.parent_id = None
 
         db.session.delete(user)
-        db.session.commit()
+        safe_commit()
         flash(f"ユーザー {username} ({role}) を削除しました", "success")
     except Exception as e:
         db.session.rollback()
@@ -1039,7 +1065,7 @@ def handle_quest_action():
             Question.query.filter_by(quest_id=quest_id_to_delete).delete()
 
             db.session.delete(quest)
-            db.session.commit()
+            safe_commit()
             flash("削除しました", "success")
         return redirect(url_for('manage_quests', title=title, level=level))
     
@@ -1095,7 +1121,7 @@ def save_quest(quest_id):
             new_quest = Quest(title=title, level=level, questname=questname)
         
         db.session.add(new_quest)
-        db.session.commit()
+        safe_commit()
         flash("新しいクエストを保存しました", "success")
         return redirect(url_for('edit_quest', quest_id=new_quest.id, title=title, level=level))
     else:
@@ -1124,7 +1150,7 @@ def save_quest(quest_id):
                 db.session.execute(db.text("UPDATE quests SET id = :new_id WHERE id = :old_id"), 
                                    {'new_id': new_id, 'old_id': old_id})
                 
-                db.session.commit()
+                safe_commit()
                 # セッション内の古いオブジェクトを期限切れにして、DBから最新の状態を読み込めるようにする
                 db.session.expire_all()
                 
@@ -1146,7 +1172,7 @@ def save_quest(quest_id):
         quest.title = title
         quest.level = level
         quest.questname = questname
-        db.session.commit()
+        safe_commit()
         flash("クエスト情報を保存しました", "success")
         return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
@@ -1176,7 +1202,7 @@ def renumber_questions(quest_id):
                 db.session.execute(db.text("UPDATE questions SET id = :new_id WHERE id = :old_id"),
                                    {'new_id': new_id, 'old_id': old_id})
         
-        db.session.commit()
+        safe_commit()
         flash(f"問題IDを振り直しました（{base_id + 1}〜）。", "success")
     except Exception as e:
         db.session.rollback()
@@ -1213,7 +1239,7 @@ def delete_question(quest_id, question_id):
     level = request.args.get('level', '')
     question = Question.query.get_or_404(question_id)
     db.session.delete(question)
-    db.session.commit()
+    safe_commit()
     flash("問題を削除しました", "success")
     return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
@@ -1289,143 +1315,151 @@ def edit_question(quest_id, question_id):
 # 問題の保存画面
 @app.route('/admin/question/save/<int:quest_id>', methods=['POST'])
 def save_question(quest_id):
-    question_id = request.values.get('question_id')
-    title = request.form.get('title', '')
-    level = request.form.get('level', '')
+    try:
+        question_id = request.values.get('question_id')
+        title = request.form.get('title', '')
+        level = request.form.get('level', '')
 
-    q_type = request.form['type']
-    text = request.form['text']
-    if question_id == 'new':
-        # クエストIDに基づいた自動採番 (QuestID * 100 + 連番)
-        base_id = quest_id * 100
-        existing_ids = [q.id for q in Question.query.filter(Question.id > base_id, Question.id < base_id + 100).all()]
-        if existing_ids:
-            new_q_id = max(existing_ids) + 1
+        q_type = request.form['type']
+        text = request.form['text']
+        if question_id == 'new':
+            # クエストIDに基づいた自動採番 (QuestID * 100 + 連番)
+            base_id = quest_id * 100
+            existing_ids = [q.id for q in Question.query.filter(Question.id > base_id, Question.id < base_id + 100).all()]
+            if existing_ids:
+                new_q_id = max(existing_ids) + 1
+            else:
+                new_q_id = base_id + 1
+            
+            question = Question(id=new_q_id, quest_id=quest_id, type=q_type, text=text)
         else:
-            new_q_id = base_id + 1
+            question = Question.query.get_or_404(int(question_id))
+            question.type = q_type
+            question.text = text
+        question.explanation = request.form.get('explanation', '').strip()
+
+        if q_type == 'choice' or q_type == 'multiple_choice':
+            choices = [request.form.get(f'choice{i}', '') for i in range(4)]
+            answer = request.form['answer']
+            question.choices = json.dumps(choices)
+            question.answer = answer
+
+        elif q_type == 'sort':
+            question.choices = None
+            question.answer = request.form.get('answer_sort', '')
+
+        elif q_type == 'fill_in_the_blank_en':
+            question.choices = None
+            question.answer = request.form['answer_fill_in_the_blank_en']
+
+        elif q_type == 'numeric':
+            answers = []
+            for i in range(4):
+                label = request.form.get(f'label{i}', '')
+                value_str = request.form.get(f'num_answer{i}', '')
+                if label and value_str:
+                    try:
+                        # Ensure value is a valid number before converting
+                        answers.append({'label': label, 'answer': int(value_str)})
+                    except (ValueError, TypeError):
+                        # Skip invalid entries gracefully
+                        flash(f'数値入力の解答「{value_str}」は無効なため、スキップされました。', 'warning')
+                        pass
+            question.choices = None
+            question.answer = json.dumps(answers)
+
+        elif q_type == 'svg_interactive':
+            svg_content = request.form.get('svg_content', '')
+            sub_ids = request.form.getlist('sub_id')
+            sub_prompts = request.form.getlist('sub_prompt')
+            sub_answers = request.form.getlist('sub_answer')
+
+            sub_questions = []
+            for i in range(len(sub_ids)):
+                if sub_ids[i] and sub_prompts[i] and sub_answers[i]:
+                    sub_questions.append({
+                        'id': sub_ids[i],
+                        'prompt': sub_prompts[i],
+                        'answer': sub_answers[i]
+                    })
+
+            question.choices = svg_content
+            question.answer = json.dumps(sub_questions)
+
+        elif q_type == 'figure_choice':
+            svg_content = request.form.get('figure_choice_svg_content', '')
+            sub_ids = request.form.getlist('figure_choice_sub_id')
+            sub_prompts = request.form.getlist('figure_choice_sub_prompt')
+            sub_answers = request.form.getlist('figure_choice_sub_answer')
+
+            sub_questions = []
+            for i in range(len(sub_prompts)):
+                if sub_prompts[i]:
+                    choices = [request.form.get(f'figure_choice_sub_choice_{i}_{j}', '') for j in range(4)]
+                    sub_questions.append({
+                        'id': sub_ids[i] if i < len(sub_ids) else f'new{i}',
+                        'prompt': sub_prompts[i],
+                        'choices': choices,
+                        'answer': sub_answers[i] if i < len(sub_answers) else ''
+                    })
+            
+            question.choices = svg_content # SVG content is stored in choices
+            question.answer = json.dumps(sub_questions)
+
+        elif q_type == 'function_graph':
+            # The 'answer' field stores the function definitions for the graph
+            graph_definitions_json = request.form.get('answer_function_graph', '[]')
+            try:
+                json.loads(graph_definitions_json)
+                question.answer = graph_definitions_json
+            except json.JSONDecodeError:
+                question.answer = '[]'
+                flash('方程式グラフの定義データ形式が無効だったため、保存されませんでした。', 'error')
+
+            # The 'choices' field stores the sub-questions (prompts and answers)
+            sub_questions_json = request.form.get('answers', '[]')
+            try:
+                json.loads(sub_questions_json)
+                question.choices = sub_questions_json
+            except json.JSONDecodeError:
+                question.choices = '[]'
+                flash('方程式グラフの回答データ形式が無効だったため、保存されませんでした。', 'error')
+
+        elif q_type == 'function_graph_choice':
+            # Graph definitions are stored in question.choices
+            graph_definitions_json = request.form.get('function_graph_choice_definitions', '[]')
+            try:
+                json.loads(graph_definitions_json)
+                question.choices = graph_definitions_json
+            except json.JSONDecodeError:
+                question.choices = '[]'
+                flash('方程式グラフ（選択）のグラフ定義データ形式が無効だったため、保存されませんでした。', 'error')
+
+            # Sub-questions are stored in question.answer
+            sub_prompts = request.form.getlist('fgc_sub_prompt')
+            sub_answers = request.form.getlist('fgc_sub_answer')
+            sub_questions = []
+            for i in range(len(sub_prompts)):
+                if sub_prompts[i]:
+                    choices = [request.form.get(f'fgc_sub_choice_{i}_{j}', '') for j in range(4)]
+                    sub_questions.append({
+                        'prompt': sub_prompts[i],
+                        'choices': choices,
+                        'answer': sub_answers[i] if i < len(sub_answers) else ''
+                    })
+            question.answer = json.dumps(sub_questions)
+        if question_id == 'new':
+            db.session.add(question)
         
-        question = Question(id=new_q_id, quest_id=quest_id, type=q_type, text=text)
-    else:
-        question = Question.query.get_or_404(int(question_id))
-        question.type = q_type
-        question.text = text
-    question.explanation = request.form.get('explanation', '').strip()
+        safe_commit()
+        flash('問題を保存しました', 'success')
 
-    if q_type == 'choice' or q_type == 'multiple_choice':
-        choices = [request.form.get(f'choice{i}', '') for i in range(4)]
-        answer = request.form['answer']
-        question.choices = json.dumps(choices)
-        question.answer = answer
-
-    elif q_type == 'sort':
-        question.choices = None
-        question.answer = request.form.get('answer_sort', '')
-
-    elif q_type == 'fill_in_the_blank_en':
-        question.choices = None
-        question.answer = request.form['answer_fill_in_the_blank_en']
-
-    elif q_type == 'numeric':
-        answers = []
-        for i in range(4):
-            label = request.form.get(f'label{i}', '')
-            value_str = request.form.get(f'num_answer{i}', '')
-            if label and value_str:
-                try:
-                    # Ensure value is a valid number before converting
-                    answers.append({'label': label, 'answer': int(value_str)})
-                except (ValueError, TypeError):
-                    # Skip invalid entries gracefully
-                    flash(f'数値入力の解答「{value_str}」は無効なため、スキップされました。', 'warning')
-                    pass
-        question.choices = None
-        question.answer = json.dumps(answers)
-
-    elif q_type == 'svg_interactive':
-        svg_content = request.form.get('svg_content', '')
-        sub_ids = request.form.getlist('sub_id')
-        sub_prompts = request.form.getlist('sub_prompt')
-        sub_answers = request.form.getlist('sub_answer')
-
-        sub_questions = []
-        for i in range(len(sub_ids)):
-            if sub_ids[i] and sub_prompts[i] and sub_answers[i]:
-                sub_questions.append({
-                    'id': sub_ids[i],
-                    'prompt': sub_prompts[i],
-                    'answer': sub_answers[i]
-                })
-
-        question.choices = svg_content
-        question.answer = json.dumps(sub_questions)
-
-    elif q_type == 'figure_choice':
-        svg_content = request.form.get('figure_choice_svg_content', '')
-        sub_ids = request.form.getlist('figure_choice_sub_id')
-        sub_prompts = request.form.getlist('figure_choice_sub_prompt')
-        sub_answers = request.form.getlist('figure_choice_sub_answer')
-
-        sub_questions = []
-        for i in range(len(sub_prompts)):
-            if sub_prompts[i]:
-                choices = [request.form.get(f'figure_choice_sub_choice_{i}_{j}', '') for j in range(4)]
-                sub_questions.append({
-                    'id': sub_ids[i] if i < len(sub_ids) else f'new{i}',
-                    'prompt': sub_prompts[i],
-                    'choices': choices,
-                    'answer': sub_answers[i] if i < len(sub_answers) else ''
-                })
-        
-        question.choices = svg_content # SVG content is stored in choices
-        question.answer = json.dumps(sub_questions)
-
-    elif q_type == 'function_graph':
-        # The 'answer' field stores the function definitions for the graph
-        graph_definitions_json = request.form.get('answer_function_graph', '[]')
-        try:
-            json.loads(graph_definitions_json)
-            question.answer = graph_definitions_json
-        except json.JSONDecodeError:
-            question.answer = '[]'
-            flash('方程式グラフの定義データ形式が無効だったため、保存されませんでした。', 'error')
-
-        # The 'choices' field stores the sub-questions (prompts and answers)
-        sub_questions_json = request.form.get('answers', '[]')
-        try:
-            json.loads(sub_questions_json)
-            question.choices = sub_questions_json
-        except json.JSONDecodeError:
-            question.choices = '[]'
-            flash('方程式グラフの回答データ形式が無効だったため、保存されませんでした。', 'error')
-
-    elif q_type == 'function_graph_choice':
-        # Graph definitions are stored in question.choices
-        graph_definitions_json = request.form.get('function_graph_choice_definitions', '[]')
-        try:
-            json.loads(graph_definitions_json)
-            question.choices = graph_definitions_json
-        except json.JSONDecodeError:
-            question.choices = '[]'
-            flash('方程式グラフ（選択）のグラフ定義データ形式が無効だったため、保存されませんでした。', 'error')
-
-        # Sub-questions are stored in question.answer
-        sub_prompts = request.form.getlist('fgc_sub_prompt')
-        sub_answers = request.form.getlist('fgc_sub_answer')
-        sub_questions = []
-        for i in range(len(sub_prompts)):
-            if sub_prompts[i]:
-                choices = [request.form.get(f'fgc_sub_choice_{i}_{j}', '') for j in range(4)]
-                sub_questions.append({
-                    'prompt': sub_prompts[i],
-                    'choices': choices,
-                    'answer': sub_answers[i] if i < len(sub_answers) else ''
-                })
-        question.answer = json.dumps(sub_questions)
-    if question_id == 'new':
-        db.session.add(question)
-    
-    db.session.commit()
-    flash('問題を保存しました', 'success')
+    except OperationalError as e:
+        if "disk I/O error" in str(e):
+            app.logger.error(f"Critical Database Error: {e}")
+            flash('データベースの書き込みエラーが発生しました。しばらく時間を置いてから再度お試しください。', 'error')
+        else:
+            raise
 
     return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 

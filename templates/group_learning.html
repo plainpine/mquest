@@ -84,6 +84,27 @@
             </div>
           {% endfor %}
         </div>
+      {% elif question.type == 'function_graph_choice' %}
+        <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1rem;">
+          <div id="graph-target-{{ q_index }}"></div>
+          <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+        </div>
+        <div class="sub-questions-container">
+          {% for sub_q in question.sub_questions %}
+            <div class="sub-question" style="margin-bottom: 1rem;">
+              <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+              <div class="choice-block">
+                {% for choice in sub_q.choices %}
+                  {% if choice %}
+                    <div class="choice-option">
+                      <span class="markdown" data-content="{{ choice | e }}"></span>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
 
       <!-- 答え表示・隠すボタン -->
@@ -107,6 +128,10 @@
             {% for sub_q in question.sub_questions %}
               <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
             {% endfor %}
+          {% elif question.type == 'function_graph_choice' %}
+            {% for sub_q in question.sub_questions %}
+              <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
+            {% endfor %}
           {% endif %}
         </div>
       </div>
@@ -121,23 +146,39 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  // Markdown対応
-  document.querySelectorAll('.markdown').forEach(div => {
-    let md = div.getAttribute('data-content');
-    if (md) {
-      md = md.replace(/\\n/g, '\n');  // 改行の復元
-      div.innerHTML = marked.parse(md);
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },  
+    svg: { fontCache: 'global' }
+  };
+
+  function renderMarkdownAndMath() {
+    if (typeof marked === 'undefined') return;
+    if (marked.use) {
+      marked.use({ breaks: true });
+    } else if (marked.setOptions) {
+      marked.setOptions({ breaks: true });
     }
-  });
-  // MathJax 3 の再レンダリングをトリガー
-  if (window.MathJax) {
-    try {
+
+    document.querySelectorAll('.markdown').forEach(div => {
+      let md = div.getAttribute('data-content');
+      if (md) {
+        md = md.replace(/\\n/g, '\n');  // 改行の復元
+        try {
+          div.innerHTML = marked.parse(md);
+        } catch (e) {
+          console.error('Markdown parse error:', e);
+          div.textContent = md;
+        }
+      }
+    });
+    // MathJax 3 の再レンダリングをトリガー
+    if (window.MathJax && MathJax.typesetPromise) {
       MathJax.typesetPromise();
-    } catch (e) {
-      console.error('MathJax typesetting failed:', e);
     }
   }
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderMarkdownAndMath();
 
   // 並び替え
   document.querySelectorAll('.sortable').forEach(list => {
@@ -173,16 +214,218 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.textContent = isVisible ? '答え' : '隠す';
     });
   });
+
+  // --- Function Plotting ---
+  const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
+  document.querySelectorAll('.function-graph-container').forEach((container, i) => {
+      const functionsDataRaw = container.dataset.functions;
+      const targetId = `#graph-target-${i}`;
+      const legendId = `graph-legend-${i}`;
+      if (functionsDataRaw && document.querySelector(targetId)) {
+          try {
+              const functionsData = JSON.parse(functionsDataRaw);
+              let xAxisConfig = { domain: [-10.1, 10.1] }, yAxisConfig = { domain: [-10.1, 10.1] };
+              const containerWidth = container.clientWidth;
+              let plotWidth = 800;
+              if (containerWidth > 0 && containerWidth < 800) plotWidth = containerWidth;
+              let plotHeight = 600;
+
+              // 設定コマンドを先に処理（range, size を優先）
+              functionsData.forEach(item => {
+                  const fn = item.fn.trim();
+                  if (fn.startsWith('range:')) {
+                      const p = fn.replace('range:', '').split(',').map(parseFloat);
+                      if (p.length === 4) { xAxisConfig.domain = [p[0], p[1]]; yAxisConfig.domain = [p[2], p[3]]; }
+                  } else if (fn.startsWith('size:')) {
+                      const p = fn.replace('size:', '').split(',').map(parseFloat);
+                      if (p.length === 2) { plotWidth = Math.min(p[0], containerWidth || p[0]); plotHeight = p[1] * (plotWidth / p[0]); }
+                  }
+              });
+
+              // その他の設定を処理
+              functionsData.forEach(item => {
+                  if (!item.fn) return;
+                  const fn = item.fn.trim();
+                  if (fn.startsWith('label:')) {
+                      const p = fn.replace('label:', '').split(',');
+                      if (p.length >= 1) xAxisConfig.label = p[0].trim();
+                      if (p.length >= 2) yAxisConfig.label = p[1].trim();
+                  } else if (fn.startsWith('step:')) {
+                      const p = fn.replace('step:', '').split(',').map(parseFloat);
+                      if (p.length >= 1 && !isNaN(p[0]) && p[0] > 0) {
+                          const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = p[0];
+                          xAxisConfig.tickValues = d3.range(
+                              Math.ceil(start / step) * step,
+                              end + step / 2,
+                              step
+                          );
+                      }
+                      if (p.length >= 2 && !isNaN(p[1]) && p[1] > 0) {
+                          const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = p[1];
+                          yAxisConfig.tickValues = d3.range(
+                              Math.ceil(start / step) * step,
+                              end + step / 2,
+                              step
+                          );
+                      }
+                  }
+              });
+
+              // デフォルトのステップを5に設定（設定がない場合）
+              if (!xAxisConfig.tickValues) {
+                  const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = 5;
+                  xAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
+              }
+              if (!yAxisConfig.tickValues) {
+                  const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = 5;
+                  yAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
+              }
+
+              const targetEl = document.querySelector(targetId);
+              targetEl.style.height = plotHeight + 'px';
+              targetEl.style.width = plotWidth + 'px';
+              targetEl.style.margin = '0 auto';
+
+              const annotations = [];
+              const plotData = functionsData.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
+                  .map((it, idx) => {
+                      let fnStr = it.fn.trim();
+                      let domain = null;
+                      let range = null;
+                      let showIntercepts = it.show_intercepts === true || it.show_intercepts === "true" || fnStr.toLowerCase().includes('show_intercepts:true') || fnStr.toLowerCase().includes('show_intercepts: true');
+                      let pureFn = fnStr.split('|')[0].trim();
+                      const rangeMatch = pureFn.match(/\[(.*?)\]/);
+                      if (rangeMatch) {
+                          const parts = rangeMatch[1].split(',').map(s => parseFloat(s.trim()));
+                          if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) { domain = [parts[0], parts[1]]; }
+                          if (parts.length >= 4 && !isNaN(parts[2]) && !isNaN(parts[3])) { range = [parts[2], parts[3]]; }
+                          pureFn = pureFn.replace(/\[.*?\]/, '').trim();
+                      }
+                      let entry = { color: colors[idx % colors.length], caption: it.caption };
+                      const xMatch = pureFn.match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
+                      if (xMatch) {
+                          const constant = parseFloat(xMatch[1]);
+                          entry.fn = 'x - (' + constant + ')';
+                          entry.fnType = 'implicit';
+                          if (showIntercepts) annotations.push({ x: constant, text: `x:${constant}` });
+                      } else {
+                          let cleanFn = pureFn.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
+                          entry.fn = cleanFn;
+                          entry.graphType = 'polyline';
+                          try {
+                              let evalFn = cleanFn.replace(/(\d)\s*([a-z\(])/gi, '$1*$2').replace(/([a-z])\s*(\d)/gi, '$1*$2').replace(/\)\s*\(/g, ')*(').replace(/\)\s*([a-z0-9])/gi, ')*$1').replace(/\^/g, '**');
+                              if (evalFn.trim()) {
+                                  entry.evalFn = evalFn;
+                                  if (showIntercepts) {
+                                      let y0_expr = evalFn.replace(/\bx\b/g, '(0)');
+                                      const y0 = new Function('return ' + y0_expr)();
+                                      if (!isNaN(y0) && isFinite(y0)) annotations.push({ y: y0, text: `y:${y0.toFixed(1).replace(/\.0$/, '')}` });
+                                      const simpleLinear = cleanFn.match(/^(-?[\d\.]*)\*?x\s*([\+\-]\s*[\d\.]+)$/);
+                                      if (simpleLinear) {
+                                          let a_str = simpleLinear[1];
+                                          let a = (a_str === "" || a_str === undefined) ? 1 : (a_str === "-" ? -1 : parseFloat(a_str));
+                                          let b = parseFloat(simpleLinear[2].replace(/\s+/g, ''));
+                                          if (a !== 0) { const x0 = -b / a; annotations.push({ x: x0, text: `x:${x0.toFixed(1).replace(/\.0$/, '')}` }); }
+                                      }
+                                  }
+                              }
+                          } catch(e) {}
+                      }
+                      if (domain) entry.range = domain;
+                      return entry;
+                  });
+
+              const instance = functionPlot({ target: targetId, data: plotData, grid: true, xAxis: xAxisConfig, yAxis: yAxisConfig, width: plotWidth, height: plotHeight });
+              const drawInterceptLabels = () => {
+                  try {
+                      const svg = d3.select(targetId).select('svg');
+                      let container = svg.select('.canvas');
+                      if (container.empty()) container = svg.select('g');
+                      const xScale = instance.meta.xScale;
+                      const yScale = instance.meta.yScale;
+                      const xDomain = xScale.domain(), yDomain = yScale.domain(), y0Pos = yScale(0), x0Pos = xScale(0);
+                      container.selectAll('.custom-intercept-label').remove();
+                      container.selectAll('.custom-function-caption').remove();
+                      const usedYPositions = [];
+                      annotations.forEach(anno => {
+                          if (anno.x !== undefined) {
+                              const xPx = xScale(anno.x);
+                              if (xPx >= 0 && xPx <= plotWidth) {
+                                  container.append('text').attr('class', 'custom-intercept-label').attr('x', xPx).attr('y', y0Pos - 1).attr('text-anchor', 'middle').style('font-weight', 'bold').style('fill', '#d32f2f').style('font-size', '13px').style('pointer-events', 'none').style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff').text(anno.text.replace('x:', ''));
+                              }
+                          } else if (anno.y !== undefined) {
+                              const yPx = yScale(anno.y);
+                              if (yPx >= 0 && yPx <= plotHeight) {
+                                  container.append('text').attr('class', 'custom-intercept-label').attr('x', x0Pos + 2).attr('y', yPx).attr('dominant-baseline', 'middle').style('font-weight', 'bold').style('fill', '#1976d2').style('font-size', '13px').style('pointer-events', 'none').style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff').text(anno.text.replace('y:', ''));
+                              }
+                          }
+                      });
+                      plotData.forEach((entry, idx) => {
+                          if (!entry.caption) return;
+                          let xVal, yVal;
+                          if (entry.fnType === 'implicit') {
+                              const match = entry.fn.match(/x\s*-\s*\((.*?)\)/);
+                              if (match) { xVal = parseFloat(match[1]); yVal = yDomain[1] - (yDomain[1] - yDomain[0]) * 0.1; }
+                          } else if (entry.evalFn) {
+                              const centerX = (xDomain[0] + xDomain[1]) / 2, xRange = xDomain[1] - xDomain[0];
+                              for (let i = 0; i <= 20; i++) {
+                                  let offsetFactor = Math.ceil(i / 2) * (i % 2 === 0 ? 1 : -1);
+                                  let tx = centerX + (xRange * offsetFactor / 40);
+                                  if (tx < xDomain[0] || tx > xDomain[1]) continue;
+                                  try {
+                                      let ty = new Function('x', 'return ' + entry.evalFn)(tx);
+                                      if (ty >= yDomain[0] && ty <= yDomain[1]) { xVal = tx; yVal = ty; break; }
+                                  } catch (e) {}
+                              }
+                          }
+                          if (xVal !== undefined && yVal !== undefined) {
+                              let finalY = yScale(yVal);
+                              let attempts = 0;
+                              while (usedYPositions.some(pos => Math.abs(pos - finalY) < 25) && attempts < 10) { finalY -= 25; attempts++; }
+                              usedYPositions.push(finalY);
+
+                              // foreignObjectを使用してMarkdown/MathJaxをサポート
+                              container.append('foreignObject')
+                                  .attr('class', 'custom-function-caption')
+                                  .attr('x', xScale(xVal) + 5)
+                                  .attr('y', finalY - 15)
+                                  .attr('width', 150)
+                                  .attr('height', 40)
+                                  .append('xhtml:div')
+                                  .attr('class', 'markdown')
+                                  .attr('data-content', entry.caption)
+                                  .style('color', entry.color)
+                                  .style('font-weight', 'bold')
+                                  .style('font-size', '14px')
+                                  .style('pointer-events', 'none')
+                                  .style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff')
+                                  .style('white-space', 'nowrap')
+                                  .style('overflow', 'visible');
+                          }
+                      });
+                      renderMarkdownAndMath();
+                  } catch (err) {}
+              };
+              instance.on('draw', drawInterceptLabels);
+              drawInterceptLabels();
+              const legendEl = document.getElementById(legendId);
+              legendEl.style.display = 'block'; // 凡例を表示
+              legendEl.innerHTML = '';
+              functionsData.forEach((it, idx) => {
+                  if (it.caption) {
+                      const item = document.createElement('div');
+                      item.classList.add('legend-item');
+                      item.innerHTML = `<div class="legend-color" style="background-color: ${colors[idx % colors.length]}"></div><div class="legend-text markdown" data-content="${it.caption.replace(/"/g, '&quot;')}"></div>`;
+                      legendEl.appendChild(item);
+                  }
+              });
+              renderMarkdownAndMath();
+          } catch (e) { console.error(e); }
+      }
+  });
 });
 </script>
 
-<!-- MathJax (LaTeX数式サポート) -->
-<script>
-  window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },  
-    svg: { fontCache: 'global' }
-  };
-</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <style>

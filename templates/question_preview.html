@@ -225,14 +225,26 @@
 <script>
     function renderMarkdownAndMath() {
         if (typeof marked === 'undefined') return;
-        marked.setOptions({ breaks: true });
+        if (marked.use) {
+            marked.use({ breaks: true });
+        } else if (marked.setOptions) {
+            marked.setOptions({ breaks: true });
+        }
+
         document.querySelectorAll('.markdown').forEach(function(div) {
             var md = div.getAttribute('data-content');
             if (!md) return;
             md = md.replace(/\\n/g, '\n');
-            try { div.innerHTML = marked.parse(md); } catch (e) { div.textContent = md; }
+            try {
+                div.innerHTML = marked.parse(md);
+            } catch (e) {
+                console.error('Markdown parse error:', e);
+                div.textContent = md;
+            }
         });
-        if (window.MathJax && MathJax.typesetPromise) { MathJax.typesetPromise(); }
+        if (window.MathJax && MathJax.typesetPromise) {
+            MathJax.typesetPromise();
+        }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -514,18 +526,26 @@
                                     }
                                     usedYPositions.push(finalY);
 
-                                    container.append('text')
+                                    // foreignObjectを使用してMarkdown/MathJaxをサポート
+                                    container.append('foreignObject')
                                         .attr('class', 'custom-function-caption')
                                         .attr('x', xScale(xVal) + 5)
-                                        .attr('y', finalY - 5)
-                                        .style('fill', entry.color)
+                                        .attr('y', finalY - 15)
+                                        .attr('width', 150)
+                                        .attr('height', 40)
+                                        .append('xhtml:div')
+                                        .attr('class', 'markdown')
+                                        .attr('data-content', entry.caption)
+                                        .style('color', entry.color)
                                         .style('font-weight', 'bold')
                                         .style('font-size', '14px')
                                         .style('pointer-events', 'none')
                                         .style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff')
-                                        .text(entry.caption.replace(/\$/g, ''));
+                                        .style('white-space', 'nowrap')
+                                        .style('overflow', 'visible');
                                 }
                             });
+                            renderMarkdownAndMath();
                         } catch (err) {
                             console.warn("Label rendering error:", err);
                         }
@@ -538,7 +558,7 @@
 
                     const legendEl = document.getElementById(legendId);
                     if (legendEl) {
-                        legendEl.style.display = 'none'; // 凡例を非表示にする
+                        legendEl.style.display = 'block'; // 凡例を表示
                         legendEl.innerHTML = '';
                         functionsData.forEach((it, idx) => {
                             if (it.caption) {

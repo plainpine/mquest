@@ -311,14 +311,26 @@
 
   function renderMarkdownAndMath() {
     if (typeof marked === 'undefined') return;
-    marked.setOptions({ breaks: true });
+    if (marked.use) {
+      marked.use({ breaks: true });
+    } else if (marked.setOptions) {
+      marked.setOptions({ breaks: true });
+    }
+
     document.querySelectorAll('.markdown').forEach(function(div) {
       var md = div.getAttribute('data-content');
       if (!md) return;
       md = md.replace(/\\n/g, '\n');
-      try { div.innerHTML = marked.parse(md); } catch (e) { div.textContent = md; }
+      try {
+        div.innerHTML = marked.parse(md);
+      } catch (e) {
+        console.error('Markdown parse error:', e);
+        div.textContent = md;
+      }
     });
-    if (window.MathJax && MathJax.typesetPromise) { MathJax.typesetPromise(); }
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise();
+    }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -537,6 +549,9 @@
                         
                         // 設定コマンドを除去した純粋な方程式部分を取得
                         let pureFn = fnStr.split('|')[0].trim();
+
+                        // 個別範囲指定 [xMin, xMax] または [xMin, xMax, yMin, yMax] を抽出
+                        const rangeMatch = pureFn.match(/\[(.*?)\]/);
                         if (rangeMatch) {
                             const parts = rangeMatch[1].split(',').map(s => parseFloat(s.trim()));
                             if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
@@ -545,7 +560,7 @@
                             if (parts.length >= 4 && !isNaN(parts[2]) && !isNaN(parts[3])) {
                                 range = [parts[2], parts[3]];
                             }
-                            fnStr = fnStr.replace(/\[.*?\]/, '').trim();
+                            pureFn = pureFn.replace(/\[.*?\]/, '').trim();
                         }
 
                         let entry = { 
@@ -554,7 +569,7 @@
                         };
 
                         // x = 定数 の形式をチェック（例: x = 75）
-                        const xMatch = fnStr.split('|')[0].trim().match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
+                        const xMatch = pureFn.match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
                         if (xMatch) {
                             const constant = parseFloat(xMatch[1]);
                             entry.fn = 'x - (' + constant + ')';
@@ -564,7 +579,7 @@
                                 annotations.push({ x: constant, text: `x:${constant}` });
                             }
                         } else {
-                            let cleanFn = fnStr.split('|')[0].trim().replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
+                            let cleanFn = pureFn.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
                             entry.fn = cleanFn;
                             entry.graphType = 'polyline';
 
@@ -715,18 +730,26 @@
                                 }
                                 usedYPositions.push(finalY);
 
-                                container.append('text')
+                                // foreignObjectを使用してMarkdown/MathJaxをサポート
+                                container.append('foreignObject')
                                     .attr('class', 'custom-function-caption')
                                     .attr('x', xScale(xVal) + 5)
-                                    .attr('y', finalY - 5)
-                                    .style('fill', entry.color)
+                                    .attr('y', finalY - 15)
+                                    .attr('width', 150)
+                                    .attr('height', 40)
+                                    .append('xhtml:div')
+                                    .attr('class', 'markdown')
+                                    .attr('data-content', entry.caption)
+                                    .style('color', entry.color)
                                     .style('font-weight', 'bold')
                                     .style('font-size', '14px')
                                     .style('pointer-events', 'none')
                                     .style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff')
-                                    .text(entry.caption.replace(/\$/g, ''));
+                                    .style('white-space', 'nowrap')
+                                    .style('overflow', 'visible');
                             }
                         });
+                        renderMarkdownAndMath();
                     } catch (err) {}
                 };
 

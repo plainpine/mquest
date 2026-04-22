@@ -215,10 +215,19 @@
     function createFunctionEntry(containerId, fn = '', caption = '') {
         const div = document.createElement('div');
         div.className = 'function-entry';
-        div.innerHTML = `<input type="text" class="function-fn-input" value="${fn.replace(/"/g, '&quot;')}" placeholder="方程式">
-                         <input type="text" class="function-caption-input" value="${caption.replace(/"/g, '&quot;')}" placeholder="説明">
-                         <button type="button" class="remove-function-entry">削除</button>`;
+        div.innerHTML = `<div>
+                            <input type="text" class="function-fn-input" value="${fn.replace(/"/g, '&quot;')}" placeholder="方程式">
+                            <input type="text" class="function-caption-input" value="${caption.replace(/"/g, '&quot;')}" placeholder="説明">
+                            <div class="markdown-preview function-caption-preview" style="margin-top: 5px; min-height: 1em; background: #fdfdfd; padding: 4px; border: 1px dashed #eee; font-size: 0.9rem;"></div>
+                         </div>
+                         <button type="button" class="remove-function-entry" style="margin-top: 5px;">削除</button>`;
         document.getElementById(containerId).appendChild(div);
+        
+        const captionInput = div.querySelector('.function-caption-input');
+        const captionPreview = div.querySelector('.function-caption-preview');
+        const update = () => renderMarkdown(captionPreview, captionInput.value);
+        captionInput.addEventListener('input', update);
+        update();
     }
 
     function createFunctionGraphAnswerEntry(prompt = '', answer = '') {
@@ -253,20 +262,38 @@
             <div>
                 <label>小問プロンプト (Markdown):</label>
                 <textarea name="fgc_sub_prompt" rows="2" style="width:100%">${prompt}</textarea>
+                <div class="markdown-preview fgc-prompt-preview" style="margin-top: 5px; min-height: 1.2em; background: #fdfdfd; padding: 8px; border: 1px dashed #eee;"></div>
             </div>
             <div style="margin: 10px 0;">
-                <label>選択肢:</label><br>
+                <label>選択肢 (Markdown):</label><br>
+                <div style="display: flex; flex-wrap: wrap; gap: 1%;">
                 ${choices.map((c, i) => `
-                    <input type="text" name="fgc_sub_choice_${index}_${i}" value="${c.replace(/"/g, '&quot;')}" placeholder="選択肢 ${i+1}" style="width:23%; margin-right:1%;">
+                    <div style="width: 24%; margin-bottom: 10px;">
+                        <input type="text" name="fgc_sub_choice_${index}_${i}" value="${c.replace(/"/g, '&quot;')}" placeholder="選択肢 ${i+1}" style="width:100%;">
+                        <div class="markdown-preview fgc-choice-preview-${i}" style="margin-top: 5px; min-height: 1.2em; background: #fdfdfd; padding: 4px; border: 1px dashed #eee; font-size: 0.9rem;"></div>
+                    </div>
                 `).join('')}
+                </div>
             </div>
             <div>
                 <label>正答:</label>
                 <input type="text" name="fgc_sub_answer" value="${answer.replace(/"/g, '&quot;')}" placeholder="正答">
             </div>
-            <button type="button" class="remove-sub-question">削除</button>
+            <button type="button" class="remove-sub-question" style="margin-top: 10px;">削除</button>
         `;
         container.appendChild(div);
+
+        const promptTextarea = div.querySelector('textarea[name="fgc_sub_prompt"]');
+        const promptPreview = div.querySelector('.fgc-prompt-preview');
+        promptTextarea.addEventListener('input', () => renderMarkdown(promptPreview, promptTextarea.value));
+        renderMarkdown(promptPreview, promptTextarea.value);
+
+        choices.forEach((_, i) => {
+            const choiceInput = div.querySelector(`input[name="fgc_sub_choice_${index}_${i}"]`);
+            const choicePreview = div.querySelector(`.fgc-choice-preview-${i}`);
+            choiceInput.addEventListener('input', () => renderMarkdown(choicePreview, choiceInput.value));
+            renderMarkdown(choicePreview, choiceInput.value);
+        });
     }
 
     // Initial State
