@@ -558,7 +558,7 @@
 
                     const legendEl = document.getElementById(legendId);
                     if (legendEl) {
-                        legendEl.style.display = 'block'; // 凡例を表示
+                        legendEl.style.display = 'none'; // 凡例を非表示にする（試験画面と一致させる）
                         legendEl.innerHTML = '';
                         functionsData.forEach((it, idx) => {
                             if (it.caption) {
