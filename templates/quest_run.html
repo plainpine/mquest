@@ -589,8 +589,13 @@
                                 let evalFn = cleanFn.replace(/(\d)\s*([a-z\(])/gi, '$1*$2')
                                                    .replace(/([a-z])\s*(\d)/gi, '$1*$2')
                                                    .replace(/\)\s*\(/g, ')*(')
-                                                   .replace(/\)\s*([a-z0-9])/gi, ')*$1')
-                                                   .replace(/\^/g, '**');
+                                                   .replace(/\)\s*([a-z0-9])/gi, ')*$1');
+                                
+                                // 単項マイナスの処理: -x**2 はJSでエラーになるため (0-1)*x**2 に変換
+                                evalFn = evalFn.replace(/(^|[\(\+\-\*\/\^])\s*-\s*([a-z0-9\(])/gi, '$1(0-1)*$2');
+                                
+                                // べき乗をJS形式に置換
+                                evalFn = evalFn.replace(/\^/g, '**');
                                 
                                 if (evalFn.trim()) {
                                     entry.evalFn = evalFn;

@@ -287,53 +287,64 @@ document.addEventListener("DOMContentLoaded", () => {
               targetEl.style.margin = '0 auto';
 
               const annotations = [];
-              const plotData = functionsData.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
-                  .map((it, idx) => {
-                      let fnStr = it.fn.trim();
-                      let domain = null;
-                      let range = null;
-                      let showIntercepts = it.show_intercepts === true || it.show_intercepts === "true" || fnStr.toLowerCase().includes('show_intercepts:true') || fnStr.toLowerCase().includes('show_intercepts: true');
-                      let pureFn = fnStr.split('|')[0].trim();
-                      const rangeMatch = pureFn.match(/\[(.*?)\]/);
-                      if (rangeMatch) {
-                          const parts = rangeMatch[1].split(',').map(s => parseFloat(s.trim()));
-                          if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) { domain = [parts[0], parts[1]]; }
-                          if (parts.length >= 4 && !isNaN(parts[2]) && !isNaN(parts[3])) { range = [parts[2], parts[3]]; }
-                          pureFn = pureFn.replace(/\[.*?\]/, '').trim();
-                      }
-                      let entry = { color: colors[idx % colors.length], caption: it.caption };
-                      const xMatch = pureFn.match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
-                      if (xMatch) {
-                          const constant = parseFloat(xMatch[1]);
-                          entry.fn = 'x - (' + constant + ')';
-                          entry.fnType = 'implicit';
-                          if (showIntercepts) annotations.push({ x: constant, text: `x:${constant}` });
-                      } else {
-                          let cleanFn = pureFn.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
-                          entry.fn = cleanFn;
-                          entry.graphType = 'polyline';
-                          try {
-                              let evalFn = cleanFn.replace(/(\d)\s*([a-z\(])/gi, '$1*$2').replace(/([a-z])\s*(\d)/gi, '$1*$2').replace(/\)\s*\(/g, ')*(').replace(/\)\s*([a-z0-9])/gi, ')*$1').replace(/\^/g, '**');
-                              if (evalFn.trim()) {
-                                  entry.evalFn = evalFn;
-                                  if (showIntercepts) {
-                                      let y0_expr = evalFn.replace(/\bx\b/g, '(0)');
-                                      const y0 = new Function('return ' + y0_expr)();
-                                      if (!isNaN(y0) && isFinite(y0)) annotations.push({ y: y0, text: `y:${y0.toFixed(1).replace(/\.0$/, '')}` });
-                                      const simpleLinear = cleanFn.match(/^(-?[\d\.]*)\*?x\s*([\+\-]\s*[\d\.]+)$/);
-                                      if (simpleLinear) {
-                                          let a_str = simpleLinear[1];
-                                          let a = (a_str === "" || a_str === undefined) ? 1 : (a_str === "-" ? -1 : parseFloat(a_str));
-                                          let b = parseFloat(simpleLinear[2].replace(/\s+/g, ''));
-                                          if (a !== 0) { const x0 = -b / a; annotations.push({ x: x0, text: `x:${x0.toFixed(1).replace(/\.0$/, '')}` }); }
-                                      }
-                                  }
+                      const plotData = functionsData.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
+                          .map((it, idx) => {
+                              let fnStr = it.fn.trim();
+                              let domain = null;
+                              let range = null;
+                              let showIntercepts = it.show_intercepts === true || it.show_intercepts === "true" || fnStr.toLowerCase().includes('show_intercepts:true') || fnStr.toLowerCase().includes('show_intercepts: true');
+                              let pureFn = fnStr.split('|')[0].trim();
+                              const rangeMatch = pureFn.match(/\[(.*?)\]/);
+                              if (rangeMatch) {
+                                  const parts = rangeMatch[1].split(',').map(s => parseFloat(s.trim()));
+                                  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) { domain = [parts[0], parts[1]]; }
+                                  if (parts.length >= 4 && !isNaN(parts[2]) && !isNaN(parts[3])) { range = [parts[2], parts[3]]; }
+                                  pureFn = pureFn.replace(/\[.*?\]/, '').trim();
                               }
-                          } catch(e) {}
-                      }
-                      if (domain) entry.range = domain;
-                      return entry;
-                  });
+                              let entry = { color: colors[idx % colors.length], caption: it.caption };
+                              const xMatch = pureFn.match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
+                              if (xMatch) {
+                                  const constant = parseFloat(xMatch[1]);
+                                  entry.fn = 'x - (' + constant + ')';
+                                  entry.fnType = 'implicit';
+                                  if (showIntercepts) annotations.push({ x: constant, text: `x:${constant}` });
+                              } else {
+                                  let cleanFn = pureFn.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
+                                  entry.fn = cleanFn;
+                                  entry.graphType = 'polyline';
+                                  try {
+                                      // JSで評価可能な形式に変換
+                                      let evalFn = cleanFn.replace(/(\d)\s*([a-z\(])/gi, '$1*$2')
+                                                         .replace(/([a-z])\s*(\d)/gi, '$1*$2')
+                                                         .replace(/\)\s*\(/g, ')*(')
+                                                         .replace(/\)\s*([a-z0-9])/gi, ')*$1');
+                                      
+                                      // 単項マイナスの処理
+                                      evalFn = evalFn.replace(/(^|[\(\+\-\*\/\^])\s*-\s*([a-z0-9\(])/gi, '$1(0-1)*$2');
+                                      
+                                      // べき乗の処理
+                                      evalFn = evalFn.replace(/\^/g, '**');
+
+                                      if (evalFn.trim()) {
+                                          entry.evalFn = evalFn;
+                                          if (showIntercepts) {
+                                              let y0_expr = evalFn.replace(/\bx\b/g, '(0)');
+                                              const y0 = new Function('return ' + y0_expr)();
+                                              if (!isNaN(y0) && isFinite(y0)) annotations.push({ y: y0, text: `y:${y0.toFixed(1).replace(/\.0$/, '')}` });
+                                              const simpleLinear = cleanFn.match(/^(-?[\d\.]*)\*?x\s*([\+\-]\s*[\d\.]+)$/);
+                                              if (simpleLinear) {
+                                                  let a_str = simpleLinear[1];
+                                                  let a = (a_str === "" || a_str === undefined) ? 1 : (a_str === "-" ? -1 : parseFloat(a_str));
+                                                  let b = parseFloat(simpleLinear[2].replace(/\s+/g, ''));
+                                                  if (a !== 0) { const x0 = -b / a; annotations.push({ x: x0, text: `x:${x0.toFixed(1).replace(/\.0$/, '')}` }); }
+                                              }
+                                          }
+                                      }
+                                  } catch(e) {}
+                              }
+                              if (domain) entry.range = domain;
+                              return entry;
+                          });
 
               const instance = functionPlot({ target: targetId, data: plotData, grid: true, xAxis: xAxisConfig, yAxis: yAxisConfig, width: plotWidth, height: plotHeight });
               const drawInterceptLabels = () => {
