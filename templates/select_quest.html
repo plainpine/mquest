@@ -28,7 +28,7 @@
   {% for quest in quests %}
     {% set history = history_map.get(quest.id) %}
     <li data-url="{{ url_for('quest_run', quest_id=quest.id) }}" onclick="window.location.href=this.dataset.url">
-      <span>{{ quest.questname }}</span>
+      <span class="markdown" data-content="{{ quest.questname | e }}"></span>
       {% if history %}
         <span class="quest-stats">{{ history.cleared_count|default(0) }}/{{ history.attempts|default(0) }}</span>
       {% else %}
@@ -41,4 +41,44 @@
 </ul>
 
 <a class="button secondary" href="{{ url_for('select_level', title=title) }}">レベル選択に戻る</a>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+
+  function renderMarkdownAndMath() {
+    if (typeof marked === 'undefined') return;
+    if (marked.use) {
+      marked.use({ breaks: true });
+    } else if (marked.setOptions) {
+      marked.setOptions({ breaks: true });
+    }
+
+    document.querySelectorAll('.markdown').forEach(function(div) {
+      var md = div.getAttribute('data-content');
+      if (!md) return;
+      md = md.replace(/\\n/g, '\n');
+      try {
+        div.innerHTML = marked.parse(md);
+      } catch (e) {
+        console.error('Markdown parse error:', e);
+        div.textContent = md;
+      }
+    });
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    renderMarkdownAndMath();
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 {% endblock %}

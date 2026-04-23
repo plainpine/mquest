@@ -49,7 +49,7 @@
         <td>{{ quest.id }}</td>
         <td>{{ quest.title }}</td>
         <td>{{ quest.level }}</td>
-        <td>{{ quest.questname }}</td>
+        <td><div class="markdown" data-content="{{ quest.questname | e }}"></div></td>
       </tr>
       {% else %}
       <tr><td colspan="6">対象のクエストがありません。</td></tr>
@@ -72,4 +72,46 @@ function validateQuestSelection() {
 }
 </script>
 {% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+
+  function renderMarkdownAndMath() {
+    if (typeof marked === 'undefined') return;
+    if (marked.use) {
+      marked.use({ breaks: true });
+    } else if (marked.setOptions) {
+      marked.setOptions({ breaks: true });
+    }
+
+    document.querySelectorAll('.markdown').forEach(function(div) {
+      var md = div.getAttribute('data-content');
+      if (!md) return;
+      md = md.replace(/\\n/g, '\n');
+      try {
+        div.innerHTML = marked.parse(md);
+      } catch (e) {
+        console.error('Markdown parse error:', e);
+        div.textContent = md;
+      }
+    });
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    renderMarkdownAndMath();
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+{% endblock %}
+
+
 
