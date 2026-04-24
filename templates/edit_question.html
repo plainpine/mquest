@@ -509,6 +509,45 @@
         if (e.target.classList.contains('remove-function-entry') || e.target.classList.contains('remove-fg-answer') || e.target.classList.contains('remove-sub-question')) e.target.parentElement.remove();
     });
 
+    // --- SVG Preview Logic ---
+    function updateSvgPreview(textareaId, previewContainerId) {
+        const textarea = document.getElementById(textareaId);
+        let previewContainer = document.getElementById(previewContainerId);
+        
+        if (!previewContainer) {
+            previewContainer = document.createElement('div');
+            previewContainer.id = previewContainerId;
+            previewContainer.style.marginTop = '10px';
+            previewContainer.style.padding = '10px';
+            previewContainer.style.border = '1px solid #ddd';
+            previewContainer.style.background = '#f9f9f9';
+            textarea.parentNode.insertBefore(previewContainer, textarea.nextSibling.nextSibling);
+        }
+        
+        const svgContent = textarea.value;
+        if (svgContent.includes('<svg')) {
+            previewContainer.innerHTML = svgContent;
+            // Adjust SVG size for preview if it's too large
+            const svgEl = previewContainer.querySelector('svg');
+            if (svgEl) {
+                svgEl.style.maxWidth = '100%';
+                svgEl.style.height = 'auto';
+            }
+        } else {
+            previewContainer.innerHTML = '<p style="color:red;">有効なSVGデータがありません。</p>';
+        }
+    }
+
+    const svgPreviewBtn = document.getElementById('svg-preview-button');
+    if (svgPreviewBtn) {
+        svgPreviewBtn.addEventListener('click', () => updateSvgPreview('svg-content-textarea', 'svg-interactive-preview-container'));
+    }
+
+    const figureChoicePreviewBtn = document.getElementById('figure-choice-svg-preview-button');
+    if (figureChoicePreviewBtn) {
+        figureChoicePreviewBtn.addEventListener('click', () => updateSvgPreview('figure-choice-svg-content', 'figure-choice-preview-container'));
+    }
+
     // Load Data
     updateSections();
     const qData = {{ question.answer | tojson | safe if question else 'null' }};
