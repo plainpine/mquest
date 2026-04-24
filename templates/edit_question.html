@@ -16,6 +16,7 @@
     </div>
     <div id="ggb-element"></div>
     <div class="ggb-modal-footer">
+      <button type="button" id="ggb-resize-btn" class="button" style="background-color: #2196F3; color: white; margin-right: auto;">指定サイズにリサイズ</button>
       <button type="button" id="ggb-cancel-btn" class="button secondary">キャンセル</button>
       <button type="button" id="ggb-apply-btn" class="button" style="background-color: #4CAF50; color: white;">反映</button>
     </div>
@@ -25,12 +26,22 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     let currentGgbTargetId = null;
+    let currentGgbDataTargetId = null;
     const ggbModal = document.getElementById('ggb-modal-backdrop');
     const ggbContent = document.getElementById('ggb-modal-content');
     const ggbHeader = document.getElementById('ggb-modal-header');
     const ggbCancelBtn = document.getElementById('ggb-cancel-btn');
     const ggbApplyBtn = document.getElementById('ggb-apply-btn');
+    const ggbResizeBtn = document.getElementById('ggb-resize-btn');
     const ggbCloseX = document.getElementById('ggb-close-x');
+
+    // Helper: Get dimensions from current section's inputs
+    function getTargetDims() {
+        const isFgc = currentGgbTargetId === 'figure-choice-svg-content';
+        const w = document.getElementById(isFgc ? 'figure-choice-svg-width' : 'svg-width').value;
+        const h = document.getElementById(isFgc ? 'figure-choice-svg-height' : 'svg-height').value;
+        return { w: parseInt(w), h: parseInt(h) };
+    }
 
     // Dragging logic
     let isDragging = false;
@@ -61,7 +72,6 @@
         const api = window.ggbApplet;
         if (api && typeof api.setSize === 'function') {
           const ggbElem = document.getElementById('ggb-element');
-          // Subtract header and footer height to get the actual applet area
           const h = ggbElem.offsetHeight;
           const w = ggbElem.offsetWidth;
           api.setSize(w, h);
@@ -84,7 +94,16 @@
       "enableRightClick": true,
       "useBrowserForJS": true,
       "allowUpscale": true,
-      "enableFullscreen": true
+      "enableFullscreen": true,
+      "appletOnLoad": function(api) {
+          // Load existing GGB data if available
+          if (currentGgbDataTargetId) {
+              const ggbData = document.getElementById(currentGgbDataTargetId).value;
+              if (ggbData) {
+                  api.setBase64(ggbData);
+              }
+          }
+      }
     };
     const applet = new GGBApplet(ggbParams, true);
 
@@ -95,17 +114,31 @@
     document.querySelectorAll('.ggb-open-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         currentGgbTargetId = btn.dataset.target;
+        currentGgbDataTargetId = btn.dataset.ggbTarget;
         ggbModal.style.display = 'flex';
-        if (!document.getElementById('ggb-element').hasChildNodes()) {
+        
+        const ggbElem = document.getElementById('ggb-element');
+        if (!ggbElem.hasChildNodes()) {
           applet.inject('ggb-element');
+        } else {
+            // If already injected, manually load data
+            const api = window.ggbApplet;
+            if (api && currentGgbDataTargetId) {
+                const ggbData = document.getElementById(currentGgbDataTargetId).value;
+                if (ggbData) {
+                    api.setBase64(ggbData);
+                } else {
+                    api.newConstruction();
+                }
+            }
         }
       });
     });
 
     ggbApplyBtn.addEventListener('click', () => {
-      // 1. APIオブジェクトの取得を試行（複数の経路）
       const api = window.ggbApplet || (typeof applet !== 'undefined' && applet.getAppletObject ? applet.getAppletObject() : null);
       const targetInput = document.getElementById(currentGgbTargetId);
+      const ggbDataInput = document.getElementById(currentGgbDataTargetId);
       
       if (!api && !document.querySelector('#ggb-element svg')) {
         alert("GeoGebraがまだ読み込まれていません。画面が表示されるまでお待ちください。");
@@ -116,6 +149,14 @@
       const finalize = (svgString) => {
         if (exported || !svgString) return;
         exported = true;
+        
+        // Also get Base64 for state
+        if (api && typeof api.getBase64 === 'function' && ggbDataInput) {
+            api.getBase64((data) => {
+                ggbDataInput.value = data;
+            });
+        }
+
         if (targetInput) {
           targetInput.value = svgString;
           targetInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -220,8 +261,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.3);
-      z-index: 1000;
+      background: rgba(0,0,0,0.4);
+      z-index: 10000; /* 十分に高く */
     }
     #ggb-modal-content {
       background: white;
@@ -231,40 +272,47 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 80%;
-      height: 80%;
-      min-width: 400px;
-      min-height: 300px;
+      width: 85%;
+      height: 85%;
+      min-width: 600px;
+      min-height: 450px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       resize: both;
       overflow: hidden;
     }
     #ggb-modal-header {
       background: #673ab7;
       color: white;
-      padding: 10px;
+      padding: 12px 15px;
       cursor: move;
       font-weight: bold;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-radius: 8px 8px 0 0;
+      flex-shrink: 0; /* 高さを維持 */
+      z-index: 10;
     }
     #ggb-element {
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      border-bottom: 1px solid #ccc;
+      flex: 1; /* 残りの空間をすべて使う */
+      width: 100% !important;
+      height: auto !important;
+      overflow: hidden;
+      position: relative;
+      background: #eee;
     }
     .ggb-modal-footer {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      padding: 10px;
-      background: #f5f5f5;
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-top: 1px solid #dee2e6;
       border-radius: 0 0 8px 8px;
+      flex-shrink: 0; /* 高さを維持 */
+      z-index: 10;
     }
 </style>
 
@@ -324,10 +372,19 @@
   </div>
 
   <div id="svg-interactive-section" style="display:none;">
+    <div style="display: flex; gap: 20px; margin-bottom: 10px; align-items: flex-end;">
+      <div>
+        <label>表示サイズ (横x縦 px):</label><br>
+        <input type="number" name="svg_width" id="svg-width" placeholder="横 (例: 600)" style="width: 100px;"> x 
+        <input type="number" name="svg_height" id="svg-height" placeholder="縦 (例: 400)" style="width: 100px;">
+      </div>
+      <button type="button" class="button ggb-open-btn" data-target="svg-content-textarea" data-ggb-target="ggb-data-hidden" style="background-color: #673ab7; color: white;">GeoGebraで作成</button>
+    </div>
     <label>SVGコンテンツ:</label>
     <textarea name="svg_content" id="svg-content-textarea" rows="10" cols="60">{{ question.choices if question and question.type == 'svg_interactive' else '' }}</textarea><br>
+    <input type="hidden" name="ggb_data" id="ggb-data-hidden" value="">
     <button type="button" id="svg-preview-button" class="button">SVGプレビュー</button>
-    <button type="button" class="button ggb-open-btn" data-target="svg-content-textarea" style="background-color: #673ab7; color: white;">GeoGebraで作成</button><br>
+    <br>
     <div id="sub-questions-container">
       {% if question and question.type == 'svg_interactive' and answers %}
         {% for sub_q in answers %}
@@ -344,10 +401,18 @@
   </div>
 
   <div id="figure-choice-section" style="display:none;">
+    <div style="display: flex; gap: 20px; margin-bottom: 10px; align-items: flex-end;">
+      <div>
+        <label>表示サイズ (横x縦 px):</label><br>
+        <input type="number" name="figure_choice_svg_width" id="figure-choice-svg-width" placeholder="横 (例: 600)" style="width: 100px;"> x 
+        <input type="number" name="figure_choice_svg_height" id="figure-choice-svg-height" placeholder="縦 (例: 400)" style="width: 100px;">
+      </div>
+      <button type="button" class="button ggb-open-btn" data-target="figure-choice-svg-content" data-ggb-target="figure-choice-ggb-data-hidden" style="background-color: #673ab7; color: white;">GeoGebraで作成</button>
+    </div>
     <label>SVGコンテンツ:</label>
     <textarea name="figure_choice_svg_content" id="figure-choice-svg-content" rows="10" cols="60">{{ question.choices if question and question.type == 'figure_choice' else '' }}</textarea><br>
+    <input type="hidden" name="figure_choice_ggb_data" id="figure-choice-ggb-data-hidden" value="">
     <button type="button" id="figure-choice-svg-preview-button" class="button">SVGプレビュー</button>
-    <button type="button" class="button ggb-open-btn" data-target="figure-choice-svg-content" style="background-color: #673ab7; color: white;">GeoGebraで作成</button>
     <div id="figure-choice-sub-questions-container">
       {# JavaScript will handle dynamic items for complex nested structures to avoid Jinja issues #}
     </div>
@@ -649,24 +714,37 @@
         const textarea = document.getElementById(textareaId);
         let previewContainer = document.getElementById(previewContainerId);
         
+        // Get width/height inputs based on which section we are in
+        const isFgc = textareaId === 'figure-choice-svg-content';
+        const wInput = document.getElementById(isFgc ? 'figure-choice-svg-width' : 'svg-width');
+        const hInput = document.getElementById(isFgc ? 'figure-choice-svg-height' : 'svg-height');
+
         if (!previewContainer) {
             previewContainer = document.createElement('div');
             previewContainer.id = previewContainerId;
+            previewContainer.className = 'svg-preview-box';
             previewContainer.style.marginTop = '10px';
             previewContainer.style.padding = '10px';
             previewContainer.style.border = '1px solid #ddd';
             previewContainer.style.background = '#f9f9f9';
+            previewContainer.style.overflow = 'auto';
             textarea.parentNode.insertBefore(previewContainer, textarea.nextSibling.nextSibling);
         }
         
         const svgContent = textarea.value;
         if (svgContent.includes('<svg')) {
+            // Apply specified dimensions to container
+            previewContainer.style.maxWidth = wInput.value ? wInput.value + 'px' : '100%';
+            previewContainer.style.maxHeight = hInput.value ? hInput.value + 'px' : 'none';
+            
             previewContainer.innerHTML = svgContent;
-            // Adjust SVG size for preview if it's too large
+            
+            // Force SVG element to fill the container and respect max-width
             const svgEl = previewContainer.querySelector('svg');
             if (svgEl) {
-                svgEl.style.maxWidth = '100%';
+                svgEl.style.width = '100%';
                 svgEl.style.height = 'auto';
+                svgEl.style.display = 'block';
             }
         } else {
             previewContainer.innerHTML = '<p style="color:red;">有効なSVGデータがありません。</p>';
@@ -706,6 +784,31 @@
         try {
             if(Array.isArray(aData)) aData.forEach(d => createFigureChoiceSubQuestion(d.prompt, d.choices, d.answer, d.id));
         } catch(e) {}
+    }
+
+    // --- Restore GeoGebra SVG and GGB State ---
+    if (typeSelect.value === 'svg_interactive' || typeSelect.value === 'figure_choice') {
+        const choicesRaw = {{ question.choices | tojson | safe if question else 'null' }};
+        if (choicesRaw) {
+            try {
+                const data = typeof choicesRaw === 'string' ? JSON.parse(choicesRaw) : choicesRaw;
+                if (data && typeof data === 'object') {
+                    if (typeSelect.value === 'svg_interactive') {
+                        if (data.svg) document.getElementById('svg-content-textarea').value = data.svg;
+                        if (data.ggb) document.getElementById('ggb-data-hidden').value = data.ggb;
+                        if (data.width) document.getElementById('svg-width').value = data.width;
+                        if (data.height) document.getElementById('svg-height').value = data.height;
+                    } else {
+                        if (data.svg) document.getElementById('figure-choice-svg-content').value = data.svg;
+                        if (data.ggb) document.getElementById('figure-choice-ggb-data-hidden').value = data.ggb;
+                        if (data.width) document.getElementById('figure-choice-svg-width').value = data.width;
+                        if (data.height) document.getElementById('figure-choice-svg-height').value = data.height;
+                    }
+                }
+            } catch (e) {
+                // If not JSON, it's old legacy SVG-only data, which is already set by Jinja2 in the textarea
+            }
+        }
     }
 
 

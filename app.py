@@ -26,6 +26,13 @@ from models import db, User, Quest, UserProgress
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'  # セッション管理に必要
 
+@app.template_filter('from_json')
+def from_json_filter(s):
+    try:
+        return json.loads(s)
+    except (json.JSONDecodeError, TypeError):
+        return None
+
 # データベース設定（例: SQLite）
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mquest.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -343,19 +350,22 @@ def quest_run(quest_id):
             answer = q.answer  # パースできなければそのまま
 
         # すでに構造化されていないので、自前で構築
-        if q.type == 'svg_interactive':
+        if q.type == 'svg_interactive' or q.type == 'figure_choice':
+            # Try to parse choices as JSON (new format with 'svg' and 'ggb')
+            svg_display = q.choices
+            try:
+                choices_json = json.loads(q.choices)
+                if isinstance(choices_json, dict) and 'svg' in choices_json:
+                    svg_display = choices_json['svg']
+            except (json.JSONDecodeError, TypeError):
+                pass
+
             questions.append({
                 "type": q.type,
                 "text": q.text,
-                "svg_content": q.choices, # choicesにSVGコンテンツを格納
-                "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
-            })
-        elif q.type == 'figure_choice':
-            questions.append({
-                "type": q.type,
-                "text": q.text,
-                "svg_content": q.choices, # choicesにSVGコンテンツを格納
-                "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
+                "choices": q.choices, # Pass raw JSON for size extraction in template
+                "svg_content": svg_display,
+                "sub_questions": json.loads(q.answer) if q.answer else []
             })
         elif q.type == 'function_graph':
             questions.append({
@@ -1266,6 +1276,16 @@ def edit_question(quest_id, question_id):
         answers = None
         if question.type == 'choice' or question.type == 'multiple_choice':
             choices = json.loads(question.choices) if question.choices else None
+        elif question.type == 'svg_interactive' or question.type == 'figure_choice':
+            # Extract only the SVG part for the textarea to avoid showing JSON to the user
+            try:
+                choices_data = json.loads(question.choices)
+                if isinstance(choices_data, dict) and 'svg' in choices_data:
+                    choices = choices_data['svg']
+                else:
+                    choices = question.choices
+            except (json.JSONDecodeError, TypeError):
+                choices = question.choices
         elif question.type == 'numeric':
             try:
                 answers = json.loads(question.answer) if question.answer else []
@@ -1370,6 +1390,9 @@ def save_question(quest_id):
 
         elif q_type == 'svg_interactive':
             svg_content = request.form.get('svg_content', '')
+            ggb_data = request.form.get('ggb_data', '')
+            svg_width = request.form.get('svg_width', '')
+            svg_height = request.form.get('svg_height', '')
             sub_ids = request.form.getlist('sub_id')
             sub_prompts = request.form.getlist('sub_prompt')
             sub_answers = request.form.getlist('sub_answer')
@@ -1383,11 +1406,20 @@ def save_question(quest_id):
                         'answer': sub_answers[i]
                     })
 
-            question.choices = svg_content
+            # Store SVG, GGB, and size data as JSON in choices
+            question.choices = json.dumps({
+                'svg': svg_content, 
+                'ggb': ggb_data,
+                'width': svg_width,
+                'height': svg_height
+            })
             question.answer = json.dumps(sub_questions)
 
         elif q_type == 'figure_choice':
             svg_content = request.form.get('figure_choice_svg_content', '')
+            ggb_data = request.form.get('figure_choice_ggb_data', '')
+            svg_width = request.form.get('figure_choice_svg_width', '')
+            svg_height = request.form.get('figure_choice_svg_height', '')
             sub_ids = request.form.getlist('figure_choice_sub_id')
             sub_prompts = request.form.getlist('figure_choice_sub_prompt')
             sub_answers = request.form.getlist('figure_choice_sub_answer')
@@ -1403,7 +1435,13 @@ def save_question(quest_id):
                         'answer': sub_answers[i] if i < len(sub_answers) else ''
                     })
             
-            question.choices = svg_content # SVG content is stored in choices
+            # Store SVG, GGB, and size data as JSON in choices
+            question.choices = json.dumps({
+                'svg': svg_content, 
+                'ggb': ggb_data,
+                'width': svg_width,
+                'height': svg_height
+            })
             question.answer = json.dumps(sub_questions)
 
         elif q_type == 'function_graph':
@@ -1510,13 +1548,14 @@ def preview_question():
 
     elif q_type == 'svg_interactive':
         question_data['svg_content'] = request.form.get('svg_content', '')
+        # Pass GGB data as well for preview state if needed, though not strictly required for static preview
+        question_data['choices'] = json.dumps({'svg': question_data['svg_content'], 'ggb': request.form.get('ggb_data', '')})
         sub_ids = request.form.getlist('sub_id')
         sub_prompts = request.form.getlist('sub_prompt')
         sub_answers = request.form.getlist('sub_answer')
         
         sub_questions = []
         for i in range(len(sub_ids)):
-            # Ensure all fields for a sub-question are present before adding
             if sub_prompts[i]:
                 sub_questions.append({
                     'id': sub_ids[i],
@@ -1524,11 +1563,11 @@ def preview_question():
                     'answer': sub_answers[i]
                 })
         question_data['sub_questions'] = sub_questions
-        # The 'answer' field for svg_interactive in the database is the sub_questions JSON
         question_data['answer'] = sub_questions
 
     elif q_type == 'figure_choice':
         question_data['svg_content'] = request.form.get('figure_choice_svg_content', '')
+        question_data['choices'] = json.dumps({'svg': question_data['svg_content'], 'ggb': request.form.get('figure_choice_ggb_data', '')})
         sub_ids = request.form.getlist('figure_choice_sub_id')
         sub_prompts = request.form.getlist('figure_choice_sub_prompt')
         sub_answers = request.form.getlist('figure_choice_sub_answer')

@@ -98,9 +98,18 @@
         </div>
       </div>
     {% elif question.type == 'svg_interactive' %}
-      <div class="svg-interactive-container" data-question-index="{{ q_index }}">
+      {% set choices_data = (question.choices | from_json) if (question.choices and question.choices.startswith('{')) else none %}
+      {% set style = "" %}
+      {% if choices_data %}
+        {% if choices_data.width %}{% set style = style + "max-width: " + choices_data.width + "px; " %}{% endif %}
+        {% if choices_data.height %}{% set style = style + "max-height: " + choices_data.height + "px; " %}{% endif %}
+      {% endif %}
+      <div class="svg-display-container" data-question-index="{{ q_index }}" style="{{ style }}">
         {{ question.svg_content | safe }}
       </div>
+      <style>
+        .svg-display-container svg { width: 100%; height: auto; display: block; }
+      </style>
       <div class="sub-questions-container">
         {% for sub_q in question.sub_questions %}
           <div class="sub-question" style="margin-bottom: 1rem;">
@@ -137,9 +146,18 @@
         </div>
       </div>
     {% elif question.type == 'figure_choice' %}
-      <div class="figure-choice-container" data-question-index="{{ q_index }}">
-        {{ question.text | safe }}
+      {% set choices_data = (question.choices | from_json) if (question.choices and question.choices.startswith('{')) else none %}
+      {% set style = "" %}
+      {% if choices_data %}
+        {% if choices_data.width %}{% set style = style + "max-width: " + choices_data.width + "px; " %}{% endif %}
+        {% if choices_data.height %}{% set style = style + "max-height: " + choices_data.height + "px; " %}{% endif %}
+      {% endif %}
+      <div class="figure-choice-display-container" data-question-index="{{ q_index }}" style="{{ style }}">
+        {{ question.svg_content | safe }}
       </div>
+      <style>
+        .figure-choice-display-container svg { width: 100%; height: auto; display: block; }
+      </style>
       <div class="sub-questions-container">
         {% for sub_q in question.sub_questions %}
           <div class="sub-question" style="margin-bottom: 1rem;">

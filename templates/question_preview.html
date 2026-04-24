@@ -66,7 +66,13 @@
         <h3>問題文</h3>
         <div class="markdown" data-content="{{ question.text | e }}"></div>
         {% if (question.type == 'figure_choice' or question.type == 'svg_interactive') and question.svg_content %}
-            <div class="svg-container" style="margin-top: 1rem;">
+            {% set choices_data = (question.choices | from_json) if (question.choices and question.choices.startswith('{')) else none %}
+            {% set style = "" %}
+            {% if choices_data %}
+                {% if choices_data.width %}{% set style = style + "max-width: " + choices_data.width + "px; " %}{% endif %}
+                {% if choices_data.height %}{% set style = style + "max-height: " + choices_data.height + "px; " %}{% endif %}
+            {% endif %}
+            <div class="svg-container" style="margin-top: 1rem; {{ style }}">
                 {{ question.svg_content | safe }}
             </div>
         {% endif %}
