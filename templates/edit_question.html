@@ -386,16 +386,7 @@
     <button type="button" id="svg-preview-button" class="button">SVGプレビュー</button>
     <br>
     <div id="sub-questions-container">
-      {% if question and question.type == 'svg_interactive' and answers %}
-        {% for sub_q in answers %}
-          <div class="sub-question">
-            <input type="hidden" name="sub_id" value="{{ sub_q.id }}">
-            <textarea name="sub_prompt" rows="2" class="sub-prompt-input">{{ sub_q.prompt }}</textarea>
-            <input type="text" name="sub_answer" value="{{ sub_q.answer }}">
-            <button type="button" class="remove-sub-question">削除</button>
-          </div>
-        {% endfor %}
-      {% endif %}
+      {# JavaScript will handle dynamic items to ensure consistency #}
     </div>
     <button type="button" id="add-sub-question">小問を追加</button>
   </div>
