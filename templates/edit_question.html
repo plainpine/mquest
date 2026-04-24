@@ -16,7 +16,8 @@
     </div>
     <div id="ggb-element"></div>
     <div class="ggb-modal-footer">
-      <button type="button" id="ggb-resize-btn" class="button" style="background-color: #2196F3; color: white; margin-right: auto;">指定サイズにリサイズ</button>
+      <button type="button" id="ggb-resize-btn" class="button" style="background-color: #2196F3; color: white; margin-right: 10px;">指定サイズにリサイズ</button>
+      <button type="button" id="ggb-refresh-btn" class="button" style="background-color: #ff9800; color: white; margin-right: auto;">メニュー再表示</button>
       <button type="button" id="ggb-cancel-btn" class="button secondary">キャンセル</button>
       <button type="button" id="ggb-apply-btn" class="button" style="background-color: #4CAF50; color: white;">反映</button>
     </div>
@@ -33,6 +34,7 @@
     const ggbCancelBtn = document.getElementById('ggb-cancel-btn');
     const ggbApplyBtn = document.getElementById('ggb-apply-btn');
     const ggbResizeBtn = document.getElementById('ggb-resize-btn');
+    const ggbRefreshBtn = document.getElementById('ggb-refresh-btn');
     const ggbCloseX = document.getElementById('ggb-close-x');
 
     // Helper: Get dimensions from current section's inputs
@@ -66,19 +68,82 @@
 
     document.addEventListener('mouseup', () => { isDragging = false; });
 
-    // Resize Sync Logic
+    // Resize Sync Logic - Debounced to prevent infinite loops
+    let resizeTimer;
     const resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        const api = window.ggbApplet;
-        if (api && typeof api.setSize === 'function') {
-          const ggbElem = document.getElementById('ggb-element');
-          const h = ggbElem.offsetHeight;
-          const w = ggbElem.offsetWidth;
-          api.setSize(w, h);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        for (let entry of entries) {
+          const api = window.ggbApplet;
+          if (api && typeof api.setSize === 'function') {
+            const ggbElem = document.getElementById('ggb-element');
+            if (ggbElem) {
+              console.log("Resizing GeoGebra applet...");
+              api.setSize(ggbElem.offsetWidth, ggbElem.offsetHeight);
+            }
+          }
         }
-      }
+      }, 200); // 200ms debounce
     });
     resizeObserver.observe(ggbContent);
+
+    // Manual Resize: Fit modal to specified dimensions
+    ggbResizeBtn.addEventListener('click', () => {
+        const dims = getTargetDims();
+        if (dims.w && dims.h) {
+            ggbContent.style.width = (dims.w + 4) + 'px';
+            ggbContent.style.height = (dims.h + 110) + 'px';
+            ggbContent.style.transform = 'translate(-50%, -50%)';
+            ggbContent.style.top = '50%';
+            ggbContent.style.left = '50%';
+        } else {
+            alert("リサイズするには先に「表示サイズ (横x縦 px)」を入力してください。");
+        }
+    });
+
+    // --- Menu Refresh Logic ---
+    ggbRefreshBtn.addEventListener('click', () => {
+        const api = window.ggbApplet;
+        if (!api) return;
+        
+        console.log("Refreshing GeoGebra menu/layout...");
+        api.getBase64((base64Data) => {
+            const ggbElem = document.getElementById('ggb-element');
+            ggbElem.innerHTML = '';
+            
+            const newApplet = new GGBApplet(ggbParams, true);
+            newApplet.inject('ggb-element');
+            
+            window.tempGgbData = base64Data;
+        });
+    });
+
+    let lastInitId = null;
+    window.ggbOnInit = function(id) {
+        // Prevent immediate re-init loop
+        if (lastInitId === id) return;
+        lastInitId = id;
+        
+        console.log("GeoGebra initialized:", id);
+        const api = window.ggbApplet;
+        if (!api) return;
+
+        // 1. Check for temporary refresh data
+        if (window.tempGgbData) {
+            api.setBase64(window.tempGgbData);
+            window.tempGgbData = null;
+        } 
+        // 2. Load saved data from hidden field
+        else if (currentGgbDataTargetId) {
+            const ggbDataInput = document.getElementById(currentGgbDataTargetId);
+            if (ggbDataInput && ggbDataInput.value) {
+                api.setBase64(ggbDataInput.value);
+            }
+        }
+        
+        // Reset lastInitId after a delay to allow future valid inits (like refresh)
+        setTimeout(() => { lastInitId = null; }, 1000);
+    };
 
     const ggbParams = {
       "id": "ggbApplet",
@@ -94,16 +159,7 @@
       "enableRightClick": true,
       "useBrowserForJS": true,
       "allowUpscale": true,
-      "enableFullscreen": true,
-      "appletOnLoad": function(api) {
-          // Load existing GGB data if available
-          if (currentGgbDataTargetId) {
-              const ggbData = document.getElementById(currentGgbDataTargetId).value;
-              if (ggbData) {
-                  api.setBase64(ggbData);
-              }
-          }
-      }
+      "enableFullscreen": true
     };
     const applet = new GGBApplet(ggbParams, true);
 
@@ -770,7 +826,9 @@
             if(Array.isArray(aData)) aData.forEach(d => createFgcSubQuestion(d.prompt, d.choices, d.answer));
         } catch(e) {}
     } else if (typeSelect.value === 'svg_interactive') {
-        // Initial rendering of existing sub-questions is handled by Jinja2, but we could sync here if needed
+        try {
+            if(Array.isArray(aData)) aData.forEach(d => createSubQuestion(d.prompt, d.answer, d.id));
+        } catch(e) {}
     } else if (typeSelect.value === 'figure_choice') {
         try {
             if(Array.isArray(aData)) aData.forEach(d => createFigureChoiceSubQuestion(d.prompt, d.choices, d.answer, d.id));

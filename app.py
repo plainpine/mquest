@@ -1107,7 +1107,6 @@ def edit_quest(quest_id):
                            all_levels=all_levels,
                            quest_display_title=quest_display_title)
 
-# Quest情報の保存
 @app.route('/admin/quest/save/<quest_id>', methods=['POST'])
 def save_quest(quest_id):
     title = request.form.get('title')
@@ -1115,76 +1114,89 @@ def save_quest(quest_id):
     questname = request.form.get('questname')
     new_id_str = request.form.get('new_id')
 
-    if quest_id == 'new':
-        if new_id_str:
+    # Helper for robust query
+    def get_quest_with_retry(qid):
+        for _ in range(3):
             try:
-                new_id = int(new_id_str)
-                # Check if exists
-                if Quest.query.get(new_id):
-                    flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
-                    return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
-                new_quest = Quest(id=new_id, title=title, level=level, questname=questname)
-            except ValueError:
-                flash("エラー: IDは数値で入力してください。", "danger")
-                return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
-        else:
-            new_quest = Quest(title=title, level=level, questname=questname)
-        
-        db.session.add(new_quest)
-        safe_commit()
-        flash("新しいクエストを保存しました", "success")
-        return redirect(url_for('edit_quest', quest_id=new_quest.id, title=title, level=level))
-    else:
-        old_id = int(quest_id)
-        quest = Quest.query.get_or_404(old_id)
-        
-        # IDが変更された場合
-        if new_id_str and int(new_id_str) != old_id:
-            try:
-                new_id = int(new_id_str)
-                # Check if exists
-                if Quest.query.get(new_id):
-                    flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
-                    return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
-                
-                # 手動で全テーブルのIDを更新 (SQLiteでFK制約がONでない場合を考慮)
-                # 注意: 外部キー制約が有効な場合、更新順序が重要になる可能性があります
-                db.session.execute(db.text("UPDATE quest_attempt_logs SET quest_id = :new_id WHERE quest_id = :old_id"), 
-                                   {'new_id': new_id, 'old_id': old_id})
-                db.session.execute(db.text("UPDATE questions SET quest_id = :new_id WHERE quest_id = :old_id"), 
-                                   {'new_id': new_id, 'old_id': old_id})
-                db.session.execute(db.text("UPDATE quest_history SET quest_id = :new_id WHERE quest_id = :old_id"), 
-                                   {'new_id': new_id, 'old_id': old_id})
-                db.session.execute(db.text("UPDATE user_progress SET quest_id = :new_id WHERE quest_id = :old_id"), 
-                                   {'new_id': new_id, 'old_id': old_id})
-                db.session.execute(db.text("UPDATE quests SET id = :new_id WHERE id = :old_id"), 
-                                   {'new_id': new_id, 'old_id': old_id})
-                
-                safe_commit()
-                # セッション内の古いオブジェクトを期限切れにして、DBから最新の状態を読み込めるようにする
-                db.session.expire_all()
-                
-                # 更新後のQuestオブジェクトを再取得
-                quest = Quest.query.get(new_id)
-                if not quest:
-                    flash("エラー: 更新後のクエストデータの取得に失敗しました。", "danger")
-                    return redirect(url_for('manage_quests', title=title, level=level))
-                
-                quest_id = str(new_id)
-            except ValueError:
-                flash("エラー: IDは数値で入力してください。", "danger")
-                return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
-            except Exception as e:
-                db.session.rollback()
-                flash(f"エラー: IDの更新に失敗しました。{str(e)}", "danger")
-                return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
+                return db.session.get(Quest, qid)
+            except OperationalError as e:
+                if "disk I/O error" in str(e):
+                    time.sleep(0.5)
+                    continue
+                raise
+        return db.session.get(Quest, qid)
 
-        quest.title = title
-        quest.level = level
-        quest.questname = questname
-        safe_commit()
-        flash("クエスト情報を保存しました", "success")
-        return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
+    try:
+        if quest_id == 'new':
+            if new_id_str:
+                try:
+                    new_id = int(new_id_str)
+                    # Check if exists with retry logic
+                    if get_quest_with_retry(new_id):
+                        flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
+                        return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
+                    new_quest = Quest(id=new_id, title=title, level=level, questname=questname)
+                except ValueError:
+                    flash("エラー: IDは数値で入力してください。", "danger")
+                    return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
+            else:
+                new_quest = Quest(title=title, level=level, questname=questname)
+            
+            db.session.add(new_quest)
+            safe_commit()
+            flash("新しいクエストを保存しました", "success")
+            return redirect(url_for('edit_quest', quest_id=new_quest.id, title=title, level=level))
+        else:
+            old_id = int(quest_id)
+            quest = get_quest_with_retry(old_id)
+            if not quest:
+                flash("エラー: 更新対象のクエストが見つかりません。", "danger")
+                return redirect(url_for('manage_quests'))
+            
+            # IDが変更された場合
+            if new_id_str and int(new_id_str) != old_id:
+                try:
+                    new_id = int(new_id_str)
+                    if get_quest_with_retry(new_id):
+                        flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
+                        return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
+                    
+                    db.session.execute(db.text("UPDATE quest_attempt_logs SET quest_id = :new_id WHERE quest_id = :old_id"), 
+                                       {'new_id': new_id, 'old_id': old_id})
+                    db.session.execute(db.text("UPDATE questions SET quest_id = :new_id WHERE quest_id = :old_id"), 
+                                       {'new_id': new_id, 'old_id': old_id})
+                    db.session.execute(db.text("UPDATE quest_history SET quest_id = :new_id WHERE quest_id = :old_id"), 
+                                       {'new_id': new_id, 'old_id': old_id})
+                    db.session.execute(db.text("UPDATE user_progress SET quest_id = :new_id WHERE quest_id = :old_id"), 
+                                       {'new_id': new_id, 'old_id': old_id})
+                    db.session.execute(db.text("UPDATE quests SET id = :new_id WHERE id = :old_id"), 
+                                       {'new_id': new_id, 'old_id': old_id})
+                    
+                    safe_commit()
+                    db.session.expire_all()
+                    quest = get_quest_with_retry(new_id)
+                    quest_id = str(new_id)
+                except ValueError:
+                    flash("エラー: IDは数値で入力してください。", "danger")
+                    return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f"エラー: IDの更新に失敗しました。{str(e)}", "danger")
+                    return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
+
+            quest.title = title
+            quest.level = level
+            quest.questname = questname
+            safe_commit()
+            flash("クエスト情報を保存しました", "success")
+            return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
+
+    except OperationalError as e:
+        if "disk I/O error" in str(e):
+            app.logger.error(f"Critical Database Error during save_quest: {e}")
+            flash('データベースの読み込み/書き込みエラーが発生しました。時間を置いてから再度「保存」を押してください。', 'error')
+            return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
+        raise
 
 
 
@@ -1277,7 +1289,7 @@ def edit_question(quest_id, question_id):
         if question.type == 'choice' or question.type == 'multiple_choice':
             choices = json.loads(question.choices) if question.choices else None
         elif question.type == 'svg_interactive' or question.type == 'figure_choice':
-            # Extract only the SVG part for the textarea to avoid showing JSON to the user
+            # 1. Extract SVG for the textarea
             try:
                 choices_data = json.loads(question.choices)
                 if isinstance(choices_data, dict) and 'svg' in choices_data:
@@ -1286,22 +1298,17 @@ def edit_question(quest_id, question_id):
                     choices = question.choices
             except (json.JSONDecodeError, TypeError):
                 choices = question.choices
+            
+            # 2. Load sub-questions into answers
+            try:
+                answers = json.loads(question.answer) if question.answer else []
+            except json.JSONDecodeError:
+                answers = []
         elif question.type == 'numeric':
             try:
                 answers = json.loads(question.answer) if question.answer else []
             except json.JSONDecodeError:
-                answers = [] # Invalid JSON in DB, treat as empty
-        elif question.type == 'svg_interactive':
-            try:
-                answers = json.loads(question.answer) if question.answer else []
-            except json.JSONDecodeError:
-                answers = [] # Invalid JSON in DB, treat as empty
-        elif question.type == 'figure_choice':
-            try:
-                answers = json.loads(question.answer) if question.answer else []
-            except json.JSONDecodeError:
-                answers = [] # Invalid JSON in DB, treat as empty
-
+                answers = []
         elif question.type == 'function_graph' and question.answer:
             # NEW: Load sub-questions from the 'choices' field
             try:
@@ -1398,12 +1405,14 @@ def save_question(quest_id):
             sub_answers = request.form.getlist('sub_answer')
 
             sub_questions = []
-            for i in range(len(sub_ids)):
-                if sub_ids[i] and sub_prompts[i] and sub_answers[i]:
+            # Use the length of sub_prompts as the base to avoid issues if other lists are shorter
+            for i in range(len(sub_prompts)):
+                prompt = sub_prompts[i].strip()
+                if prompt: # Save if there is at least a prompt
                     sub_questions.append({
-                        'id': sub_ids[i],
-                        'prompt': sub_prompts[i],
-                        'answer': sub_answers[i]
+                        'id': sub_ids[i] if i < len(sub_ids) else f'new_{int(time.time()*1000)}_{i}',
+                        'prompt': prompt,
+                        'answer': sub_answers[i] if i < len(sub_answers) else ''
                     })
 
             # Store SVG, GGB, and size data as JSON in choices
@@ -1426,11 +1435,12 @@ def save_question(quest_id):
 
             sub_questions = []
             for i in range(len(sub_prompts)):
-                if sub_prompts[i]:
+                prompt = sub_prompts[i].strip()
+                if prompt:
                     choices = [request.form.get(f'figure_choice_sub_choice_{i}_{j}', '') for j in range(4)]
                     sub_questions.append({
-                        'id': sub_ids[i] if i < len(sub_ids) else f'new{i}',
-                        'prompt': sub_prompts[i],
+                        'id': sub_ids[i] if i < len(sub_ids) else f'new_{int(time.time()*1000)}_{i}',
+                        'prompt': prompt,
                         'choices': choices,
                         'answer': sub_answers[i] if i < len(sub_answers) else ''
                     })
