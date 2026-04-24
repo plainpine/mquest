@@ -7,6 +7,13 @@
 <script src="https://www.geogebra.org/apps/deployggb.js"></script>
 <div id="ggb-modal-backdrop">
   <div id="ggb-modal-content">
+    <div id="ggb-modal-header">
+      <span>GeoGebra 編集</span>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <span style="font-size: 0.7rem; font-weight: normal; opacity: 0.8;">(ヘッダーで移動 / 右下でリサイズ)</span>
+        <button type="button" id="ggb-close-x" style="background:none; border:none; color:white; font-size: 1.5rem; cursor:pointer; line-height:1; padding:0 5px;">&times;</button>
+      </div>
+    </div>
     <div id="ggb-element"></div>
     <div class="ggb-modal-footer">
       <button type="button" id="ggb-cancel-btn" class="button secondary">キャンセル</button>
@@ -19,14 +26,55 @@
   document.addEventListener('DOMContentLoaded', () => {
     let currentGgbTargetId = null;
     const ggbModal = document.getElementById('ggb-modal-backdrop');
+    const ggbContent = document.getElementById('ggb-modal-content');
+    const ggbHeader = document.getElementById('ggb-modal-header');
     const ggbCancelBtn = document.getElementById('ggb-cancel-btn');
     const ggbApplyBtn = document.getElementById('ggb-apply-btn');
+    const ggbCloseX = document.getElementById('ggb-close-x');
+
+    // Dragging logic
+    let isDragging = false;
+    let offsetX, offsetY;
+
+    ggbHeader.addEventListener('mousedown', (e) => {
+      if (e.target === ggbCloseX) return;
+      isDragging = true;
+      const rect = ggbContent.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      ggbContent.style.transform = 'none';
+      ggbContent.style.top = rect.top + 'px';
+      ggbContent.style.left = rect.left + 'px';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      ggbContent.style.left = (e.clientX - offsetX) + 'px';
+      ggbContent.style.top = (e.clientY - offsetY) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => { isDragging = false; });
+
+    // Resize Sync Logic
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const api = window.ggbApplet;
+        if (api && typeof api.setSize === 'function') {
+          const ggbElem = document.getElementById('ggb-element');
+          // Subtract header and footer height to get the actual applet area
+          const h = ggbElem.offsetHeight;
+          const w = ggbElem.offsetWidth;
+          api.setSize(w, h);
+        }
+      }
+    });
+    resizeObserver.observe(ggbContent);
 
     const ggbParams = {
       "id": "ggbApplet",
       "appName": "classic",
-      "width": 860,
-      "height": 500,
+      "width": "100%",
+      "height": "100%",
       "showToolBar": true,
       "showMenuBar": true,
       "showAlgebraInput": true,
@@ -34,9 +82,15 @@
       "enableLabelDrags": true,
       "enableShiftDragZoom": true,
       "enableRightClick": true,
-      "useBrowserForJS": true
+      "useBrowserForJS": true,
+      "allowUpscale": true,
+      "enableFullscreen": true
     };
     const applet = new GGBApplet(ggbParams, true);
+
+    const closeModal = () => { ggbModal.style.display = 'none'; };
+    ggbCancelBtn.addEventListener('click', closeModal);
+    ggbCloseX.addEventListener('click', closeModal);
 
     document.querySelectorAll('.ggb-open-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -46,10 +100,6 @@
           applet.inject('ggb-element');
         }
       });
-    });
-
-    ggbCancelBtn.addEventListener('click', () => {
-      ggbModal.style.display = 'none';
     });
 
     ggbApplyBtn.addEventListener('click', () => {
@@ -170,30 +220,51 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.3);
       z-index: 1000;
-      justify-content: center;
-      align-items: center;
     }
     #ggb-modal-content {
       background: white;
-      padding: 20px;
+      padding: 0;
       border-radius: 8px;
-      width: 90%;
-      max-width: 900px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
       height: 80%;
+      min-width: 400px;
+      min-height: 300px;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      resize: both;
+      overflow: hidden;
+    }
+    #ggb-modal-header {
+      background: #673ab7;
+      color: white;
+      padding: 10px;
+      cursor: move;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 8px 8px 0 0;
     }
     #ggb-element {
       flex: 1;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
+      width: 100%;
+      height: 100%;
+      border-bottom: 1px solid #ccc;
     }
     .ggb-modal-footer {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 0 0 8px 8px;
     }
 </style>
 
