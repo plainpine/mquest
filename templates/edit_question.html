@@ -2,6 +2,150 @@
 {% extends "base.html" %}
 {% block title %}問題編集{% endblock %}
 
+{% block scripts %}
+{{ super() }}
+<script src="https://www.geogebra.org/apps/deployggb.js"></script>
+<div id="ggb-modal-backdrop">
+  <div id="ggb-modal-content">
+    <div id="ggb-element"></div>
+    <div class="ggb-modal-footer">
+      <button type="button" id="ggb-cancel-btn" class="button secondary">キャンセル</button>
+      <button type="button" id="ggb-apply-btn" class="button" style="background-color: #4CAF50; color: white;">反映</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    let currentGgbTargetId = null;
+    const ggbModal = document.getElementById('ggb-modal-backdrop');
+    const ggbCancelBtn = document.getElementById('ggb-cancel-btn');
+    const ggbApplyBtn = document.getElementById('ggb-apply-btn');
+
+    const ggbParams = {
+      "id": "ggbApplet",
+      "appName": "classic",
+      "width": 860,
+      "height": 500,
+      "showToolBar": true,
+      "showMenuBar": true,
+      "showAlgebraInput": true,
+      "showResetIcon": true,
+      "enableLabelDrags": true,
+      "enableShiftDragZoom": true,
+      "enableRightClick": true,
+      "useBrowserForJS": true
+    };
+    const applet = new GGBApplet(ggbParams, true);
+
+    document.querySelectorAll('.ggb-open-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentGgbTargetId = btn.dataset.target;
+        ggbModal.style.display = 'flex';
+        if (!document.getElementById('ggb-element').hasChildNodes()) {
+          applet.inject('ggb-element');
+        }
+      });
+    });
+
+    ggbCancelBtn.addEventListener('click', () => {
+      ggbModal.style.display = 'none';
+    });
+
+    ggbApplyBtn.addEventListener('click', () => {
+      // 1. APIオブジェクトの取得を試行（複数の経路）
+      const api = window.ggbApplet || (typeof applet !== 'undefined' && applet.getAppletObject ? applet.getAppletObject() : null);
+      const targetInput = document.getElementById(currentGgbTargetId);
+      
+      if (!api && !document.querySelector('#ggb-element svg')) {
+        alert("GeoGebraがまだ読み込まれていません。画面が表示されるまでお待ちください。");
+        return;
+      }
+
+      let exported = false;
+      const finalize = (svgString) => {
+        if (exported || !svgString) return;
+        exported = true;
+        if (targetInput) {
+          targetInput.value = svgString;
+          targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+          console.log("GeoGebra SVG exported successfully.");
+        }
+        ggbModal.style.display = 'none';
+      };
+
+      console.log("Attempting to export GeoGebra SVG...");
+
+      // 方法1: API経由でのエクスポート
+      if (api) {
+        try {
+          // getExportの存在確認（非同期版）
+          if (typeof api.getExport === 'function') {
+            api.getExport('svg', (data) => {
+              if (data) { console.log("Exported via getExport callback"); finalize(data); }
+            });
+            
+            // 同期版も試す
+            const syncData = api.getExport('svg');
+            if (syncData && typeof syncData === 'string' && syncData.startsWith('<svg')) {
+              console.log("Exported via getExport synchronous");
+              finalize(syncData);
+              return;
+            }
+          }
+          
+          // 他の可能性: exportSVG
+          if (!exported && typeof api.exportSVG === 'function') {
+            api.exportSVG((data) => { if (data) finalize(data); });
+          }
+        } catch (e) {
+          console.warn("GeoGebra API call failed:", e);
+        }
+      }
+
+      // 方法2: 強力なDOMフォールバック（iframe内も検索）
+      setTimeout(() => {
+        if (!exported) {
+          console.log("Trying deep DOM search for SVG...");
+          
+          const findSvg = (root) => {
+            if (!root) return null;
+            // 直下のSVGを探す
+            const svg = root.querySelector('svg');
+            if (svg) return svg;
+            
+            // iframeがあればその中を探す
+            const iframes = root.querySelectorAll('iframe');
+            for (let f of iframes) {
+              try {
+                const innerSvg = findSvg(f.contentDocument || f.contentWindow.document);
+                if (innerSvg) return innerSvg;
+              } catch (e) { /* クロスドメイン制限など */ }
+            }
+            return null;
+          };
+
+          const svgElement = findSvg(document.getElementById('ggb-element'));
+          if (svgElement) {
+            console.log("Exported via Deep DOM fallback");
+            const serializer = new XMLSerializer();
+            let svgString = serializer.serializeToString(svgElement);
+            // xmlnsが抜けている場合の補完
+            if (!svgString.includes('xmlns="http://www.w3.org/2000/svg"')) {
+              svgString = svgString.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            finalize(svgString);
+          } else {
+            alert("データの取得に失敗しました。アプレットの読み込み完了を待つか、図形を少し動かしてから再度お試しください。");
+            ggbModal.style.display = 'none';
+          }
+        }
+      }, 800);
+    });
+  });
+</script>
+{% endblock %}
+
 {% block content %}
 <h2>問題編集</h2>
 <style>
@@ -17,6 +161,40 @@
     .function-entry { display: flex; align-items: center; gap: 10px; }
     .function-entry input { flex: 1; }
     .remove-function-entry, .remove-fg-answer { background: #f44336; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+
+    /* GeoGebra Modal Styles */
+    #ggb-modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    #ggb-modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 900px;
+      height: 80%;
+      display: flex;
+      flex-direction: column;
+    }
+    #ggb-element {
+      flex: 1;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+    .ggb-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
 </style>
 
 <form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
@@ -77,7 +255,8 @@
   <div id="svg-interactive-section" style="display:none;">
     <label>SVGコンテンツ:</label>
     <textarea name="svg_content" id="svg-content-textarea" rows="10" cols="60">{{ question.choices if question and question.type == 'svg_interactive' else '' }}</textarea><br>
-    <button type="button" id="svg-preview-button" class="button">SVGプレビュー</button><br>
+    <button type="button" id="svg-preview-button" class="button">SVGプレビュー</button>
+    <button type="button" class="button ggb-open-btn" data-target="svg-content-textarea" style="background-color: #673ab7; color: white;">GeoGebraで作成</button><br>
     <div id="sub-questions-container">
       {% if question and question.type == 'svg_interactive' and answers %}
         {% for sub_q in answers %}
@@ -95,8 +274,9 @@
 
   <div id="figure-choice-section" style="display:none;">
     <label>SVGコンテンツ:</label>
-    <textarea name="figure_choice_svg_content" id="figure-choice-svg-content" rows="10" cols="60">{{ question.choices if question and question.type == 'figure_choice' else '' }}</textarea>
+    <textarea name="figure_choice_svg_content" id="figure-choice-svg-content" rows="10" cols="60">{{ question.choices if question and question.type == 'figure_choice' else '' }}</textarea><br>
     <button type="button" id="figure-choice-svg-preview-button" class="button">SVGプレビュー</button>
+    <button type="button" class="button ggb-open-btn" data-target="figure-choice-svg-content" style="background-color: #673ab7; color: white;">GeoGebraで作成</button>
     <div id="figure-choice-sub-questions-container">
       {# JavaScript will handle dynamic items for complex nested structures to avoid Jinja issues #}
     </div>
