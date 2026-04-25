@@ -17,7 +17,8 @@
     <div id="ggb-element"></div>
     <div class="ggb-modal-footer">
       <button type="button" id="ggb-resize-btn" class="button" style="background-color: #2196F3; color: white; margin-right: 10px;">指定サイズにリサイズ</button>
-      <button type="button" id="ggb-refresh-btn" class="button" style="background-color: #ff9800; color: white; margin-right: auto;">メニュー再表示</button>
+      <button type="button" id="ggb-refresh-btn" class="button" style="background-color: #ff9800; color: white; margin-right: 10px;">メニュー再表示</button>
+      <button type="button" id="ggb-reset-btn" class="button" style="background-color: #f44336; color: white; margin-right: auto;">初期化</button>
       <button type="button" id="ggb-cancel-btn" class="button secondary">キャンセル</button>
       <button type="button" id="ggb-apply-btn" class="button" style="background-color: #4CAF50; color: white;">反映</button>
     </div>
@@ -35,7 +36,82 @@
     const ggbApplyBtn = document.getElementById('ggb-apply-btn');
     const ggbResizeBtn = document.getElementById('ggb-resize-btn');
     const ggbRefreshBtn = document.getElementById('ggb-refresh-btn');
+    const ggbResetBtn = document.getElementById('ggb-reset-btn');
     const ggbCloseX = document.getElementById('ggb-close-x');
+
+    // Helper: Extract GGB data from text (Base64, XML, or embedded comment)
+    function extractGgbData(text) {
+        if (!text) return null;
+        const trimmed = text.trim();
+        console.log("Analyzing text for GGB data... (length: " + text.length + ")");
+        
+        // 1. Try to find embedded comment <!-- GGB_DATA:... --> using stable indexOf
+        const startTag = "<!-- GGB_DATA:";
+        const endTag = " -->";
+        const startIdx = text.indexOf(startTag);
+        if (startIdx !== -1) {
+            const endIdx = text.indexOf(endTag, startIdx + startTag.length);
+            if (endIdx !== -1) {
+                const data = text.substring(startIdx + startTag.length, endIdx).replace(/\s/g, '');
+                console.log("Found GGB data in comment via indexOf. Length:", data.length);
+                return data;
+            }
+        }
+        
+        // 2. Check if it's GGB XML
+        if (trimmed.includes('<geogebra')) {
+            const xmlStart = trimmed.indexOf('<geogebra');
+            const data = trimmed.substring(xmlStart);
+            console.log("Found GGB XML. Length:", data.length);
+            return data;
+        }
+
+        // 3. Try to see if the whole text is a Base64 string (only if not an SVG/XML tag)
+        if (!trimmed.startsWith('<')) {
+            const b64Candidate = trimmed.replace(/\s/g, '');
+            if (b64Candidate.length > 100 && /^[A-Za-z0-9+/=]+$/.test(b64Candidate)) {
+                console.log("Assuming text is raw Base64. Length:", b64Candidate.length);
+                return b64Candidate;
+            }
+        }
+        
+        console.warn("No valid GGB data found in the provided text.");
+        return null;
+    }
+
+    // Helper: Load data into API with retry/wait
+    function loadDataToApi(api, data, retries = 15) {
+        if (!data) return;
+        
+        // Try to find API if not provided
+        if (!api) {
+            api = window.ggbApplet || (window.applet && typeof window.applet.getAppletObject === 'function' ? window.applet.getAppletObject() : null);
+        }
+
+        try {
+            if (api && typeof api.setBase64 === 'function') {
+                console.log("Attempting to load data into GeoGebra API...");
+                if (data.includes('<geogebra')) {
+                    api.setXML(data);
+                } else {
+                    api.setBase64(data);
+                }
+                console.log("Data successfully loaded into GeoGebra.");
+                
+                // Refresh view
+                if (typeof api.refreshViews === 'function') api.refreshViews();
+            } else {
+                if (retries > 0) {
+                    console.log("API not ready (setBase64 missing), retrying... (" + retries + ")");
+                    setTimeout(() => loadDataToApi(null, data, retries - 1), 500);
+                } else {
+                    console.error("GeoGebra API failed to become ready after multiple retries.");
+                }
+            }
+        } catch (e) {
+            console.error("Error during loadDataToApi:", e);
+        }
+    }
 
     // Helper: Get dimensions from current section's inputs
     function getTargetDims() {
@@ -118,6 +194,15 @@
         });
     });
 
+    // --- Reset Logic ---
+    ggbResetBtn.addEventListener('click', () => {
+        const api = window.ggbApplet;
+        if (!api) return;
+        if (confirm("全ての図形を消去して初期状態に戻しますか？")) {
+            api.newConstruction();
+        }
+    });
+
     let lastInitId = null;
     window.ggbOnInit = function(id) {
         // Prevent immediate re-init loop
@@ -130,14 +215,14 @@
 
         // 1. Check for temporary refresh data
         if (window.tempGgbData) {
-            api.setBase64(window.tempGgbData);
+            loadDataToApi(api, window.tempGgbData);
             window.tempGgbData = null;
         } 
         // 2. Load saved data from hidden field
         else if (currentGgbDataTargetId) {
             const ggbDataInput = document.getElementById(currentGgbDataTargetId);
             if (ggbDataInput && ggbDataInput.value) {
-                api.setBase64(ggbDataInput.value);
+                loadDataToApi(api, ggbDataInput.value);
             }
         }
         
@@ -171,21 +256,34 @@
       btn.addEventListener('click', () => {
         currentGgbTargetId = btn.dataset.target;
         currentGgbDataTargetId = btn.dataset.ggbTarget;
+
+        // --- State Recovery from Textarea ---
+        const targetTextarea = document.getElementById(currentGgbTargetId);
+        const ggbHiddenInput = document.getElementById(currentGgbDataTargetId);
+        let recoveredData = null;
+        if (targetTextarea && ggbHiddenInput) {
+            recoveredData = extractGgbData(targetTextarea.value);
+            if (recoveredData) {
+                console.log("Recovered GGB data from textarea.");
+                ggbHiddenInput.value = recoveredData;
+            }
+        }
+        
         ggbModal.style.display = 'flex';
         
         const ggbElem = document.getElementById('ggb-element');
         if (!ggbElem.hasChildNodes()) {
           applet.inject('ggb-element');
+          // Note: Data loading will be handled by ggbOnInit for the first injection
         } else {
             // If already injected, manually load data
             const api = window.ggbApplet;
-            if (api && currentGgbDataTargetId) {
-                const ggbData = document.getElementById(currentGgbDataTargetId).value;
-                if (ggbData) {
-                    api.setBase64(ggbData);
-                } else {
-                    api.newConstruction();
-                }
+            const dataToLoad = recoveredData || (ggbHiddenInput ? ggbHiddenInput.value : null);
+            
+            if (dataToLoad) {
+                loadDataToApi(api, dataToLoad);
+            } else {
+                if (api && typeof api.newConstruction === 'function') api.newConstruction();
             }
         }
       });
@@ -210,13 +308,20 @@
         if (api && typeof api.getBase64 === 'function' && ggbDataInput) {
             api.getBase64((data) => {
                 ggbDataInput.value = data;
+                // --- Embed GGB data into SVG for recovery ---
+                if (targetInput) {
+                  // Append as an XML comment
+                  targetInput.value = svgString + "\n<!-- GGB_DATA:" + data + " -->";
+                  targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                  console.log("GeoGebra SVG and GGB data exported successfully.");
+                }
             });
-        }
-
-        if (targetInput) {
-          targetInput.value = svgString;
-          targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-          console.log("GeoGebra SVG exported successfully.");
+        } else {
+            if (targetInput) {
+              targetInput.value = svgString;
+              targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+              console.log("GeoGebra SVG exported successfully (without state data).");
+            }
         }
         ggbModal.style.display = 'none';
       };
@@ -842,20 +947,27 @@
             try {
                 const data = typeof choicesRaw === 'string' ? JSON.parse(choicesRaw) : choicesRaw;
                 if (data && typeof data === 'object') {
-                    if (typeSelect.value === 'svg_interactive') {
-                        if (data.svg) document.getElementById('svg-content-textarea').value = data.svg;
-                        if (data.ggb) document.getElementById('ggb-data-hidden').value = data.ggb;
-                        if (data.width) document.getElementById('svg-width').value = data.width;
-                        if (data.height) document.getElementById('svg-height').value = data.height;
-                    } else {
-                        if (data.svg) document.getElementById('figure-choice-svg-content').value = data.svg;
-                        if (data.ggb) document.getElementById('figure-choice-ggb-data-hidden').value = data.ggb;
-                        if (data.width) document.getElementById('figure-choice-svg-width').value = data.width;
-                        if (data.height) document.getElementById('figure-choice-svg-height').value = data.height;
+                    const isFgc = typeSelect.value === 'figure_choice';
+                    const svgTextarea = document.getElementById(isFgc ? 'figure-choice-svg-content' : 'svg-content-textarea');
+                    const ggbHidden = document.getElementById(isFgc ? 'figure-choice-ggb-data-hidden' : 'ggb-data-hidden');
+                    const wInput = document.getElementById(isFgc ? 'figure-choice-svg-width' : 'svg-width');
+                    const hInput = document.getElementById(isFgc ? 'figure-choice-svg-height' : 'svg-height');
+
+                    if (data.svg && svgTextarea) {
+                        let svg = data.svg;
+                        // Auto-embed GGB data if missing in SVG comment but exists in JSON
+                        if (data.ggb && !svg.includes("GGB_DATA:")) {
+                            console.log("Auto-embedding missing GGB data into restoration textarea.");
+                            svg += "\n<!-- GGB_DATA:" + data.ggb + " -->";
+                        }
+                        svgTextarea.value = svg;
                     }
+                    if (data.ggb && ggbHidden) ggbHidden.value = data.ggb;
+                    if (data.width && wInput) wInput.value = data.width;
+                    if (data.height && hInput) hInput.value = data.height;
                 }
             } catch (e) {
-                // If not JSON, it's old legacy SVG-only data, which is already set by Jinja2 in the textarea
+                console.error("Restoration failed:", e);
             }
         }
     }
