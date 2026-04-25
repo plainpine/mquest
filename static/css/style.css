@@ -97,7 +97,8 @@ ul li a:hover {
 }
 
 img {
-  border-radius: 50%;
+  max-width: 100%;
+  height: auto;
   margin-right: 10px;
 }
 

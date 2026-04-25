@@ -455,14 +455,29 @@
       border-radius: 8px 8px 0 0;
       flex-shrink: 0; /* 高さを維持 */
       z-index: 10;
-    }
     #ggb-element {
       flex: 1; /* 残りの空間をすべて使う */
       width: 100% !important;
-      height: auto !important;
+      height: 400px; /* デフォルトの最小高さ */
+      min-height: 300px;
       overflow: hidden;
       position: relative;
       background: #eee;
+    }
+    .markdown-preview img {
+      max-width: 100%;
+      height: auto !important;
+      object-fit: contain;
+      display: block;
+      margin: 10px 0;
+      border-radius: 0 !important;
+    }
+    .markdown-preview {
+      border: 1px solid #ddd;
+      padding: 10px;
+      background: #fff;
+      min-height: 50px;
+      overflow-wrap: break-word;
     }
     .ggb-modal-footer {
       display: flex;
@@ -472,7 +487,7 @@
       background: #f8f9fa;
       border-top: 1px solid #dee2e6;
       border-radius: 0 0 8px 8px;
-      flex-shrink: 0; /* 高さを維持 */
+      flex-shrink: 0;
       z-index: 10;
     }
 </style>
@@ -835,6 +850,45 @@
 
     // Initial State
     function updateSections() {
+        const oldType = typeSelect.dataset.lastType || "";
+        const newType = typeSelect.value;
+        
+        // --- Data Sync between SVG-based types ---
+        const svgTypes = ['svg_interactive', 'figure_choice'];
+        if (svgTypes.includes(oldType) && svgTypes.includes(newType) && oldType !== newType) {
+            console.log(`Syncing data from ${oldType} to ${newType}`);
+            const isToFgc = newType === 'figure_choice';
+            
+            // Map elements explicitly due to inconsistent IDs
+            const mapping = [
+                { 
+                    src: isToFgc ? 'svg-content-textarea' : 'figure-choice-svg-content', 
+                    dst: isToFgc ? 'figure-choice-svg-content' : 'svg-content-textarea' 
+                },
+                { 
+                    src: isToFgc ? 'ggb-data-hidden' : 'figure-choice-ggb-data-hidden', 
+                    dst: isToFgc ? 'figure-choice-ggb-data-hidden' : 'ggb-data-hidden' 
+                },
+                { 
+                    src: isToFgc ? 'svg-width' : 'figure-choice-svg-width', 
+                    dst: isToFgc ? 'figure-choice-svg-width' : 'svg-width' 
+                },
+                { 
+                    src: isToFgc ? 'svg-height' : 'figure-choice-svg-height', 
+                    dst: isToFgc ? 'figure-choice-svg-height' : 'svg-height' 
+                }
+            ];
+
+            mapping.forEach(m => {
+                const srcEl = document.getElementById(m.src);
+                const dstEl = document.getElementById(m.dst);
+                if (srcEl && dstEl && srcEl.value) {
+                    dstEl.value = srcEl.value;
+                }
+            });
+        }
+        typeSelect.dataset.lastType = newType;
+
         const sections = ["choice", "sort", "numeric", "fill-in-the-blank-en", "svg-interactive", "figure-choice", "function-graph", "function-graph-choice"];
         sections.forEach(s => { 
             const el = document.getElementById(s + "-section");
@@ -849,6 +903,45 @@
         const el = document.getElementById(`choice${i}`);
         if(el) el.addEventListener('input', updatePreviews);
     }
+
+    // --- Clipboard Paste Support for Images ---
+    const setupImagePaste = (textareaId) => {
+        const textarea = document.getElementById(textareaId);
+        if (!textarea) return;
+
+        textarea.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    // Prevent default paste for images
+                    e.preventDefault();
+                    
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const base64 = event.target.result;
+                        const imgMarkdown = `\n![image](${base64})\n`;
+                        
+                        // Insert at cursor position
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        const text = textarea.value;
+                        textarea.value = text.substring(0, start) + imgMarkdown + text.substring(end);
+                        
+                        // Set cursor after the inserted text
+                        textarea.selectionStart = textarea.selectionEnd = start + imgMarkdown.length;
+                        
+                        // Trigger preview update
+                        updatePreviews();
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        });
+    };
+
+    setupImagePaste('text-input');
+    setupImagePaste('explanation-input');
 
     document.getElementById('add-function-entry').addEventListener('click', () => createFunctionEntry('function-entries-container'));
     document.getElementById('add-function-graph-choice-entry').addEventListener('click', () => createFunctionEntry('function-graph-choice-entries-container'));
