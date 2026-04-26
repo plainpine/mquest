@@ -1309,33 +1309,40 @@ def save_quest(quest_id):
 def renumber_questions(quest_id):
     if not current_user.is_admin():
         return redirect(url_for('login'))
-    
+
     title = request.form.get('title', '')
     level = request.form.get('level', '')
-    
-    quest = Quest.query.get_or_404(quest_id)
-    # 現在のID順にソート
-    questions = sorted(quest.questions, key=lambda x: x.id)
-    
+    ordered_ids = request.form.getlist('ordered_question_ids')
+
+    if not ordered_ids:
+        flash("並び替える問題がありません。", "warning")
+        return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
+
     try:
-        # クエストIDをベースにしたID体系（QuestID * 100 + 連番）
+        # Step 1: Move all questions for this quest to a temporary ID range to avoid collisions
+        # Temporary offset (e.g., 1,000,000)
+        temp_offset = 1000000
+        for qid in ordered_ids:
+            db.session.execute(db.text("UPDATE questions SET id = id + :offset WHERE id = :old_id"),
+                               {'offset': temp_offset, 'old_id': int(qid)})
+
+        # Step 2: Move back to the final ID based on the new order
         base_id = quest_id * 100
-        for i, q in enumerate(questions):
+        for i, old_id in enumerate(ordered_ids):
             new_id = base_id + (i + 1)
-            old_id = q.id
-            if old_id != new_id:
-                # SQLiteの場合、主キーの更新は直接可能
-                db.session.execute(db.text("UPDATE questions SET id = :new_id WHERE id = :old_id"),
-                                   {'new_id': new_id, 'old_id': old_id})
-        
+            temp_id = int(old_id) + temp_offset
+            db.session.execute(db.text("UPDATE questions SET id = :new_id WHERE id = :temp_id"),
+                               {'new_id': new_id, 'temp_id': temp_id})
+
         safe_commit()
-        flash(f"問題IDを振り直しました（{base_id + 1}〜）。", "success")
+        db.session.expire_all()
+        flash(f"並び替えを保存し、問題IDを振り直しました（{base_id + 1}〜）。", "success")
     except Exception as e:
         db.session.rollback()
+        app.logger.error(f"Renumber questions error: {e}")
         flash(f"エラー: IDの振り直しに失敗しました。{str(e)}", "danger")
-    
-    return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
+    return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 @app.route('/admin/question/edit/<int:quest_id>', methods=['POST'])
 @login_required
 def edit_question_action(quest_id):

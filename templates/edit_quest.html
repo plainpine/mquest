@@ -59,31 +59,57 @@
 <form method="post">
   <input type="hidden" name="title" value="{{ title }}">
   <input type="hidden" name="level" value="{{ level }}">
-  <table border="1" cellpadding="8">
-    <tr>
-      <th></th>
-      <th>ID</th>
-      <th>種類</th>
-      <th>本文</th>
-    </tr>
-    {% for q in quest.questions %}
-    <tr>
-      <td><input type="radio" name="question_id" value="{{ q.id }}"></td>
-      <td>{{ q.id }}</td>
-      <td>{{ q.type }}</td>
-      <td>{{ q.text[:30] }}...</td>
-    </tr>
-    {% endfor %}
+  <table border="1" cellpadding="8" id="question-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>順序</th>
+        <th>ID</th>
+        <th>種類</th>
+        <th>本文</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for q in quest.questions|sort(attribute='id') %}
+      <tr>
+        <td><input type="radio" name="question_id" value="{{ q.id }}"></td>
+        <td>
+          <button type="button" onclick="moveRowUp(this)">↑</button>
+          <button type="button" onclick="moveRowDown(this)">↓</button>
+          <input type="hidden" name="ordered_question_ids" value="{{ q.id }}">
+        </td>
+        <td>{{ q.id }}</td>
+        <td>{{ q.type }}</td>
+        <td>{{ q.text[:30] }}...</td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
   <br>
   <button formaction="{{ url_for('edit_question_action', quest_id=quest.id) }}" onclick="return validateQuestionSelection()" formmethod="post">編集</button>
   <button formaction="{{ url_for('add_question', quest_id=quest.id) }}" formmethod="get">追加</button>
   <button formaction="{{ url_for('delete_question_action', quest_id=quest.id) }}" formmethod="post" onclick="return validateQuestionSelection() && confirm('本当に削除しますか？');">削除</button>
-  <button formaction="{{ url_for('renumber_questions', quest_id=quest.id) }}" formmethod="post" onclick="return confirm('このクエストの問題IDを「クエストID＋連番（101〜）」の形式で振り直しますか？\n（例: クエストIDが1なら101, 102...）');">問題IDを振り直す</button>
+  <button formaction="{{ url_for('renumber_questions', quest_id=quest.id) }}" formmethod="post" onclick="return confirm('現在の表示順で問題IDを振り直しますか？\n（クエストID＋101, 102...）');">順序を保存してIDを振り直す</button>
 </form>
 {% endif %}
 
 <script>
+function moveRowUp(btn) {
+  const row = btn.closest('tr');
+  const prev = row.previousElementSibling;
+  if (prev && prev.parentNode.tagName === 'TBODY') {
+    row.parentNode.insertBefore(row, prev);
+  }
+}
+
+function moveRowDown(btn) {
+  const row = btn.closest('tr');
+  const next = row.nextElementSibling;
+  if (next) {
+    row.parentNode.insertBefore(next, row);
+  }
+}
+
 function validateQuestionSelection() {
   const questId = document.querySelector('input[name="question_id"]:checked');
   if (!questId) {
