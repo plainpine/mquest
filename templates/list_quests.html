@@ -27,15 +27,16 @@
   <input type="hidden" name="title" value="{{ selected_title }}">
   <input type="hidden" name="level" value="{{ selected_level }}">
   <div style="margin-bottom: 1rem;">
-    <button type="submit" name="action" value="edit">編集</button>
+    <button type="submit" name="action" value="edit" onclick="setClickedAction(this.value)">編集</button>
     <button type="button" onclick="location.href='{{ url_for('edit_quest', quest_id='new', title=selected_title, level=selected_level) }}'">追加</button>
-    <button type="submit" name="action" value="delete" onclick="return confirm('本当に削除しますか？')">削除</button>
-    <button type="submit" name="action" value="challenge">問題確認</button>
+    <button type="submit" name="action" value="delete" onclick="setClickedAction(this.value); return confirm('本当に削除しますか？')">削除</button>
+    <button type="submit" name="action" value="challenge" onclick="setClickedAction(this.value)">問題確認</button>
+    <button type="submit" name="action" value="bulk_edit" onclick="setClickedAction(this.value)">一括ID変更</button>
   </div>
   <table border="1" cellpadding="8">
     <thead>
       <tr>
-        <th>選択</th>
+        <th><input type="checkbox" id="select-all"></th>
         <th>ID</th>
         <th>タイトル</th>
         <th>レベル</th>
@@ -45,7 +46,7 @@
     <tbody>
       {% for quest in quests %}
       <tr>
-        <td><input type="radio" name="quest_id" value="{{ quest.id }}"></td>
+        <td><input type="checkbox" name="quest_id" value="{{ quest.id }}" class="quest-checkbox"></td>
         <td>{{ quest.id }}</td>
         <td>{{ quest.title }}</td>
         <td>{{ quest.level }}</td>
@@ -59,18 +60,36 @@
   </form>
   <br>
   <a href="{{ url_for('dashboard_admin') }}" class="button">管理者ダッシュボードに戻る</a>
-</form>
 
-<script>
-function validateQuestSelection() {
-  const questId = document.querySelector('input[name="quest_id"]:checked');
-  if (!questId) {
+  <script>
+  let clickedAction = "";
+  function setClickedAction(action) {
+  clickedAction = action;
+  }
+
+  function validateQuestSelection() {
+  const checkboxes = document.querySelectorAll('input[name="quest_id"]:checked');
+  if (checkboxes.length === 0) {
     alert("クエストを選択してください！");
     return false;
   }
+
+  if (clickedAction === "edit" || clickedAction === "challenge") {
+    if (checkboxes.length > 1) {
+      alert("この操作は1つのクエストのみ選択してください。");
+      return false;
+    }
+  }
   return true;
-}
-</script>
+  }
+
+  document.getElementById('select-all').addEventListener('change', function() {
+  const checkboxes = document.querySelectorAll('.quest-checkbox');
+  for (let checkbox of checkboxes) {
+    checkbox.checked = this.checked;
+  }
+  });
+  </script>
 {% endblock %}
 
 {% block scripts %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}一括ID変更{% endblock %}
+{% block content %}
+<h2>クエストID一括変更</h2>
+
+<div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ccc; background-color: #f9f9f9; border-radius: 4px;">
+    <h4>一括入力ヘルパー</h4>
+    <label for="start-id">開始ID:</label>
+    <input type="number" id="start-id" placeholder="例: 101" style="width: 100px;">
+    <button type="button" onclick="fillSequentially()">連番で入力</button>
+    <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">
+        ※現在のリストの並び順（ID順）に従って連番を割り振ります。
+    </p>
+</div>
+
+<form method="post" action="{{ url_for('save_bulk_ids') }}">
+    <input type="hidden" name="title" value="{{ title }}">
+    <input type="hidden" name="level" value="{{ level }}">
+    
+    <table border="1" cellpadding="8" style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #eee;">
+                <th>元のID</th>
+                <th>タイトル</th>
+                <th>レベル</th>
+                <th>クエスト名</th>
+                <th style="width: 150px;">新しいID</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quest in quests %}
+            <tr>
+                <td>{{ quest.id }}<input type="hidden" name="old_id" value="{{ quest.id }}"></td>
+                <td>{{ quest.title }}</td>
+                <td>{{ quest.level }}</td>
+                <td><div class="markdown" data-content="{{ quest.questname | e }}"></div></td>
+                <td><input type="number" name="new_id" value="{{ quest.id }}" class="new-id-input" required style="width: 100px;"></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 1.5rem;">
+        <button type="submit" class="button">変更を保存</button>
+        <a href="{{ url_for('manage_quests', title=title, level=level) }}" class="button" style="background-color: #666; text-decoration: none; padding: 10px 20px; color: white; border-radius: 4px; display: inline-block;">キャンセル</a>
+    </div>
+</form>
+
+<script>
+function fillSequentially() {
+    const startIdInput = document.getElementById('start-id');
+    const startId = parseInt(startIdInput.value);
+    if (isNaN(startId)) {
+        alert("開始IDを数値で入力してください。");
+        return;
+    }
+    
+    const inputs = document.querySelectorAll('.new-id-input');
+    inputs.forEach((input, index) => {
+        input.value = startId + index;
+    });
+}
+</script>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  function renderMarkdown() {
+    if (typeof marked === 'undefined') return;
+    marked.setOptions({ breaks: true });
+
+    document.querySelectorAll('.markdown').forEach(function(div) {
+      var md = div.getAttribute('data-content');
+      if (!md) return;
+      md = md.replace(/\\n/g, '\n');
+      div.innerHTML = marked.parse(md);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    renderMarkdown();
+  });
+</script>
+{% endblock %}

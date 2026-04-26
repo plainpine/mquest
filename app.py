@@ -1047,7 +1047,7 @@ def manage_quests():
 @login_required
 def handle_quest_action():
     action = request.form.get('action')
-    quest_id = request.form.get('quest_id')
+    quest_ids = request.form.getlist('quest_id')
     title = request.form.get('title', '')
     level = request.form.get('level', '')
 
@@ -1055,31 +1055,135 @@ def handle_quest_action():
         # Assuming 'add' goes to a new quest page that should also know how to get back
         return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
     
-    # Actions that need a quest_id
-    if not quest_id:
+    # Actions that need at least one quest_id
+    if not quest_ids:
         flash("Questを選択してください", "warning")
         return redirect(url_for('manage_quests', title=title, level=level))
 
     if action == 'edit':
-        return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
+        return redirect(url_for('edit_quest', quest_id=quest_ids[0], title=title, level=level))
+    elif action == 'bulk_edit':
+        return redirect(url_for('bulk_edit_ids', quest_ids=','.join(quest_ids), title=title, level=level))
     elif action == 'challenge':
         # Preserve title and level filters when challenging a quest from manage_quests
-        return redirect(url_for('quest_run', quest_id=quest_id, title=title, level=level))
+        return redirect(url_for('quest_run', quest_id=quest_ids[0], title=title, level=level))
     elif action == 'delete':
-        quest_id_to_delete = int(quest_id)
-        quest = Quest.query.get(quest_id_to_delete)
-        if quest:
-            # Manually delete dependent records to prevent IntegrityError
-            UserProgress.query.filter_by(quest_id=quest_id_to_delete).delete()
-            QuestHistory.query.filter_by(quest_id=quest_id_to_delete).delete()
-            Question.query.filter_by(quest_id=quest_id_to_delete).delete()
+        deleted_count = 0
+        for qid in quest_ids:
+            quest_id_to_delete = int(qid)
+            quest = Quest.query.get(quest_id_to_delete)
+            if quest:
+                # Manually delete dependent records to prevent IntegrityError
+                UserProgress.query.filter_by(quest_id=quest_id_to_delete).delete()
+                QuestHistory.query.filter_by(quest_id=quest_id_to_delete).delete()
+                Question.query.filter_by(quest_id=quest_id_to_delete).delete()
+                QuestAttemptLog.query.filter_by(quest_id=quest_id_to_delete).delete()
 
-            db.session.delete(quest)
+                db.session.delete(quest)
+                deleted_count += 1
+        
+        if deleted_count > 0:
             safe_commit()
-            flash("削除しました", "success")
+            flash(f"{deleted_count}件のクエストを削除しました", "success")
         return redirect(url_for('manage_quests', title=title, level=level))
     
     # Fallback just in case
+    return redirect(url_for('manage_quests', title=title, level=level))
+
+def _update_quest_id_internal(old_id, new_id):
+    """Internal helper to update quest ID across all related tables."""
+    tables = [
+        "quest_attempt_logs",
+        "questions",
+        "quest_history",
+        "user_progress",
+        "quests"
+    ]
+    for table in tables:
+        column = "id" if table == "quests" else "quest_id"
+        db.session.execute(db.text(f"UPDATE {table} SET {column} = :new_id WHERE {column} = :old_id"),
+                           {'new_id': new_id, 'old_id': old_id})
+
+@app.route('/admin/quest/bulk_edit_ids', methods=['GET'])
+@login_required
+def bulk_edit_ids():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    quest_ids_str = request.args.get('quest_ids', '')
+    title = request.args.get('title', '')
+    level = request.args.get('level', '')
+    
+    if not quest_ids_str:
+        return redirect(url_for('manage_quests', title=title, level=level))
+    
+    quest_ids = [int(qid) for qid in quest_ids_str.split(',') if qid]
+    quests = Quest.query.filter(Quest.id.in_(quest_ids)).order_by(Quest.id).all()
+    
+    return render_template('bulk_edit_ids.html', quests=quests, title=title, level=level)
+
+@app.route('/admin/quest/save_bulk_ids', methods=['POST'])
+@login_required
+def save_bulk_ids():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    title = request.form.get('title', '')
+    level = request.form.get('level', '')
+    
+    old_ids = request.form.getlist('old_id')
+    new_ids_str = request.form.getlist('new_id')
+    
+    updates = []
+    try:
+        for old_id_str, new_id_str in zip(old_ids, new_ids_str):
+            if not new_id_str: continue
+            old_id = int(old_id_str)
+            new_id = int(new_id_str)
+            if old_id != new_id:
+                updates.append((old_id, new_id))
+    except ValueError:
+        flash("IDは数値で入力してください。", "danger")
+        return redirect(request.referrer)
+
+    if not updates:
+        flash("変更はありませんでした。", "info")
+        return redirect(url_for('manage_quests', title=title, level=level))
+
+    # Validate collisions
+    new_id_set = set(u[1] for u in updates)
+    if len(new_id_set) != len(updates):
+        flash("新しいIDの間で重複があります。", "danger")
+        return redirect(request.referrer)
+    
+    selected_old_ids = set(u[0] for u in updates)
+    
+    for _, new_id in updates:
+        if new_id not in selected_old_ids:
+            if Quest.query.get(new_id):
+                flash(f"エラー: ID {new_id} は既に他のクエストで使用されています。", "danger")
+                return redirect(request.referrer)
+
+    try:
+        # Temporary offset strategy to avoid unique constraint violations during swap
+        offset = 1000000
+        
+        # 1. Move to temporary range
+        for old_id, new_id in updates:
+            _update_quest_id_internal(old_id, old_id + offset)
+        
+        # 2. Move to final target IDs from temporary range
+        for old_id, new_id in updates:
+            _update_quest_id_internal(old_id + offset, new_id)
+            
+        safe_commit()
+        db.session.expire_all()
+        flash(f"{len(updates)}件のクエストIDを更新しました。", "success")
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Bulk ID update error: {e}")
+        flash(f"エラーが発生しました: {str(e)}", "danger")
+        
     return redirect(url_for('manage_quests', title=title, level=level))
 
 @app.route('/admin/quest/edit/<quest_id>', methods=['GET'])
