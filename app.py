@@ -706,8 +706,15 @@ def quest_result(quest_id):
                 'text': q.text,
                 'explanation': q.explanation
             }
-            if q.type == 'svg_interactive':
-                question_view_model['svg_content'] = q.choices
+            if q.type == 'svg_interactive' or q.type == 'figure_choice':
+                svg_display = q.choices
+                try:
+                    choices_json = json.loads(q.choices)
+                    if isinstance(choices_json, dict) and 'svg' in choices_json:
+                        svg_display = choices_json['svg']
+                except (json.JSONDecodeError, TypeError):
+                    pass
+                question_view_model['svg_content'] = svg_display
             # Convert newlines in explanation to <br> tags for HTML rendering
             if q.explanation:
                 question_view_model['explanation'] = q.explanation.replace('\n', '<br>')
