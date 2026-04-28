@@ -15,29 +15,108 @@
       </div>
     </div>
     <div id="ggb-element"></div>
-    <div class="ggb-modal-footer">
-      <button type="button" id="ggb-resize-btn" class="button" style="background-color: #2196F3; color: white; margin-right: 10px;">指定サイズにリサイズ</button>
-      <button type="button" id="ggb-refresh-btn" class="button" style="background-color: #ff9800; color: white; margin-right: 10px;">メニュー再表示</button>
-      <button type="button" id="ggb-reset-btn" class="button" style="background-color: #f44336; color: white; margin-right: auto;">初期化</button>
-      <button type="button" id="ggb-cancel-btn" class="button secondary">キャンセル</button>
-      <button type="button" id="ggb-apply-btn" class="button" style="background-color: #4CAF50; color: white;">反映</button>
+    <div class="ggb-modal-footer" id="ggb-footer">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%;">
+        <button type="button" id="ggb-resize-btn" class="button" style="background-color: #2196F3; color: white;">指定サイズにリサイズ</button>
+        <button type="button" id="ggb-refresh-btn" class="button" style="background-color: #ff9800; color: white;">メニュー再表示</button>
+        <button type="button" id="ggb-3d-btn" class="button" style="background-color: #9c27b0; color: white;">3D表示切替</button>
+        <button type="button" id="ggb-reset-btn" class="button" style="background-color: #f44336; color: white; margin-right: auto;">初期化(白黒)</button>
+        <button type="button" id="ggb-cancel-btn" class="button secondary">キャンセル</button>
+        <button type="button" id="ggb-apply-btn" class="button" style="background-color: #4CAF50; color: white;">反映</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
+  // --- Global SVG Preview Logic ---
+  function updateSvgPreview(textareaId, previewContainerId) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+    
+    let previewContainer = document.getElementById(previewContainerId);
+    
+    const isFgc = textareaId === 'figure-choice-svg-content';
+    const wInput = document.getElementById(isFgc ? 'figure-choice-svg-width' : 'svg-width');
+    const hInput = document.getElementById(isFgc ? 'figure-choice-svg-height' : 'svg-height');
+
+    if (!previewContainer) {
+        previewContainer = document.createElement('div');
+        previewContainer.id = previewContainerId;
+        previewContainer.className = 'svg-preview-box';
+        previewContainer.style.marginTop = '10px';
+        previewContainer.style.padding = '10px';
+        previewContainer.style.border = '1px solid #ddd';
+        previewContainer.style.background = '#f9f9f9';
+        previewContainer.style.overflow = 'auto';
+        textarea.parentNode.insertBefore(previewContainer, textarea.nextSibling.nextSibling);
+    }
+    
+    const svgContent = textarea.value;
+    if (svgContent.includes('<svg')) {
+        previewContainer.style.maxWidth = (wInput && wInput.value) ? wInput.value + 'px' : '100%';
+        previewContainer.style.maxHeight = (hInput && hInput.value) ? hInput.value + 'px' : 'none';
+        
+        previewContainer.innerHTML = svgContent;
+        
+        const svgEl = previewContainer.querySelector('svg');
+        if (svgEl) {
+            svgEl.style.width = '100%';
+            svgEl.style.height = 'auto';
+            svgEl.style.display = 'block';
+        }
+    } else {
+        previewContainer.innerHTML = '<p style="color:red;">有効なSVGデータがありません。</p>';
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     let currentGgbTargetId = null;
     let currentGgbDataTargetId = null;
     const ggbModal = document.getElementById('ggb-modal-backdrop');
     const ggbContent = document.getElementById('ggb-modal-content');
     const ggbHeader = document.getElementById('ggb-modal-header');
+    const ggbFooter = document.getElementById('ggb-footer');
     const ggbCancelBtn = document.getElementById('ggb-cancel-btn');
     const ggbApplyBtn = document.getElementById('ggb-apply-btn');
     const ggbResizeBtn = document.getElementById('ggb-resize-btn');
     const ggbRefreshBtn = document.getElementById('ggb-refresh-btn');
     const ggbResetBtn = document.getElementById('ggb-reset-btn');
+    const ggb3dBtn = document.getElementById('ggb-3d-btn');
     const ggbCloseX = document.getElementById('ggb-close-x');
+
+    // --- Footer Toggle Logic ---
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.innerHTML = 'メニュー表示/非表示';
+    toggleBtn.style = 'background: rgba(255,255,255,0.2); border: 1px solid white; color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; cursor: pointer;';
+    ggbHeader.querySelector('div').prepend(toggleBtn);
+    
+    toggleBtn.addEventListener('click', () => {
+        const isHidden = ggbFooter.style.display === 'none';
+        ggbFooter.style.display = isHidden ? 'flex' : 'none';
+        // Force resize of GGB to fill or vacate the space
+        setTimeout(() => {
+            const api = window.ggbApplet;
+            const ggbElem = document.getElementById('ggb-element');
+            if (api && api.setSize && ggbElem) {
+                api.setSize(ggbElem.offsetWidth, ggbElem.offsetHeight);
+            }
+        }, 50);
+    });
+
+    // 3D View Toggle
+    ggb3dBtn.addEventListener('click', () => {
+        const api = window.ggbApplet;
+        if (!api) return;
+        try {
+            const views = api.getVisibleViewIds ? api.getVisibleViewIds() : "";
+            const is3DVisible = views.includes('4');
+            api.executeCommand("ShowView(4, " + (!is3DVisible) + ")");
+        } catch (e) {
+            console.error("Failed to toggle 3D view:", e);
+        }
+    });
 
     // Helper: Extract GGB data from text (Base64, XML, or embedded comment)
     function extractGgbData(text) {
@@ -79,13 +158,43 @@
         return null;
     }
 
+    // Helper: Set default styling to Black & White
+    function setGgbDefaults(api, retries = 5) {
+        if (!api) return;
+        
+        // Check if the api is fully ready (has executeCommand)
+        if (typeof api.executeCommand !== 'function') {
+            if (retries > 0) {
+                console.log("GGB executeCommand not ready, retrying defaults... (" + retries + ")");
+                setTimeout(() => setGgbDefaults(api, retries - 1), 200);
+            }
+            return;
+        }
+
+        console.log("Setting GeoGebra defaults to Black & White...");
+        try {
+            const commands = [
+                'SetDefaultStyle(Point, {color: "Black", pointSize: 3, labelStyle: 0})',
+                'SetDefaultStyle(Segment, {color: "Black", lineThickness: 2})',
+                'SetDefaultStyle(Line, {color: "Black", lineThickness: 2})',
+                'SetDefaultStyle(Circle, {color: "Black", lineThickness: 2})',
+                'SetDefaultStyle(Polygon, {color: "Black", lineThickness: 2, filling: 0})',
+                'SetDefaultStyle(Angle, {color: "Black", size: 30})',
+                'SetDefaultStyle(Vector, {color: "Black", lineThickness: 2})',
+                'SetDefaultStyle(Arc, {color: "Black", lineThickness: 2})'
+            ];
+            commands.forEach(cmd => api.executeCommand(cmd));
+        } catch (e) {
+            console.warn("Failed to set GGB defaults:", e);
+        }
+    }
+
     // Helper: Load data into API with retry/wait
     function loadDataToApi(api, data, retries = 15) {
         if (!data) return;
         
-        // Try to find API if not provided
         if (!api) {
-            api = window.ggbApplet || (window.applet && typeof window.applet.getAppletObject === 'function' ? window.applet.getAppletObject() : null);
+            api = window.ggbApplet || (window[lastInitId]) || (window.applet && typeof window.applet.getAppletObject === 'function' ? window.applet.getAppletObject() : null);
         }
 
         try {
@@ -98,14 +207,12 @@
                 }
                 console.log("Data successfully loaded into GeoGebra.");
                 
-                // Refresh view
                 if (typeof api.refreshViews === 'function') api.refreshViews();
+                setGgbDefaults(api);
             } else {
                 if (retries > 0) {
-                    console.log("API not ready (setBase64 missing), retrying... (" + retries + ")");
-                    setTimeout(() => loadDataToApi(null, data, retries - 1), 500);
-                } else {
-                    console.error("GeoGebra API failed to become ready after multiple retries.");
+                    const nextApi = window.ggbApplet || (window[lastInitId]);
+                    setTimeout(() => loadDataToApi(nextApi, data, retries - 1), 500);
                 }
             }
         } catch (e) {
@@ -144,24 +251,20 @@
 
     document.addEventListener('mouseup', () => { isDragging = false; });
 
-    // Resize Sync Logic - Debounced to prevent infinite loops
+    // Resize Sync Logic - Observe the GGB element itself for accurate sizing
     let resizeTimer;
+    const ggbElem = document.getElementById('ggb-element');
     const resizeObserver = new ResizeObserver(entries => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
-        for (let entry of entries) {
-          const api = window.ggbApplet;
-          if (api && typeof api.setSize === 'function') {
-            const ggbElem = document.getElementById('ggb-element');
-            if (ggbElem) {
-              console.log("Resizing GeoGebra applet...");
-              api.setSize(ggbElem.offsetWidth, ggbElem.offsetHeight);
-            }
-          }
+        const api = window.ggbApplet;
+        if (api && typeof api.setSize === 'function' && ggbElem) {
+            console.log("Resizing GeoGebra applet to:", ggbElem.offsetWidth, ggbElem.offsetHeight);
+            api.setSize(ggbElem.offsetWidth, ggbElem.offsetHeight);
         }
-      }, 200); // 200ms debounce
+      }, 100); // Faster response
     });
-    resizeObserver.observe(ggbContent);
+    if (ggbElem) resizeObserver.observe(ggbElem);
 
     // Manual Resize: Fit modal to specified dimensions
     ggbResizeBtn.addEventListener('click', () => {
@@ -200,6 +303,7 @@
         if (!api) return;
         if (confirm("全ての図形を消去して初期状態に戻しますか？")) {
             api.newConstruction();
+            setGgbDefaults(api); // Apply defaults after reset
         }
     });
 
@@ -212,6 +316,9 @@
         console.log("GeoGebra initialized:", id);
         const api = window.ggbApplet;
         if (!api) return;
+
+        // Apply defaults on every init/load
+        setGgbDefaults(api);
 
         // 1. Check for temporary refresh data
         if (window.tempGgbData) {
@@ -304,85 +411,171 @@
         if (exported || !svgString) return;
         exported = true;
         
-        // Also get Base64 for state
+        console.log("Finalizing export... SVG Length:", svgString.length);
+        
+        // 1. Update target input immediately with current SVG
+        if (targetInput) {
+            targetInput.value = svgString;
+            targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // Auto-update SVG preview on the edit page
+            const isFgc = currentGgbTargetId === 'figure-choice-svg-content';
+            updateSvgPreview(currentGgbTargetId, isFgc ? 'figure-choice-preview-container' : 'svg-interactive-preview-container');
+        }
+
+        // 2. Try to get GGB state data for re-editing
         if (api && typeof api.getBase64 === 'function' && ggbDataInput) {
             api.getBase64((data) => {
+                if (!data) return;
                 ggbDataInput.value = data;
-                // --- Embed GGB data into SVG for recovery ---
+                // Embed GGB data into the textarea value as a comment
                 if (targetInput) {
-                  // Append as an XML comment
-                  targetInput.value = svgString + "\n<!-- GGB_DATA:" + data + " -->";
-                  targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                  console.log("GeoGebra SVG and GGB data exported successfully.");
+                  const currentVal = targetInput.value;
+                  // Only append if it doesn't already have GGB data
+                  if (!currentVal.includes("GGB_DATA:")) {
+                    targetInput.value = currentVal + "\n<!-- GGB_DATA:" + data + " -->";
+                  }
                 }
+                console.log("GGB state data embedded successfully.");
             });
-        } else {
-            if (targetInput) {
-              targetInput.value = svgString;
-              targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-              console.log("GeoGebra SVG exported successfully (without state data).");
-            }
         }
-        ggbModal.style.display = 'none';
+
+        // 3. Close modal after a short delay to ensure UI updates
+        setTimeout(() => {
+            ggbModal.style.display = 'none';
+        }, 200);
       };
 
-      console.log("Attempting to export GeoGebra SVG...");
+      console.log("Attempting to export GeoGebra content...");
 
-      // 方法1: API経由でのエクスポート
       if (api) {
         try {
-          // getExportの存在確認（非同期版）
-          if (typeof api.getExport === 'function') {
-            api.getExport('svg', (data) => {
-              if (data) { console.log("Exported via getExport callback"); finalize(data); }
-            });
-            
-            // 同期版も試す
-            const syncData = api.getExport('svg');
-            if (syncData && typeof syncData === 'string' && syncData.startsWith('<svg')) {
-              console.log("Exported via getExport synchronous");
-              finalize(syncData);
-              return;
-            }
-          }
+          if (typeof api.refreshViews === 'function') api.refreshViews();
+
+          // Detection for 3D or other non-standard views
+          const viewsStr = api.getVisibleViewIds ? String(api.getVisibleViewIds()) : "";
+          const is3DActive = viewsStr.includes('4') || viewsStr.includes('512');
           
-          // 他の可能性: exportSVG
-          if (!exported && typeof api.exportSVG === 'function') {
-            api.exportSVG((data) => { if (data) finalize(data); });
+          const handlePngData = (data) => {
+                if (exported) return;
+                if (data && typeof data === 'string' && data.startsWith('data:image/png')) {
+                    const dims = getTargetDims();
+                    const w = dims.w || 600;
+                    const h = dims.h || 400;
+                    const svgWrapper = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <image xlink:href="${data}" href="${data}" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
+</svg>`;
+                    finalize(svgWrapper);
+                }
+          };
+
+          const tryPngExport = () => {
+            if (exported) return;
+            
+            // Try different api signatures for exportImage
+            if (typeof api.exportImage === 'function') {
+                try {
+                    // Try to get result directly (synchronous)
+                    const direct = api.exportImage({ "type": "png" });
+                    if (direct && typeof direct === 'string' && direct.startsWith('data:image/png')) {
+                        handlePngData(direct);
+                        return;
+                    }
+                } catch(e) {}
+
+                try {
+                    // Try callback style
+                    api.exportImage(handlePngData, { "type": "png" });
+                    api.exportImage({ "type": "png" }, handlePngData);
+                } catch(e) {}
+            }
+
+            // Fallback to getPNGBase64
+            setTimeout(() => {
+                if (!exported && typeof api.getPNGBase64 === 'function') {
+                    const b64 = api.getPNGBase64(1, false, 72);
+                    if (b64) handlePngData("data:image/png;base64," + b64);
+                }
+            }, 300);
+          };
+
+          const trySvgExport = () => {
+            if (exported) return;
+            
+            let svgData = null;
+            if (typeof api.getExport === 'function') {
+                svgData = api.getExport('svg');
+            }
+            if (!svgData && typeof api.exportSVG === 'function') {
+                svgData = api.exportSVG();
+            }
+
+            if (svgData && typeof svgData === 'string' && svgData.length > 200) {
+                // If 3D is active, standard SVG export is often blank/insufficient
+                if (is3DActive && svgData.length < 1500) {
+                    tryPngExport();
+                } else {
+                    finalize(svgData);
+                }
+            } else {
+                // Async fallback
+                if (typeof api.getExport === 'function') {
+                    api.getExport('svg', (data) => { if(data && data.length > 200) finalize(data); });
+                }
+                setTimeout(() => { if(!exported) tryPngExport(); }, 500);
+            }
+          };
+
+          if (is3DActive) {
+              tryPngExport();
+              setTimeout(trySvgExport, 1000); // SVG as absolute fallback
+          } else {
+              trySvgExport();
+              setTimeout(tryPngExport, 1000); // PNG as fallback
           }
         } catch (e) {
           console.warn("GeoGebra API call failed:", e);
         }
       }
 
-      // 方法2: 強力なDOMフォールバック（iframe内も検索）
+      // DOM fallback (as a last resort)
       setTimeout(() => {
         if (!exported) {
-          console.log("Trying deep DOM search for SVG...");
+          console.log("Trying deep DOM search for SVG or Canvas...");
           
-          const findSvg = (root) => {
+          const findEl = (root, tag) => {
             if (!root) return null;
-            // 直下のSVGを探す
-            const svg = root.querySelector('svg');
-            if (svg) return svg;
-            
-            // iframeがあればその中を探す
+            const el = root.querySelector(tag);
+            if (el) return el;
             const iframes = root.querySelectorAll('iframe');
             for (let f of iframes) {
               try {
-                const innerSvg = findSvg(f.contentDocument || f.contentWindow.document);
-                if (innerSvg) return innerSvg;
-              } catch (e) { /* クロスドメイン制限など */ }
+                const innerEl = findEl(f.contentDocument || f.contentWindow.document, tag);
+                if (innerEl) return innerEl;
+              } catch (e) {}
             }
             return null;
           };
 
-          const svgElement = findSvg(document.getElementById('ggb-element'));
+          const ggbElem = document.getElementById('ggb-element');
+          const svgElement = findEl(ggbElem, 'svg');
+          const canvasElement = findEl(ggbElem, 'canvas');
+
+          if (canvasElement && (is3DActive || !svgElement)) {
+              console.log("Exporting via Canvas fallback");
+              try {
+                  const data = canvasElement.toDataURL('image/png');
+                  if (data && data.length > 1000) {
+                      handlePngData(data);
+                      return;
+                  }
+              } catch(e) { console.warn("Canvas fallback failed", e); }
+          }
+
           if (svgElement) {
-            console.log("Exported via Deep DOM fallback");
+            console.log("Exporting via SVG DOM fallback");
             const serializer = new XMLSerializer();
             let svgString = serializer.serializeToString(svgElement);
-            // xmlnsが抜けている場合の補完
             if (!svgString.includes('xmlns="http://www.w3.org/2000/svg"')) {
               svgString = svgString.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
             }
@@ -392,7 +585,7 @@
             ggbModal.style.display = 'none';
           }
         }
-      }, 800);
+      }, 2000);
     });
   });
 </script>
@@ -455,6 +648,7 @@
       border-radius: 8px 8px 0 0;
       flex-shrink: 0; /* 高さを維持 */
       z-index: 10;
+    }
     #ggb-element {
       flex: 1; /* 残りの空間をすべて使う */
       width: 100% !important;
@@ -463,6 +657,7 @@
       overflow: hidden;
       position: relative;
       background: #eee;
+      margin-bottom: 2px; /* フッターとのわずかな隙間 */
     }
     .markdown-preview img {
       max-width: 100%;
@@ -485,10 +680,11 @@
       gap: 10px;
       padding: 12px 15px;
       background: #f8f9fa;
-      border-top: 1px solid #dee2e6;
+      border-top: 2px solid #673ab7; /* 境界を明確に */
       border-radius: 0 0 8px 8px;
       flex-shrink: 0;
-      z-index: 10;
+      z-index: 100; /* アプレットの要素より手前に */
+      position: relative;
     }
 </style>
 
