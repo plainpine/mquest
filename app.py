@@ -509,7 +509,7 @@ def quest_result(quest_id):
                     sub_q_id = sub_q['id']
                     form_field_name = f"q{i}_{sub_q_id}"
                     user_val = request.form.get(form_field_name, '').strip()
-                    expected_val = str(sub_q['answer'])
+                    expected_val = str(sub_q['answer']).strip()
                     user_answers_list.append({sub_q['prompt']: user_val})
                     expected_answers_list.append({sub_q['prompt']: expected_val})
                     if user_val != expected_val:
@@ -526,7 +526,7 @@ def quest_result(quest_id):
                 for sub_q_index, sub_q in enumerate(sub_questions):
                     form_field_name = f"q{i}_{sub_q_index}"
                     user_val = request.form.get(form_field_name, '').strip()
-                    expected_val = str(sub_q['answer'])
+                    expected_val = str(sub_q['answer']).strip()
                     user_answers_list.append({sub_q['prompt']: user_val})
                     expected_answers_list.append({sub_q['prompt']: expected_val})
                     if user_val != expected_val:
@@ -543,7 +543,7 @@ def quest_result(quest_id):
                 for j, ans in enumerate(answer_list):
                     field = f"q{i}_{j}"
                     user_val = request.form.get(field, '').strip()
-                    expected_val = str(ans['answer'])
+                    expected_val = str(ans['answer']).strip()
                     expected.append({ans['label']: expected_val})
                     user_input.append({ans['label']: user_val})
                     if user_val != expected_val:
@@ -563,7 +563,7 @@ def quest_result(quest_id):
                 for sub_q_index, sub_q in enumerate(sub_questions):
                     form_field_name = f"q{i}_{sub_q_index}"
                     user_val = request.form.get(form_field_name, '').strip()
-                    expected_val = str(sub_q.get('answer', ''))
+                    expected_val = str(sub_q.get('answer', '')).strip()
                     
                     user_answers_list.append({sub_q.get('prompt', ''): user_val})
                     expected_answers_list.append({sub_q.get('prompt', ''): expected_val})
@@ -577,7 +577,8 @@ def quest_result(quest_id):
 
             elif question_type == 'function_graph':
                 try:
-                    sub_questions = json.loads(q.choices)
+                    # choices stores the sub-questions (prompts and answers) for function_graph
+                    sub_questions = json.loads(q.choices) if q.choices else []
                 except (json.JSONDecodeError, TypeError):
                     sub_questions = []
                 
@@ -588,7 +589,7 @@ def quest_result(quest_id):
                 for sub_q_index, sub_q in enumerate(sub_questions):
                     form_field_name = f"q{i}_{sub_q_index}"
                     user_val = request.form.get(form_field_name, '').strip()
-                    expected_val = str(sub_q.get('answer', ''))
+                    expected_val = str(sub_q.get('answer', '')).strip()
                     
                     user_answers_list.append({sub_q.get('prompt', ''): user_val})
                     expected_answers_list.append({sub_q.get('prompt', ''): expected_val})
@@ -598,6 +599,7 @@ def quest_result(quest_id):
                         
                 correct = all_sub_correct
                 user_answer = user_answers_list
+                expected = expected_answers_list
                 expected = expected_answers_list
 
             results.append({
