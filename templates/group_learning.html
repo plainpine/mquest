@@ -54,7 +54,13 @@
         </div>
 
       {% elif question.type == 'svg_interactive' %}
-        <div class="svg-interactive-container">
+        {% set choices_data = (question.choices | from_json) if (question.choices and question.choices.startswith('{')) else none %}
+        {% set style = "" %}
+        {% if choices_data %}
+          {% if choices_data.width %}{% set style = style + "max-width: " + choices_data.width + "px; " %}{% endif %}
+          {% if choices_data.height %}{% set style = style + "max-height: " + choices_data.height + "px; " %}{% endif %}
+        {% endif %}
+        <div class="svg-interactive-container" style="{{ style }}">
           {{ question.svg_content | safe }}
         </div>
         <div class="sub-questions-container" style="margin-top: 1rem;">
@@ -65,8 +71,14 @@
           {% endfor %}
         </div>
       {% elif question.type == 'figure_choice' %}
-        <div class="figure-choice-container">
-          {{ question.text | safe }}
+        {% set choices_data = (question.choices | from_json) if (question.choices and question.choices.startswith('{')) else none %}
+        {% set style = "" %}
+        {% if choices_data %}
+          {% if choices_data.width %}{% set style = style + "max-width: " + choices_data.width + "px; " %}{% endif %}
+          {% if choices_data.height %}{% set style = style + "max-height: " + choices_data.height + "px; " %}{% endif %}
+        {% endif %}
+        <div class="figure-choice-container" style="{{ style }}">
+          {{ question.svg_content | safe }}
         </div>
         <div class="sub-questions-container" style="margin-top: 1rem;">
           {% for sub_q in question.sub_questions %}
@@ -472,6 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
     padding: 0.5rem 0.75rem;
     font-size: 1rem;
   }
+  .svg-interactive-container svg, .figure-choice-container svg { width: 100%; height: auto; display: block; }
 </style>
 {% endblock %}
 

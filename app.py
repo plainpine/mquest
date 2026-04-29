@@ -704,6 +704,7 @@ def quest_result(quest_id):
                 'id': q.id,
                 'type': q.type,
                 'text': q.text,
+                'choices': q.choices,
                 'explanation': q.explanation
             }
             if q.type == 'svg_interactive' or q.type == 'figure_choice':
@@ -1679,7 +1680,12 @@ def preview_question():
     elif q_type == 'svg_interactive':
         question_data['svg_content'] = request.form.get('svg_content', '')
         # Pass GGB data as well for preview state if needed, though not strictly required for static preview
-        question_data['choices'] = json.dumps({'svg': question_data['svg_content'], 'ggb': request.form.get('ggb_data', '')})
+        question_data['choices'] = json.dumps({
+            'svg': question_data['svg_content'], 
+            'ggb': request.form.get('ggb_data', ''),
+            'width': request.form.get('svg_width', ''),
+            'height': request.form.get('svg_height', '')
+        })
         sub_ids = request.form.getlist('sub_id')
         sub_prompts = request.form.getlist('sub_prompt')
         sub_answers = request.form.getlist('sub_answer')
@@ -1697,7 +1703,12 @@ def preview_question():
 
     elif q_type == 'figure_choice':
         question_data['svg_content'] = request.form.get('figure_choice_svg_content', '')
-        question_data['choices'] = json.dumps({'svg': question_data['svg_content'], 'ggb': request.form.get('figure_choice_ggb_data', '')})
+        question_data['choices'] = json.dumps({
+            'svg': question_data['svg_content'], 
+            'ggb': request.form.get('figure_choice_ggb_data', ''),
+            'width': request.form.get('figure_choice_svg_width', ''),
+            'height': request.form.get('figure_choice_svg_height', '')
+        })
         sub_ids = request.form.getlist('figure_choice_sub_id')
         sub_prompts = request.form.getlist('figure_choice_sub_prompt')
         sub_answers = request.form.getlist('figure_choice_sub_answer')
