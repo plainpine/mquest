@@ -1841,18 +1841,22 @@ def quest_run_group(quest_id):
             answer = q.answer  # パースできなければそのまま
 
         # すでに構造化されていないので、自前で構築
-        if q.type == 'svg_interactive':
+        if q.type == 'svg_interactive' or q.type == 'figure_choice':
+            # Try to parse choices as JSON (new format with 'svg' and 'ggb')
+            svg_display = q.choices
+            try:
+                choices_json = json.loads(q.choices)
+                if isinstance(choices_json, dict) and 'svg' in choices_json:
+                    svg_display = choices_json['svg']
+            except (json.JSONDecodeError, TypeError):
+                pass
+
             questions.append({
                 "type": q.type,
                 "text": q.text,
-                "svg_content": q.choices, # choicesにSVGコンテンツを格納
-                "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
-            })
-        elif q.type == 'figure_choice':
-            questions.append({
-                "type": q.type,
-                "text": q.text, # textにSVGコンテンツを格納
-                "sub_questions": json.loads(q.answer) # answerにサブ問題を格納
+                "choices": q.choices, # Pass raw JSON for size extraction in template
+                "svg_content": svg_display,
+                "sub_questions": json.loads(q.answer) if q.answer else []
             })
         else:
             questions.append({

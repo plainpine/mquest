@@ -171,8 +171,13 @@
             return;
         }
 
-        console.log("Setting GeoGebra defaults to Black & White...");
+        console.log("Setting GeoGebra defaults and ensuring UI visibility...");
         try {
+            // Ensure UI components are visible
+            if (typeof api.showToolBar === 'function') api.showToolBar(true);
+            if (typeof api.showMenuBar === 'function') api.showMenuBar(true);
+            if (typeof api.showAlgebraInput === 'function') api.showAlgebraInput(true);
+
             const commands = [
                 'SetDefaultStyle(Point, {color: "Black", pointSize: 3, labelStyle: 0})',
                 'SetDefaultStyle(Segment, {color: "Black", lineThickness: 2})',
@@ -184,8 +189,11 @@
                 'SetDefaultStyle(Arc, {color: "Black", lineThickness: 2})'
             ];
             commands.forEach(cmd => api.executeCommand(cmd));
+            
+            // Force layout update if possible
+            if (typeof api.refreshViews === 'function') api.refreshViews();
         } catch (e) {
-            console.warn("Failed to set GGB defaults:", e);
+            console.warn("Failed to set GGB defaults or UI state:", e);
         }
     }
 
@@ -207,8 +215,12 @@
                 }
                 console.log("Data successfully loaded into GeoGebra.");
                 
-                if (typeof api.refreshViews === 'function') api.refreshViews();
-                setGgbDefaults(api);
+                // Delay slightly to let Base64 perspective apply, then override it to show UI
+                setTimeout(() => {
+                    if (typeof api.setPerspective === 'function') api.setPerspective("G");
+                    setGgbDefaults(api);
+                    if (typeof api.refreshViews === 'function') api.refreshViews();
+                }, 200);
             } else {
                 if (retries > 0) {
                     const nextApi = window.ggbApplet || (window[lastInitId]);
