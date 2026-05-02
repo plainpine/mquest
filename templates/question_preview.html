@@ -119,7 +119,7 @@
             {% for ans in (question.answers if question.answers else []) %}
                 <div class="numeric-block" style="margin-bottom: 1rem;">
                     <label>{{ ans.label }}：</label>
-                    <input type="text" class="numeric-input" data-qid="{{ q_index }}">
+                    <input type="text" class="numeric-input" data-qid="{{ q_index }}" inputmode="none">
                     <div class="correct-answer-preview">
                         <strong>正答:</strong> {{ ans.answer }}
                     </div>
@@ -127,7 +127,7 @@
             {% endfor %}
 
         {% elif question.type == 'fill_in_the_blank_en' %}
-            <input type="text" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}">
+            <input type="text" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" inputmode="none">
             <div class="correct-answer-preview">
                 <strong>正解:</strong> {{ question.answer }}
             </div>
@@ -140,7 +140,7 @@
                             <span>{{ loop.index }}.</span>
                             <div class="markdown" data-content="{{ sub_q.prompt | e }}"></div>
                         </div>
-                        <input type="text" class="numeric-input" data-qid="{{ q_index }}">
+                        <input type="text" class="numeric-input" data-qid="{{ q_index }}" inputmode="none">
                         <div class="correct-answer-preview">
                             <strong>正答:</strong> {{ sub_q.answer }}
                         </div>
@@ -183,7 +183,7 @@
                             <span>{{ loop.index }}.</span>
                             <div class="markdown" data-content="{{ sub_q.prompt | e }}"></div>
                         </div>
-                        <input type="text" class="numeric-input" data-qid="{{ q_index }}" style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+                        <input type="text" class="numeric-input" data-qid="{{ q_index }}" style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;" inputmode="none">
                         <div class="correct-answer-preview">
                             <strong>正答:</strong> {{ sub_q.answer }}
                         </div>

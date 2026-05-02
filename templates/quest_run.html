@@ -53,7 +53,7 @@
         {% for ans in question.answers %}
           <div class="numeric-block">
             <label>{{ ans.label }}：</label>
-            <input type="text" name="q{{ q_index }}_{{ loop.index0 }}" class="numeric-input" data-qid="{{ q_index }}">
+            <input type="text" name="q{{ q_index }}_{{ loop.index0 }}" class="numeric-input" data-qid="{{ q_index }}" inputmode="none">
           </div>
         {% endfor %}
         <div style="height: 1rem;"></div>
@@ -86,7 +86,7 @@
         </div>
       {% elif question.type == 'fill_in_the_blank_en' %}
         <div class="en-fill-in-the-blank-block">
-          <input type="text" name="q{{ q_index }}" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" autocomplete="off">
+          <input type="text" name="q{{ q_index }}" class="en-fill-in-the-blank-input" data-qid="{{ q_index }}" autocomplete="off" inputmode="none">
           <div class="virtual-keyboard" data-qid="{{ q_index }}" style="display: none;">
             <div class="keyboard-row">
               {% for key in 'qwertyuiop' %}<button type="button" class="key-btn-en" data-key="{{ key }}">{{ key }}</button>{% endfor %}
@@ -127,7 +127,7 @@
           {% for sub_q in question.sub_questions %}
             <div class="sub-question" style="margin-bottom: 1rem;">
               <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
-              <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+              <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;" inputmode="none">
             </div>
           {% endfor %}
           <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
@@ -203,7 +203,7 @@
           {% for sub_q in question.choices %}
             <div class="sub-question" style="margin-bottom: 1rem;">
               <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
-              <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;">
+              <input type="text" name="q{{ q_index }}_{{ sub_q.id }}" class="numeric-input" data-qid="{{ q_index }}" style="margin-top: 0.5rem; border: 1px solid #ccc; padding: 8px; font-size: 1.2rem; text-align: center; border-radius: 4px;" inputmode="none">
             </div>
           {% endfor %}
           <div class="keypad" data-qid="{{ q_index }}" style="margin-top: 1rem; display: none;">
