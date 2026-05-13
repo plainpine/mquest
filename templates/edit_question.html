@@ -17,7 +17,6 @@
     <div id="ggb-element"></div>
     <div class="ggb-modal-footer" id="ggb-footer">
       <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%;">
-        <button type="button" id="ggb-resize-btn" class="button" style="background-color: #2196F3; color: white;">指定サイズにリサイズ</button>
         <button type="button" id="ggb-refresh-btn" class="button" style="background-color: #ff9800; color: white;">メニュー再表示</button>
         <button type="button" id="ggb-3d-btn" class="button" style="background-color: #9c27b0; color: white;">3D表示切替</button>
         <button type="button" id="ggb-reset-btn" class="button" style="background-color: #f44336; color: white; margin-right: auto;">初期化(白黒)</button>
@@ -79,7 +78,6 @@
     const ggbFooter = document.getElementById('ggb-footer');
     const ggbCancelBtn = document.getElementById('ggb-cancel-btn');
     const ggbApplyBtn = document.getElementById('ggb-apply-btn');
-    const ggbResizeBtn = document.getElementById('ggb-resize-btn');
     const ggbRefreshBtn = document.getElementById('ggb-refresh-btn');
     const ggbResetBtn = document.getElementById('ggb-reset-btn');
     const ggb3dBtn = document.getElementById('ggb-3d-btn');
@@ -215,9 +213,9 @@
                 }
                 console.log("Data successfully loaded into GeoGebra.");
                 
-                // Delay slightly to let Base64 perspective apply, then override it to show UI
+                // Delay slightly to let Base64 perspective apply
                 setTimeout(() => {
-                    if (typeof api.setPerspective === 'function') api.setPerspective("G");
+                    // REMOVED: setPerspective("G") as it might reset zoom level causing "shrinking"
                     setGgbDefaults(api);
                     if (typeof api.refreshViews === 'function') api.refreshViews();
                 }, 200);
@@ -277,20 +275,6 @@
       }, 100); // Faster response
     });
     if (ggbElem) resizeObserver.observe(ggbElem);
-
-    // Manual Resize: Fit modal to specified dimensions
-    ggbResizeBtn.addEventListener('click', () => {
-        const dims = getTargetDims();
-        if (dims.w && dims.h) {
-            ggbContent.style.width = (dims.w + 4) + 'px';
-            ggbContent.style.height = (dims.h + 110) + 'px';
-            ggbContent.style.transform = 'translate(-50%, -50%)';
-            ggbContent.style.top = '50%';
-            ggbContent.style.left = '50%';
-        } else {
-            alert("リサイズするには先に「表示サイズ (横x縦 px)」を入力してください。");
-        }
-    });
 
     // --- Menu Refresh Logic ---
     ggbRefreshBtn.addEventListener('click', () => {
@@ -388,6 +372,13 @@
             }
         }
         
+        // Reset modal size to default (85%) to ensure a large editor regardless of question display size
+        ggbContent.style.width = '85%';
+        ggbContent.style.height = '85%';
+        ggbContent.style.top = '50%';
+        ggbContent.style.left = '50%';
+        ggbContent.style.transform = 'translate(-50%, -50%)';
+
         ggbModal.style.display = 'flex';
         
         const ggbElem = document.getElementById('ggb-element');
@@ -527,6 +518,12 @@
                 if (is3DActive && svgData.length < 1500) {
                     tryPngExport();
                 } else {
+                    // Force target dimensions into the SVG attributes if specified to maintain scale consistency
+                    const dims = getTargetDims();
+                    if (dims.w && dims.h) {
+                        svgData = svgData.replace(/<svg([^>]+)width="[^"]*"/, `<svg$1width="${dims.w}"`);
+                        svgData = svgData.replace(/<svg([^>]+)height="[^"]*"/, `<svg$1height="${dims.h}"`);
+                    }
                     finalize(svgData);
                 }
             } else {
@@ -859,6 +856,13 @@
 <script>
   // Definitions that must exist early
   async function updatePreviews() {
+    if (typeof marked !== 'undefined') {
+        if (marked.use) {
+            marked.use({ gfm: true, breaks: true });
+        } else if (marked.setOptions) {
+            marked.setOptions({ gfm: true, breaks: true });
+        }
+    }
     const ids = ["text-input", "explanation-input"];
     for(let i=0; i<4; i++) { ids.push(`choice${i}`); }
     
@@ -873,7 +877,13 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    marked.setOptions({ gfm: true, breaks: true });
+    if (typeof marked !== 'undefined') {
+        if (marked.use) {
+            marked.use({ gfm: true, breaks: true });
+        } else if (marked.setOptions) {
+            marked.setOptions({ gfm: true, breaks: true });
+        }
+    }
     const typeSelect = document.getElementById('type-select');
     const mainForm = document.querySelector('form');
 
@@ -904,6 +914,13 @@
     // Dynamic UI
     async function renderMarkdown(element, text) {
         if (!element) return;
+        if (typeof marked !== 'undefined') {
+            if (marked.use) {
+                marked.use({ gfm: true, breaks: true });
+            } else if (marked.setOptions) {
+                marked.setOptions({ gfm: true, breaks: true });
+            }
+        }
         element.innerHTML = marked.parse(text || '');
         if (window.MathJax && MathJax.typesetPromise) {
             await MathJax.typesetPromise([element]);
@@ -1000,8 +1017,9 @@
         div.innerHTML = `
             <input type="hidden" name="sub_id" value="${id || 'new_' + Date.now()}">
             <div>
-                <label>小問プロンプト:</label>
+                <label>小問プロンプト (Markdown):</label>
                 <textarea name="sub_prompt" rows="2" class="sub-prompt-input" style="width:100%">${prompt}</textarea>
+                <div class="markdown-preview sub-prompt-preview" style="margin-top: 5px; min-height: 1.2em; background: #fdfdfd; padding: 8px; border: 1px dashed #eee;"></div>
             </div>
             <div>
                 <label>正答:</label>
@@ -1010,6 +1028,11 @@
             <button type="button" class="remove-sub-question" style="margin-top: 5px;">削除</button>
         `;
         document.getElementById('sub-questions-container').appendChild(div);
+
+        const promptTextarea = div.querySelector('textarea[name="sub_prompt"]');
+        const promptPreview = div.querySelector('.sub-prompt-preview');
+        promptTextarea.addEventListener('input', () => renderMarkdown(promptPreview, promptTextarea.value));
+        renderMarkdown(promptPreview, promptTextarea.value);
     }
 
     function createFigureChoiceSubQuestion(prompt = '', choices = ['', '', '', ''], answer = '', id = '') {

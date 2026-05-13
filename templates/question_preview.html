@@ -95,10 +95,12 @@
         {% if question.type == 'choice' or question.type == 'multiple_choice' %}
             <div class="choice-block">
                 {% for choice in (question.choices if question.choices else []) %}
+                    {% if choice and choice.strip() %}
                     <div class="choice-option {{ 'multiple-choice' if question.type == 'multiple_choice' else '' }}" data-qname="q{{ q_index }}">
                         <input type="{{ 'checkbox' if question.type == 'multiple_choice' else 'radio' }}" name="q{{ q_index }}" style="display: none;">
                         <span class="markdown" data-content="{{ choice | e }}"></span>
                     </div>
+                    {% endif %}
                 {% endfor %}
             </div>
             <div class="correct-answer-preview">
@@ -159,9 +161,11 @@
                         </div>
                         <div class="choice-block">
                             {% for choice in sub_q.choices %}
+                                {% if choice and choice.strip() %}
                                 <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}">
                                     <span class="markdown" data-content="{{ choice | e }}"></span>
                                 </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                         <div class="correct-answer-preview">
@@ -206,9 +210,11 @@
                         </div>
                         <div class="choice-block">
                             {% for choice in sub_q.choices %}
+                                {% if choice and choice.strip() %}
                                 <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}">
                                     <span class="markdown" data-content="{{ choice | e }}"></span>
                                 </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                         <div class="correct-answer-preview">
