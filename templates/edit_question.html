@@ -17,8 +17,7 @@
     <div id="ggb-element"></div>
     <div class="ggb-modal-footer" id="ggb-footer">
       <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%;">
-        <button type="button" id="ggb-refresh-btn" class="button" style="background-color: #ff9800; color: white;">メニュー再表示</button>
-        <button type="button" id="ggb-3d-btn" class="button" style="background-color: #9c27b0; color: white;">3D表示切替</button>
+        <button type="button" id="ggb-refresh-btn" class="button" style="background-color: #ff9800; color: white;">アプリ再読込</button>
         <button type="button" id="ggb-reset-btn" class="button" style="background-color: #f44336; color: white; margin-right: auto;">初期化(白黒)</button>
         <button type="button" id="ggb-cancel-btn" class="button secondary">キャンセル</button>
         <button type="button" id="ggb-apply-btn" class="button" style="background-color: #4CAF50; color: white;">反映</button>
@@ -108,7 +107,6 @@
     const ggbApplyBtn = document.getElementById('ggb-apply-btn');
     const ggbRefreshBtn = document.getElementById('ggb-refresh-btn');
     const ggbResetBtn = document.getElementById('ggb-reset-btn');
-    const ggb3dBtn = document.getElementById('ggb-3d-btn');
     const ggbCloseX = document.getElementById('ggb-close-x');
 
     // --- Footer Toggle Logic ---
@@ -129,27 +127,6 @@
                 api.setSize(ggbElem.offsetWidth, ggbElem.offsetHeight);
             }
         }, 50);
-    });
-
-    // 3D View Toggle
-    ggb3dBtn.addEventListener('click', () => {
-        const api = window.ggbApplet;
-        if (!api) return;
-        try {
-            const views = api.getVisibleViewIds ? String(api.getVisibleViewIds()) : "";
-            const is3DVisible = views.includes('4') || views.includes('512');
-            api.executeCommand("ShowView(4, " + (!is3DVisible) + ")");
-            
-            // Force resize after layout change
-            setTimeout(() => {
-                const ggbElem = document.getElementById('ggb-element');
-                if (api.setSize && ggbElem) {
-                    api.setSize(ggbElem.offsetWidth, ggbElem.offsetHeight);
-                }
-            }, 100);
-        } catch (e) {
-            console.error("Failed to toggle 3D view:", e);
-        }
     });
 
     // Helper: Extract GGB data from text (Base64, XML, or embedded comment)
