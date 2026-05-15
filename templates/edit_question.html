@@ -28,6 +28,34 @@
 </div>
 
 <script>
+  // --- Global GeoGebra Object Listener ---
+  // This ensures that any object created (point, line, triangle, etc.) 
+  // is immediately turned black to meet the user's requirement.
+  window.onGgbObjectAdded = function(objName) {
+    const api = window.ggbApplet;
+    if (!api) return;
+    try {
+        const type = api.getObjectType(objName);
+        console.log("Object added:", objName, "Type:", type);
+        
+        // Always set color to black (r=0, g=0, b=0)
+        api.setColor(objName, 0, 0, 0);
+        
+        // Additional styling for specific types
+        if (type === 'point') {
+            api.setPointSize(objName, 3);
+            api.setLabelStyle(objName, 0); // Name only or hidden depending on GGB version
+        } else if (type === 'polygon') {
+            api.setFilling(objName, 0); // Transparent interior
+            api.setLineThickness(objName, 2);
+        } else if (['line', 'segment', 'ray', 'vector', 'circle', 'conic', 'arc'].includes(type)) {
+            api.setLineThickness(objName, 2);
+        }
+    } catch (e) {
+        console.debug("Failed to style new object:", objName, e);
+    }
+  };
+
   // --- Global SVG Preview Logic ---
   function updateSvgPreview(textareaId, previewContainerId) {
     const textarea = document.getElementById(textareaId);
@@ -108,9 +136,17 @@
         const api = window.ggbApplet;
         if (!api) return;
         try {
-            const views = api.getVisibleViewIds ? api.getVisibleViewIds() : "";
-            const is3DVisible = views.includes('4');
+            const views = api.getVisibleViewIds ? String(api.getVisibleViewIds()) : "";
+            const is3DVisible = views.includes('4') || views.includes('512');
             api.executeCommand("ShowView(4, " + (!is3DVisible) + ")");
+            
+            // Force resize after layout change
+            setTimeout(() => {
+                const ggbElem = document.getElementById('ggb-element');
+                if (api.setSize && ggbElem) {
+                    api.setSize(ggbElem.offsetWidth, ggbElem.offsetHeight);
+                }
+            }, 100);
         } catch (e) {
             console.error("Failed to toggle 3D view:", e);
         }
@@ -160,38 +196,37 @@
     function setGgbDefaults(api, retries = 5) {
         if (!api) return;
         
-        // Check if the api is fully ready (has executeCommand)
-        if (typeof api.executeCommand !== 'function') {
+        // Ensure the API is ready
+        if (typeof api.registerAddListener !== 'function') {
             if (retries > 0) {
-                console.log("GGB executeCommand not ready, retrying defaults... (" + retries + ")");
+                console.log("GGB API not fully ready, retrying defaults... (" + retries + ")");
                 setTimeout(() => setGgbDefaults(api, retries - 1), 200);
             }
             return;
         }
 
-        console.log("Setting GeoGebra defaults and ensuring UI visibility...");
+        console.log("Registering GeoGebra object listeners...");
         try {
             // Ensure UI components are visible
             if (typeof api.showToolBar === 'function') api.showToolBar(true);
             if (typeof api.showMenuBar === 'function') api.showMenuBar(true);
             if (typeof api.showAlgebraInput === 'function') api.showAlgebraInput(true);
+            if (typeof api.showStyleBar === 'function') api.showStyleBar(true);
 
-            const commands = [
-                'SetDefaultStyle(Point, {color: "Black", pointSize: 3, labelStyle: 0})',
-                'SetDefaultStyle(Segment, {color: "Black", lineThickness: 2})',
-                'SetDefaultStyle(Line, {color: "Black", lineThickness: 2})',
-                'SetDefaultStyle(Circle, {color: "Black", lineThickness: 2})',
-                'SetDefaultStyle(Polygon, {color: "Black", lineThickness: 2, filling: 0})',
-                'SetDefaultStyle(Angle, {color: "Black", size: 30})',
-                'SetDefaultStyle(Vector, {color: "Black", lineThickness: 2})',
-                'SetDefaultStyle(Arc, {color: "Black", lineThickness: 2})'
-            ];
-            commands.forEach(cmd => api.executeCommand(cmd));
+            // Register the global object listener to enforce black color on everything new
+            api.unregisterAddListener("onGgbObjectAdded"); // Clear if exists
+            api.registerAddListener("onGgbObjectAdded");
+
+            // Also, apply black color to any objects ALREADY in the construction (for re-editing)
+            const objNames = api.getAllObjectNames();
+            if (objNames && objNames.length > 0) {
+                objNames.forEach(name => window.onGgbObjectAdded(name));
+            }
             
-            // Force layout update if possible
+            // Force layout update
             if (typeof api.refreshViews === 'function') api.refreshViews();
         } catch (e) {
-            console.warn("Failed to set GGB defaults or UI state:", e);
+            console.warn("Failed to set GGB defaults:", e);
         }
     }
 
@@ -347,7 +382,10 @@
       "enableRightClick": true,
       "useBrowserForJS": true,
       "allowUpscale": true,
-      "enableFullscreen": true
+      "enableFullscreen": true,
+      "enable3D": true,
+      "allowStyleBar": true,
+      "showComponentSettings": true
     };
     const applet = new GGBApplet(ggbParams, true);
 
