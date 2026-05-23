@@ -730,6 +730,12 @@
   </select>
 
   <label for="text-input">問題文（Markdown）:</label>
+  <div style="background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.85rem;">
+    <strong>文字サイズの調整（Markdown/HTML）:</strong><br>
+    ・<code>&lt;small&gt;文字&lt;/small&gt;</code> : 標準より少し小さくする<br>
+    ・<code>&lt;span class="small-text"&gt;文字&lt;/span&gt;</code> : 85%のサイズ<br>
+    ・<code>&lt;span class="tiny-text"&gt;文字&lt;/span&gt;</code> : 70%のサイズ（注釈など）
+  </div>
   <textarea name="text" id="text-input" rows="4" cols="60">{{ question.text if question else '' }}</textarea>
   <div id="text-preview" class="markdown-preview" style="margin-bottom: 1rem;"></div>
 

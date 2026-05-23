@@ -357,6 +357,49 @@ button,
 }
 
 
+/* Markdown Table styles */
+.markdown table,
+.markdown-preview table {
+  border-collapse: collapse;
+  width: auto;
+  max-width: 100%;
+  margin-bottom: 1rem;
+  background-color: white;
+}
+
+.markdown th,
+.markdown td,
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+}
+
+.markdown th,
+.markdown-preview th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+/* 内部のpタグのマージン調整 */
+.markdown td p,
+.markdown th p,
+.markdown-preview td p,
+.markdown-preview th p {
+  margin-bottom: 0;
+}
+
+/* Markdown用テキストサイズ調整 */
+.markdown small,
+.markdown-preview small,
+.small-text {
+  font-size: 0.85em;
+}
+
+.tiny-text {
+  font-size: 0.7em;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   body {
