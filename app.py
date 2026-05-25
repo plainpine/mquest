@@ -1858,6 +1858,32 @@ def quest_run_group(quest_id):
                 "svg_content": svg_display,
                 "sub_questions": json.loads(q.answer) if q.answer else []
             })
+        elif q.type == 'function_graph':
+            questions.append({
+                "type": q.type,
+                "text": q.text,
+                "answer": answer, # This will be the parsed list of dicts
+                "choices": choices,
+                "answers": None
+            })
+        elif q.type == 'function_graph_choice':
+            # q.choices is graph_data, q.answer is sub_questions
+            try:
+                graph_data = json.loads(q.choices) if q.choices else []
+            except json.JSONDecodeError:
+                graph_data = []
+
+            try:
+                sub_questions = json.loads(q.answer) if q.answer else []
+            except json.JSONDecodeError:
+                sub_questions = []
+
+            questions.append({
+                "type": q.type,
+                "text": q.text,
+                "graph_data": graph_data,
+                "sub_questions": sub_questions,
+            })
         else:
             questions.append({
                 "type": q.type,  

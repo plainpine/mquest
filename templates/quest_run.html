@@ -235,7 +235,7 @@
           </div>
         </div>
       {% elif question.type == 'function_graph_choice' %}
-        <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1rem;">
+        <div class="function-graph-container" data-q-index="{{ q_index }}" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1rem;">
           <div id="graph-target-{{ q_index }}"></div>
           <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
         </div>
@@ -793,5 +793,7 @@
         }
     });
   });
+</script>
+{% endblock %};
 </script>
 {% endblock %}

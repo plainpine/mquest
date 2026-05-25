@@ -113,8 +113,20 @@
             </div>
           {% endfor %}
         </div>
+      {% elif question.type == 'function_graph' %}
+        <div class="function-graph-container" data-q-index="{{ q_index }}" data-functions='{{ question.answer | tojson }}' style="margin-bottom: 1rem;">
+          <div id="graph-target-{{ q_index }}"></div>
+          <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
+        </div>
+        <div class="sub-questions-container">
+          {% for sub_q in question.choices %}
+            <div class="sub-question" style="margin-bottom: 1rem;">
+              <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
+            </div>
+          {% endfor %}
+        </div>
       {% elif question.type == 'function_graph_choice' %}
-        <div class="function-graph-container" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1rem;">
+        <div class="function-graph-container" data-q-index="{{ q_index }}" data-functions='{{ question.graph_data | tojson }}' style="margin-bottom: 1rem;">
           <div id="graph-target-{{ q_index }}"></div>
           <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
         </div>
@@ -122,12 +134,12 @@
           {% for sub_q in question.sub_questions %}
             <div class="sub-question" style="margin-bottom: 1rem;">
               <div class="markdown" data-content="**{{ loop.index }}. {{ sub_q.prompt | e }}**"></div>
-              <div class="choice-block">
+               <div class="choice-block">
                 {% for choice in sub_q.choices %}
                   {% if choice and choice.strip() %}
-                    <div class="choice-option">
-                      <span class="markdown" data-content="{{ choice | e }}"></span>
-                    </div>
+                  <div class="choice-option">
+                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                  </div>
                   {% endif %}
                 {% endfor %}
               </div>
@@ -157,6 +169,10 @@
             {% for sub_q in question.sub_questions %}
               <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
             {% endfor %}
+          {% elif question.type == 'function_graph' %}
+             {% for sub_q in question.choices %}
+              <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
+            {% endfor %}
           {% elif question.type == 'function_graph_choice' %}
             {% for sub_q in question.sub_questions %}
               <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
@@ -164,48 +180,48 @@
           {% endif %}
         </div>
       </div>
-    </div>
-  {% endfor %}
-</form>
+      </div>
+      {% endfor %}
+      </form>
 
-<a href="{{ url_for('select_quest_by_title_level_admin', title=title, level=quest.level) }}"
-   class="button secondary">クエスト選択に戻る</a>
+      <a href="{{ url_for('select_quest_by_title_level_admin', title=title, level=quest.level) }}"
+      class="button secondary">クエスト選択に戻る</a>
 
-<!-- JS: Markdown・Sort・Numeric入力・答え表示 -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script>
-  function renderMarkdownAndMath() {
-    document.querySelectorAll('.markdown[data-content]').forEach(div => {
+      <!-- JS: Markdown・Sort・Numeric入力・答え表示 -->
+      <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+      <script>
+      function renderMarkdownAndMath() {
+      document.querySelectorAll('.markdown[data-content]').forEach(div => {
       window.renderMarkdown(div, div.getAttribute('data-content'));
-    });
-  }
+      });
+      }
 
-document.addEventListener("DOMContentLoaded", () => {
-  renderMarkdownAndMath();
+      document.addEventListener("DOMContentLoaded", () => {
+      renderMarkdownAndMath();
 
-  // 並び替え
-  document.querySelectorAll('.sortable').forEach(list => {
-    Sortable.create(list, { animation: 150 });
-  });
+      // 並び替え
+      document.querySelectorAll('.sortable').forEach(list => {
+      Sortable.create(list, { animation: 150 });
+      });
 
-  // 数値テンキー
-  let activeInput = null;
-  document.querySelectorAll('.numeric-input').forEach(input => {
-    input.addEventListener('focus', () => activeInput = input);
-    input.addEventListener('click', () => activeInput = input);
-    input.addEventListener('keypress', (e) => {
+      // 数値テンキー
+      let activeInput = null;
+      document.querySelectorAll('.numeric-input').forEach(input => {
+      input.addEventListener('focus', () => activeInput = input);
+      input.addEventListener('click', () => activeInput = input);
+      input.addEventListener('keypress', (e) => {
       const allowedChars = /[0-9\.\-\/]/;
       if (!allowedChars.test(e.key)) {
         e.preventDefault();
       }
-    });
-    input.addEventListener('input', (e) => {
+      });
+      input.addEventListener('input', (e) => {
       e.target.value = e.target.value.replace(/[^0-9\.\-\/]/g, '');
-    });
-  });
-  document.querySelectorAll('.keypad').forEach(keypad => {
-    const qid = keypad.dataset.qid;
-    keypad.querySelectorAll('.key-btn').forEach(btn => {
+      });
+      });
+      document.querySelectorAll('.keypad').forEach(keypad => {
+      const qid = keypad.dataset.qid;
+      keypad.querySelectorAll('.key-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!activeInput || activeInput.dataset.qid !== qid) return;
         const num = btn.dataset.num;
@@ -213,26 +229,28 @@ document.addEventListener("DOMContentLoaded", () => {
         else if (num === 'clear') activeInput.value = '';
         else activeInput.value += num;
       });
-    });
-  });
+      });
+      });
 
-  // 答え表示・非表示
-  document.querySelectorAll('.toggle-answer').forEach(btn => {
-    btn.addEventListener('click', () => {
+      // 答え表示・非表示
+      document.querySelectorAll('.toggle-answer').forEach(btn => {
+      btn.addEventListener('click', () => {
       const idx = btn.dataset.index;
       const answer = document.getElementById(`answer-${idx}`);
       const isVisible = answer.style.display === 'block';
       answer.style.display = isVisible ? 'none' : 'block';
       btn.textContent = isVisible ? '答え' : '隠す';
-    });
-  });
+      });
+      });
 
-  // --- Function Plotting ---
-  const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
-  document.querySelectorAll('.function-graph-container').forEach((container, i) => {
+      // --- Function Plotting ---
+      const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
+      document.querySelectorAll('.function-graph-container').forEach((container) => {
       const functionsDataRaw = container.dataset.functions;
-      const targetId = `#graph-target-${i}`;
-      const legendId = `graph-legend-${i}`;
+      const qIndex = container.dataset.qIndex;
+      const targetId = `#graph-target-${qIndex}`;
+      const legendId = `graph-legend-${qIndex}`;
+
       if (functionsDataRaw && document.querySelector(targetId)) {
           try {
               const functionsData = JSON.parse(functionsDataRaw);
