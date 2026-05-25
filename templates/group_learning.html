@@ -172,38 +172,12 @@
    class="button secondary">クエスト選択に戻る</a>
 
 <!-- JS: Markdown・Sort・Numeric入力・答え表示 -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-  window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },  
-    svg: { fontCache: 'global' }
-  };
-
   function renderMarkdownAndMath() {
-    if (typeof marked === 'undefined') return;
-    if (marked.use) {
-      marked.use({ breaks: true });
-    } else if (marked.setOptions) {
-      marked.setOptions({ breaks: true });
-    }
-
-    document.querySelectorAll('.markdown').forEach(div => {
-      let md = div.getAttribute('data-content');
-      if (md) {
-        md = md.replace(/\\n/g, '\n');  // 改行の復元
-        try {
-          div.innerHTML = marked.parse(md);
-        } catch (e) {
-          console.error('Markdown parse error:', e);
-          div.textContent = md;
-        }
-      }
+    document.querySelectorAll('.markdown[data-content]').forEach(div => {
+      window.renderMarkdown(div, div.getAttribute('data-content'));
     });
-    // MathJax 3 の再レンダリングをトリガー
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise();
-    }
   }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -474,8 +448,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <style>
   .choice-option {

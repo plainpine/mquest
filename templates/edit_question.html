@@ -190,6 +190,15 @@
             if (typeof api.showAlgebraInput === 'function') api.showAlgebraInput(true);
             if (typeof api.showStyleBar === 'function') api.showStyleBar(true);
 
+            // Force Algebra and Spreadsheet views if possible
+            if (typeof api.setPerspective === 'function') {
+                // "AGS" means Algebra, Graphics, Spreadsheet
+                // We only do this if it's a new construction or hasn't been set to avoid jumping
+                if (!api.getAllObjectNames().length) {
+                    api.setPerspective("AGS");
+                }
+            }
+
             // Register the global object listener to enforce black color on everything new
             api.unregisterAddListener("onGgbObjectAdded"); // Clear if exists
             api.registerAddListener("onGgbObjectAdded");
@@ -864,7 +873,6 @@
   </div>
 </form>
 
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
   // MathJax Config
   window.MathJax = {
@@ -872,18 +880,13 @@
     startup: { ready: () => { MathJax.startup.defaultReady(); if(window.updatePreviews) updatePreviews(); } }
   };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
 <script>
+  // Dynamic UI
+  // renderMarkdown is now global from main.js
+
   // Definitions that must exist early
   async function updatePreviews() {
-    if (typeof marked !== 'undefined') {
-        if (marked.use) {
-            marked.use({ gfm: true, breaks: true });
-        } else if (marked.setOptions) {
-            marked.setOptions({ gfm: true, breaks: true });
-        }
-    }
     const ids = ["text-input", "explanation-input"];
     for(let i=0; i<4; i++) { ids.push(`choice${i}`); }
     
@@ -891,20 +894,13 @@
       const input = document.getElementById(id);
       const preview = document.getElementById(id + "_preview") || document.getElementById(id.replace("-input", "-preview"));
       if (input && preview) {
-        preview.innerHTML = marked.parse(input.value || '');
-        if (window.MathJax && MathJax.typesetPromise) await MathJax.typesetPromise([preview]);
+        await window.renderMarkdown(preview, input.value || '');
       }
     }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    if (typeof marked !== 'undefined') {
-        if (marked.use) {
-            marked.use({ gfm: true, breaks: true });
-        } else if (marked.setOptions) {
-            marked.setOptions({ gfm: true, breaks: true });
-        }
-    }
+
     const typeSelect = document.getElementById('type-select');
     const mainForm = document.querySelector('form');
 
@@ -929,22 +925,6 @@
             }));
             document.getElementById('function_graph_choice_definitions_hidden').value = JSON.stringify(fns);
             // sub-questions are handled by standard form fields fgc_sub_prompt etc.
-        }
-    }
-
-    // Dynamic UI
-    async function renderMarkdown(element, text) {
-        if (!element) return;
-        if (typeof marked !== 'undefined') {
-            if (marked.use) {
-                marked.use({ gfm: true, breaks: true });
-            } else if (marked.setOptions) {
-                marked.setOptions({ gfm: true, breaks: true });
-            }
-        }
-        element.innerHTML = marked.parse(text || '');
-        if (window.MathJax && MathJax.typesetPromise) {
-            await MathJax.typesetPromise([element]);
         }
     }
 

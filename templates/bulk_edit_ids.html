@@ -65,17 +65,10 @@ function fillSequentially() {
 
 {% block scripts %}
 {{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
   function renderMarkdown() {
-    if (typeof marked === 'undefined') return;
-    marked.setOptions({ breaks: true });
-
-    document.querySelectorAll('.markdown').forEach(function(div) {
-      var md = div.getAttribute('data-content');
-      if (!md) return;
-      md = md.replace(/\\n/g, '\n');
-      div.innerHTML = marked.parse(md);
+    document.querySelectorAll('.markdown[data-content]').forEach(function(div) {
+      window.renderMarkdown(div, div.getAttribute('data-content'));
     });
   }
 

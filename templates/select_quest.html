@@ -45,40 +45,15 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-  window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-    svg: { fontCache: 'global' }
-  };
-
   function renderMarkdownAndMath() {
-    if (typeof marked === 'undefined') return;
-    if (marked.use) {
-      marked.use({ breaks: true });
-    } else if (marked.setOptions) {
-      marked.setOptions({ breaks: true });
-    }
-
-    document.querySelectorAll('.markdown').forEach(function(div) {
-      var md = div.getAttribute('data-content');
-      if (!md) return;
-      md = md.replace(/\\n/g, '\n');
-      try {
-        div.innerHTML = marked.parse(md);
-      } catch (e) {
-        console.error('Markdown parse error:', e);
-        div.textContent = md;
-      }
+    document.querySelectorAll('.markdown[data-content]').forEach(function(div) {
+        window.renderMarkdown(div, div.getAttribute('data-content'));
     });
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise();
-    }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     renderMarkdownAndMath();
   });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 {% endblock %}

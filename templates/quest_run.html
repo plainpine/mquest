@@ -329,41 +329,19 @@
 </style>
 
 <!-- JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-  window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-    svg: { fontCache: 'global' }
-  };
-
-  function renderMarkdownAndMath() {
-    if (typeof marked === 'undefined') return;
-    if (marked.use) {
-      marked.use({ breaks: true });
-    } else if (marked.setOptions) {
-      marked.setOptions({ breaks: true });
-    }
-
-    document.querySelectorAll('.markdown').forEach(function(div) {
-      var md = div.getAttribute('data-content');
-      if (!md) return;
-      md = md.replace(/\\n/g, '\n');
-      try {
-        div.innerHTML = marked.parse(md);
-      } catch (e) {
-        console.error('Markdown parse error:', e);
-        div.textContent = md;
-      }
-    });
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise();
+  async function renderMarkdownAndMath() {
+    const markdownElements = document.querySelectorAll('.markdown[data-content]');
+    for (let div of markdownElements) {
+        await window.renderMarkdown(div, div.getAttribute('data-content'));
     }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    renderMarkdownAndMath();
+    // renderMarkdownAndMath() is called automatically by main.js, 
+    // but we can call it again if needed or let it be.
 
     // --- Memo Pad Modal Logic ---
     const openBtn = document.getElementById('open-memo-btn');
@@ -816,5 +794,4 @@
     });
   });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 {% endblock %}
