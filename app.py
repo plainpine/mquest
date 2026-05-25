@@ -10,7 +10,27 @@ import json
 import logging
 import random
 import time
+import atexit
 from utils.svg_preview_bp import bp as svg_preview_bp # Import the blueprint
+
+# ... (rest of imports/mappings)
+
+def cleanup_database():
+    """
+    アプリケーション終了時にSQLiteのWALファイルをクリア（統合）する処理。
+    """
+    with app.app_context():
+        try:
+            # WALファイルの内容をメインのdbファイルに書き戻し、サイズを0にする
+            db.session.execute(db.text("PRAGMA wal_checkpoint(TRUNCATE);"))
+            # 接続を閉じる
+            db.session.remove()
+            print("\nDatabase checkpoint completed and connections closed.")
+        except Exception as e:
+            print(f"\nError during database cleanup: {e}")
+
+# アプリ終了時に実行されるように登録
+atexit.register(cleanup_database)
 
 # 科目キーと日本語名のマッピング
 SUBJECT_KEY_TO_JP = {
