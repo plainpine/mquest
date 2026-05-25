@@ -14,5 +14,8 @@
   {% endfor %}
 </ul>
 
-<a class="button secondary" href="{{ url_for('select_title_admin') }}">科目選択に戻る</a>
+<div style="margin-top: 20px; display: flex; gap: 10px;">
+    <a class="button secondary" href="{{ url_for('select_title_admin') }}">科目選択に戻る</a>
+    <a class="button" href="{{ url_for('dashboard_admin') }}">ダッシュボードに戻る</a>
+</div>
 {% endblock %}
