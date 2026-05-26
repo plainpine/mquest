@@ -425,9 +425,39 @@
       hiddenInput.value = Array.from(list.children).map(li => li.textContent.trim()).join(' ');
     });
 
+    // --- Keypad/Keyboard Toggle Logic ---
+    const kbToggle = document.getElementById('kb-toggle');
+    const allInputs = document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input');
+    
+    // Load preference from localStorage (default to false/unchecked)
+    const useAppKb = localStorage.getItem('useAppKb') === 'true';
+    kbToggle.checked = useAppKb;
+
+    function updateInputMode() {
+      const useApp = kbToggle.checked;
+      allInputs.forEach(input => {
+        if (useApp) {
+          input.setAttribute('inputmode', 'none');
+        } else {
+          // Restore default input mode (numeric for numeric inputs, text for others)
+          if (input.classList.contains('numeric-input')) {
+            input.setAttribute('inputmode', 'decimal');
+          } else {
+            input.removeAttribute('inputmode');
+          }
+        }
+      });
+      localStorage.setItem('useAppKb', useApp);
+    }
+
+    kbToggle.addEventListener('change', updateInputMode);
+    updateInputMode(); // Initialize on load
+
     // --- Keypad/Keyboard ---
     let activeInput = null, activeEnInput = null;
     const showKeyboard = (input) => {
+      if (!kbToggle.checked) return; // Don't show app keyboard if toggled off
+
       document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
       const qid = input.dataset.qid;
       const selector = input.classList.contains('numeric-input') ? `.keypad[data-qid="${qid}"]` : `.virtual-keyboard[data-qid="${qid}"]`;

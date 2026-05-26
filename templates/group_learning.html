@@ -298,9 +298,40 @@
       Sortable.create(list, { animation: 150 });
       });
 
+      // --- Keypad/Keyboard Toggle Logic ---
+      const kbToggle = document.getElementById('kb-toggle');
+      const allInputs = document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input');
+      
+      // Load preference from localStorage (default to false/unchecked)
+      const useAppKb = localStorage.getItem('useAppKb') === 'true';
+      if (kbToggle) {
+        kbToggle.checked = useAppKb;
+        kbToggle.addEventListener('change', updateInputMode);
+      }
+
+      function updateInputMode() {
+        const useApp = kbToggle ? kbToggle.checked : useAppKb;
+        allInputs.forEach(input => {
+          if (useApp) {
+            input.setAttribute('inputmode', 'none');
+          } else {
+            if (input.classList.contains('numeric-input')) {
+              input.setAttribute('inputmode', 'decimal');
+            } else {
+              input.removeAttribute('inputmode');
+            }
+          }
+        });
+        localStorage.setItem('useAppKb', useApp);
+      }
+
+      updateInputMode(); // Initialize on load
+
       // 数値テンキー
       let activeInput = null, activeEnInput = null;
       const showKeyboard = (input) => {
+        if (kbToggle && !kbToggle.checked) return; // Don't show app keyboard if toggled off
+
         document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
         const qid = input.dataset.qid;
         const selector = input.classList.contains('numeric-input') ? `.keypad[data-qid="${qid}"]` : `.virtual-keyboard[data-qid="${qid}"]`;

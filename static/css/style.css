@@ -438,17 +438,21 @@ button,
   }
 
   header {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     padding: 10px 15px;
   }
 
   header h1 {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
   }
 
   nav {
-    margin-top: 10px;
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   nav a {
