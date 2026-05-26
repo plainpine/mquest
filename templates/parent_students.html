@@ -12,7 +12,7 @@
     <th>ニックネーム</th>
     <th>ユーザー名</th>
     <th>メダル数</th>
-    <th>学習履歴</th>
+    <th>操作</th>
   </tr>
   {% for data in student_data %}
     <tr>
@@ -20,17 +20,7 @@
       <td>{{ data.student.username }}</td>
       <td>{{ data.medal_count }}</td>
       <td>
-        {% if data.histories %}
-          <ul>
-            {% for h in data.histories %}
-              <li>
-                クエスト{{ h.quest_id }}：{{ "✔" if h.correct else "✖" }}（{{ h.attempts }}回）
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          試行なし
-        {% endif %}
+        <a href="{{ url_for('progress', user_id=data.student.id) }}" class="button" style="background-color: #FF9800; padding: 5px 15px; font-size: 0.9rem;">詳細な学習状況を表示</a>
       </td>
     </tr>
   {% endfor %}

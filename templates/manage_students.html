@@ -99,7 +99,10 @@
     <div id="detail_{{ student.id }}" class="student-detail-block" style="display: none; border: 2px solid #2196F3; padding: 1.5rem; margin-bottom: 2rem; border-radius: 8px; background: #fff;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h3 style="margin: 0; color: #2196F3;">{{ student.nickname }} ({{ student.username }}) の詳細</h3>
-            <button type="button" onclick="closeAllDetails()" style="background: #666; padding: 5px 10px;">閉じる</button>
+            <div style="display: flex; gap: 10px;">
+                <a href="{{ url_for('progress', user_id=student.id) }}" class="button" style="background-color: #FF9800; padding: 5px 15px; font-size: 0.9rem;">進捗画面を表示</a>
+                <button type="button" onclick="closeAllDetails()" style="background: #666; padding: 5px 10px;">閉じる</button>
+            </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">

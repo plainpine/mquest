@@ -797,10 +797,33 @@ def medals():
 @app.route('/progress')
 @login_required
 def progress():
-    if session.get('role') != 'student':
-        return redirect(url_for('login'))
+    # Allow admins and parents to view a student's progress by passing user_id
+    requested_user_id = request.args.get('user_id', type=int)
+    
+    if requested_user_id:
+        if session.get('role') == 'admin':
+            user_id = requested_user_id
+        elif session.get('role') == 'parent':
+            # Verify if the student belongs to this parent
+            student = db.session.get(User, requested_user_id)
+            if student and student.parent_id == session.get('user_id'):
+                user_id = requested_user_id
+            else:
+                flash("指定された生徒の進捗を見る権限がありません。")
+                return redirect(url_for('dashboard'))
+        else:
+            flash("他のユーザーの進捗を見る権限がありません。")
+            return redirect(url_for('dashboard'))
+    else:
+        # Default to self for students
+        if session.get('role') != 'student':
+            return redirect(url_for('login'))
+        user_id = session.get('user_id')
 
-    user_id = session.get('user_id')
+    student = db.session.get(User, user_id)
+    if not student:
+        flash("生徒が見つかりません。")
+        return redirect(url_for('dashboard'))
 
     # 1. Existing query for the summary table (preserved)
     cleared_counts = db.session.query(
@@ -858,6 +881,7 @@ def progress():
 
     return render_template(
         "progress.html", 
+        student=student,
         cleared=processed_cleared_data,
         weekly_chart_data=weekly_chart_data,
         monthly_chart_data=monthly_chart_data

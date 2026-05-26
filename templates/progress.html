@@ -63,7 +63,7 @@
     </div>
 </div>
 
-<h2>クエスト制覇状況</h2>
+<h2>クエスト制覇状況 - {{ student.nickname or student.username }}</h2>
 <table border="1" cellpadding="6" cellspacing="0" style="margin: 20px auto;">
     <thead>
         <tr>
@@ -87,7 +87,13 @@
 </table>
 
 <br>
-<a href="{{ url_for('dashboard_student') }}" class="button">← ダッシュボードへ戻る</a>
+{% if current_user.role == 'admin' %}
+    <a href="{{ url_for('manage_students') }}" class="button">← 生徒一覧に戻る</a>
+{% elif current_user.role == 'parent' %}
+    <a href="{{ url_for('parent_students') }}" class="button">← 子どもの一覧に戻る</a>
+{% else %}
+    <a href="{{ url_for('dashboard_student') }}" class="button">← ダッシュボードに戻る</a>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
