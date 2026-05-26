@@ -736,10 +736,7 @@ def quest_result(quest_id):
                 except (json.JSONDecodeError, TypeError):
                     pass
                 question_view_model['svg_content'] = svg_display
-            # Convert newlines in explanation to <br> tags for HTML rendering
-            if q.explanation:
-                question_view_model['explanation'] = q.explanation.replace('\n', '<br>')
-
+            # Explanation is now rendered as Markdown on the client side
             res['question'] = question_view_model
     
     # Retrieve original title and level from session for filter retention

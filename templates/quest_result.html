@@ -142,7 +142,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body explanation-modal-body">
-                        {{ res.question.explanation | safe }}
+                        <div class="markdown" data-content="{{ res.question.explanation | e }}"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
@@ -178,30 +178,9 @@
 {% block scripts %}
 {{ super() }}
 <script>
-async function renderMarkdownAndMath() {
-    const markdownElements = document.querySelectorAll('.markdown[data-content]');
-    for (let div of markdownElements) {
-        await window.renderMarkdown(div, div.getAttribute('data-content'));
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function () {
-    // renderMarkdownAndMath() is called automatically by main.js
-
-    // Set up listeners for explanation modals
-    var explanationModals = document.querySelectorAll('.modal');
-    explanationModals.forEach(function (modal) {
-        modal.addEventListener('show.bs.modal', async function (event) {
-            var modalBody = modal.querySelector('.explanation-modal-body');      
-
-            // Render modal content only once
-            if (modalBody && !modalBody.hasAttribute('data-rendered')) {
-                var content = modalBody.innerHTML.trim();
-                await window.renderMarkdown(modalBody, content);
-                modalBody.setAttribute('data-rendered', 'true');
-            }
-        });
-    });
+    // MathJax/Mermaid might need adjustment if they are in hidden modals,
+    // but marked.js rendering is already handled by main.js
 });
 </script>
 {% endblock %}

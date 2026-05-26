@@ -396,6 +396,36 @@ button,
   font-size: 0.85em;
 }
 
+/* Markdownの箇条書き(ul, ol)のスタイルを復元 */
+.markdown ul,
+.markdown-preview ul {
+  list-style-type: disc !important;
+  padding-left: 2rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.markdown ol,
+.markdown-preview ol {
+  list-style-type: decimal !important;
+  padding-left: 2rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.markdown li,
+.markdown-preview li {
+  display: list-item !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin-bottom: 0.4rem !important;
+  border-radius: 0 !important;
+  justify-content: flex-start !important;
+}
+
+.markdown li::marker,
+.markdown-preview li::marker {
+  color: inherit !important;
+}
+
 .tiny-text {
   font-size: 0.7em;
 }
