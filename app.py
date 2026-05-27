@@ -307,14 +307,14 @@ def quest(quest_id):
     if session.get('role') != 'student':
         return redirect(url_for('login'))
 
-    quest = Quest.get(quest_id)
-    if not quest:
+    quest_obj = db.session.get(Quest, quest_id)
+    if not quest_obj:
         return "クエストが見つかりません", 404
 
     if request.method == 'POST':
         # 解答取得と採点
-        submitted = [int(request.form.get(f'q{i}')) for i in range(len(quest['questions']))]
-        correct = [q['answer'] for q in quest['questions']]
+        submitted = [int(request.form.get(f'q{i}')) for i in range(len(quest_obj.questions))]
+        correct = [q.answer for q in quest_obj.questions]
         score = sum([1 for i, ans in enumerate(submitted) if ans == correct[i]])
 
         # 結果表示へ
@@ -326,7 +326,7 @@ def quest(quest_id):
             quest_id=quest_id
         )
 
-    return render_template('quest_run.html', quest=quest, quest_id=quest_id)
+    return render_template('quest_run.html', quest=quest_obj, quest_id=quest_id)
 
 @app.route("/quest/select/<title>/<level>")
 def select_quest(title, level):
