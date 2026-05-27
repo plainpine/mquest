@@ -3,7 +3,7 @@ import json
 import sqlite3
 import os
 
-def fix_function_graph_answers(db_path='mquest.db'):
+def fix_function_graph_answers(db_path='instance/mquest_content.db'):
     """
     Finds all questions of type 'function_graph' and ensures their
     'answer' field is in the correct JSON format.
@@ -11,8 +11,8 @@ def fix_function_graph_answers(db_path='mquest.db'):
     """
     if not os.path.exists(db_path):
         print(f"Database file not found at '{db_path}'. Please check the path.")
-        # Fallback to instance folder path
-        db_path = os.path.join('instance', 'mquest.db')
+        # Fallback to root path
+        db_path = 'mquest.db'
         if not os.path.exists(db_path):
              print(f"Database file not found at '{db_path}' either. Aborting.")
              return

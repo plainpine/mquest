@@ -3,14 +3,14 @@ import json
 import sqlite3
 import os
 
-def diagnose_answers(db_path='mquest.db'):
+def diagnose_answers(db_path='instance/mquest_content.db'):
     """
     Reads and prints the 'answer' field for all questions of type 'function_graph'
     to diagnose their current format in the database.
     """
     if not os.path.exists(db_path):
-        print(f"Database file not found at '{db_path}'. Trying 'instance/mquest.db'.")
-        db_path = os.path.join('instance', 'mquest.db')
+        print(f"Database file not found at '{db_path}'. Trying 'mquest.db'.")
+        db_path = 'mquest.db'
         if not os.path.exists(db_path):
              print(f"Database file not found at '{db_path}' either. Aborting.")
              return

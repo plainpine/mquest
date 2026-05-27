@@ -53,8 +53,15 @@ def from_json_filter(s):
     except (json.JSONDecodeError, TypeError):
         return None
 
+import os
+
 # データベース設定（例: SQLite）
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mquest.db'
+# Flask-SQLAlchemyはデフォルトでinstanceフォルダを探すため、パスから 'instance/' を除外するか絶対パスを使用します。
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'mquest_user.db')
+app.config['SQLALCHEMY_BINDS'] = {
+    'content': 'sqlite:///' + os.path.join(basedir, 'instance', 'mquest_content.db')
+}
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # DBとLoginManagerの初期化
@@ -770,24 +777,28 @@ def medals():
 
     user_id = session.get('user_id')
 
-    # Aggregate attempts by title and level
-    medal_data = db.session.query(
-        Quest.title,
-        Quest.level,
-        func.sum(QuestHistory.attempts).label('total_attempts')
-    ).join(
-        Quest, Quest.id == QuestHistory.quest_id
-    ).filter(
-        QuestHistory.user_id == user_id
-    ).group_by(
-        Quest.title, Quest.level
-    ).order_by(
-        Quest.title, Quest.level
-    ).all()
+    # 1. ユーザーの履歴をすべて取得
+    histories = QuestHistory.query.filter_by(user_id=user_id).all()
+    if not histories:
+        return render_template("medals.html", medal_data=[])
 
-    # Apply Japanese mapping to titles
+    # 2. 履歴に関連するクエスト情報を取得
+    quest_ids = list(set(h.quest_id for h in histories))
+    quests = Quest.query.filter(Quest.id.in_(quest_ids)).all()
+    quest_map = {q.id: q for q in quests}
+
+    # 3. タイトルとレベルごとに挑戦回数を集計
+    from collections import defaultdict
+    aggregated = defaultdict(int)
+    for h in histories:
+        quest = quest_map.get(h.quest_id)
+        if quest:
+            key = (quest.title, quest.level)
+            aggregated[key] += h.attempts
+
+    # 4. 表示用にデータを整形（日本語変換とソート）
     processed_medal_data = []
-    for title, level, total_attempts in medal_data:
+    for (title, level), total_attempts in sorted(aggregated.items()):
         jp_title = SUBJECT_KEY_TO_JP.get(title, title)
         processed_medal_data.append((jp_title, level, total_attempts))
 
@@ -825,25 +836,31 @@ def progress():
         flash("生徒が見つかりません。")
         return redirect(url_for('dashboard'))
 
-    # 1. Existing query for the summary table (preserved)
-    cleared_counts = db.session.query(
-        Quest.title,
-        Quest.level,
-        db.func.count(Quest.id)
-    ).join(
-        UserProgress, Quest.id == UserProgress.quest_id
-    ).filter(
-        UserProgress.user_id == user_id,
-        UserProgress.status == 'cleared'
-    ).group_by(
-        Quest.title, Quest.level
-    ).all()
+    # 1. ユーザーがクリアした進捗レコードをすべて取得
+    progress_records = UserProgress.query.filter_by(user_id=user_id, status='cleared').all()
+    
+    if not progress_records:
+        processed_cleared_data = []
+    else:
+        # 2. 進捗に関連するクエスト情報を取得
+        quest_ids = list(set(p.quest_id for p in progress_records))
+        quests = Quest.query.filter(Quest.id.in_(quest_ids)).all()
+        quest_map = {q.id: q for q in quests}
 
-    processed_cleared_data = []
-    for title, level, count in cleared_counts:
-        jp_title = SUBJECT_KEY_TO_JP.get(title, title)
-        jp_level = SUBJECT_KEY_TO_JP.get(level, level)
-        processed_cleared_data.append((jp_title, jp_level, count))
+        # 3. タイトルとレベルごとにクリア数を集計
+        from collections import defaultdict
+        aggregated = defaultdict(int)
+        for p in progress_records:
+            quest = quest_map.get(p.quest_id)
+            if quest:
+                key = (quest.title, quest.level)
+                aggregated[key] += 1
+        
+        # 4. 表示用にデータを整形（ソート）
+        processed_cleared_data = []
+        for (title, level), count in sorted(aggregated.items()):
+            jp_title = SUBJECT_KEY_TO_JP.get(title, title)
+            processed_cleared_data.append((jp_title, level, count))
 
     # 2. New query for 4-week chart data
     four_weeks_ago = datetime.now(timezone.utc) - timedelta(weeks=4)
@@ -916,20 +933,27 @@ def manage_students():
             }
 
         # 学習進捗状況の取得（UserProgressから）
-        progress_query_result = db.session.query(
-            Quest.title,
-            Quest.level,
-            db.func.count(Quest.id)
-        ).join(UserProgress, Quest.id == UserProgress.quest_id) \
-         .filter(UserProgress.user_id == user.id, UserProgress.status == 'cleared') \
-         .group_by(Quest.title, Quest.level).all()
+        progress_records = UserProgress.query.filter_by(user_id=user.id, status='cleared').all()
+        if not progress_records:
+            user_data['progress'] = []
+        else:
+            quest_ids = list(set(p.quest_id for p in progress_records))
+            quests = Quest.query.filter(Quest.id.in_(quest_ids)).all()
+            quest_map = {q.id: q for q in quests}
 
-        # タイトルを日本語に変換
-        processed_progress = []
-        for p in progress_query_result:
-            jp_title = SUBJECT_KEY_TO_JP.get(p[0], p[0])
-            processed_progress.append({'title': jp_title, 'level': p[1], 'count': p[2]})
-        user_data['progress'] = processed_progress
+            from collections import defaultdict
+            aggregated = defaultdict(int)
+            for p in progress_records:
+                quest = quest_map.get(p.quest_id)
+                if quest:
+                    key = (quest.title, quest.level)
+                    aggregated[key] += 1
+            
+            processed_progress = []
+            for (title, level), count in sorted(aggregated.items()):
+                jp_title = SUBJECT_KEY_TO_JP.get(title, title)
+                processed_progress.append({'title': jp_title, 'level': level, 'count': count})
+            user_data['progress'] = processed_progress
 
         # メダル取得状況の取得（挑戦回数の合計）
         medal_counts = db.session.query(
@@ -1143,17 +1167,22 @@ def handle_quest_action():
 
 def _update_quest_id_internal(old_id, new_id):
     """Internal helper to update quest ID across all related tables."""
-    tables = [
-        "quest_attempt_logs",
-        "questions",
-        "quest_history",
-        "user_progress",
-        "quests"
-    ]
-    for table in tables:
-        column = "id" if table == "quests" else "quest_id"
+    user_tables = ["quest_attempt_logs", "quest_history", "user_progress"]
+    content_tables = ["questions", "quests"]
+
+    # ユーザーDB側の更新
+    for table in user_tables:
+        column = "quest_id"
         db.session.execute(db.text(f"UPDATE {table} SET {column} = :new_id WHERE {column} = :old_id"),
                            {'new_id': new_id, 'old_id': old_id})
+    
+    # コンテンツDB側の更新
+    content_engine = db.get_engine(app, bind='content')
+    for table in content_tables:
+        column = "id" if table == "quests" else "quest_id"
+        db.session.execute(db.text(f"UPDATE {table} SET {column} = :new_id WHERE {column} = :old_id"),
+                           {'new_id': new_id, 'old_id': old_id},
+                           bind_arguments={'bind': content_engine})
 
 @app.route('/admin/quest/bulk_edit_ids', methods=['GET'])
 @login_required
@@ -1316,16 +1345,8 @@ def save_quest(quest_id):
                         flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
                         return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
                     
-                    db.session.execute(db.text("UPDATE quest_attempt_logs SET quest_id = :new_id WHERE quest_id = :old_id"), 
-                                       {'new_id': new_id, 'old_id': old_id})
-                    db.session.execute(db.text("UPDATE questions SET quest_id = :new_id WHERE quest_id = :old_id"), 
-                                       {'new_id': new_id, 'old_id': old_id})
-                    db.session.execute(db.text("UPDATE quest_history SET quest_id = :new_id WHERE quest_id = :old_id"), 
-                                       {'new_id': new_id, 'old_id': old_id})
-                    db.session.execute(db.text("UPDATE user_progress SET quest_id = :new_id WHERE quest_id = :old_id"), 
-                                       {'new_id': new_id, 'old_id': old_id})
-                    db.session.execute(db.text("UPDATE quests SET id = :new_id WHERE id = :old_id"), 
-                                       {'new_id': new_id, 'old_id': old_id})
+                    # 共通のID更新ヘルパーを使用
+                    _update_quest_id_internal(old_id, new_id)
                     
                     safe_commit()
                     db.session.expire_all()
@@ -1370,12 +1391,14 @@ def renumber_questions(quest_id):
         return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
     try:
+        content_engine = db.get_engine(app, bind='content')
         # Step 1: Move all questions for this quest to a temporary ID range to avoid collisions
         # Temporary offset (e.g., 1,000,000)
         temp_offset = 1000000
         for qid in ordered_ids:
             db.session.execute(db.text("UPDATE questions SET id = id + :offset WHERE id = :old_id"),
-                               {'offset': temp_offset, 'old_id': int(qid)})
+                               {'offset': temp_offset, 'old_id': int(qid)},
+                               bind_arguments={'bind': content_engine})
 
         # Step 2: Move back to the final ID based on the new order
         base_id = quest_id * 100
@@ -1383,7 +1406,8 @@ def renumber_questions(quest_id):
             new_id = base_id + (i + 1)
             temp_id = int(old_id) + temp_offset
             db.session.execute(db.text("UPDATE questions SET id = :new_id WHERE id = :temp_id"),
-                               {'new_id': new_id, 'temp_id': temp_id})
+                               {'new_id': new_id, 'temp_id': temp_id},
+                               bind_arguments={'bind': content_engine})
 
         safe_commit()
         db.session.expire_all()
