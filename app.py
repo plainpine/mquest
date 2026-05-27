@@ -387,12 +387,22 @@ def quest_run(quest_id):
             except (json.JSONDecodeError, TypeError):
                 pass
 
+            try:
+                sub_questions = json.loads(q.answer) if q.answer else []
+                # figure_choice の場合は各小問の選択肢をシャッフル
+                if q.type == 'figure_choice':
+                    for sub_q in sub_questions:
+                        if 'choices' in sub_q and isinstance(sub_q['choices'], list):
+                            random.shuffle(sub_q['choices'])
+            except json.JSONDecodeError:
+                sub_questions = []
+
             questions.append({
                 "type": q.type,
                 "text": q.text,
                 "choices": q.choices, # Pass raw JSON for size extraction in template
                 "svg_content": svg_display,
-                "sub_questions": json.loads(q.answer) if q.answer else []
+                "sub_questions": sub_questions
             })
         elif q.type == 'function_graph':
             questions.append({
@@ -411,6 +421,10 @@ def quest_run(quest_id):
 
             try:
                 sub_questions = json.loads(q.answer) if q.answer else []
+                # 各小問の選択肢をシャッフル
+                for sub_q in sub_questions:
+                    if 'choices' in sub_q and isinstance(sub_q['choices'], list):
+                        random.shuffle(sub_q['choices'])
             except json.JSONDecodeError:
                 sub_questions = []
 
@@ -1916,12 +1930,22 @@ def quest_run_group(quest_id):
             except (json.JSONDecodeError, TypeError):
                 pass
 
+            try:
+                sub_questions = json.loads(q.answer) if q.answer else []
+                # figure_choice の場合は各小問の選択肢をシャッフル
+                if q.type == 'figure_choice':
+                    for sub_q in sub_questions:
+                        if 'choices' in sub_q and isinstance(sub_q['choices'], list):
+                            random.shuffle(sub_q['choices'])
+            except json.JSONDecodeError:
+                sub_questions = []
+
             questions.append({
                 "type": q.type,
                 "text": q.text,
                 "choices": q.choices, # Pass raw JSON for size extraction in template
                 "svg_content": svg_display,
-                "sub_questions": json.loads(q.answer) if q.answer else []
+                "sub_questions": sub_questions
             })
         elif q.type == 'function_graph':
             questions.append({
@@ -1940,6 +1964,10 @@ def quest_run_group(quest_id):
 
             try:
                 sub_questions = json.loads(q.answer) if q.answer else []
+                # 各小問の選択肢をシャッフル
+                for sub_q in sub_questions:
+                    if 'choices' in sub_q and isinstance(sub_q['choices'], list):
+                        random.shuffle(sub_q['choices'])
             except json.JSONDecodeError:
                 sub_questions = []
 
