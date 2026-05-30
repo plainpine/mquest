@@ -18,14 +18,18 @@ from utils.svg_preview_bp import bp as svg_preview_bp # Import the blueprint
 def cleanup_database():
     """
     アプリケーション終了時にSQLiteのWALファイルをクリア（統合）する処理。
+    すべてのBind（user_db, content_dbなど）に対して実行する。
     """
     with app.app_context():
         try:
-            # WALファイルの内容をメインのdbファイルに書き戻し、サイズを0にする
-            db.session.execute(db.text("PRAGMA wal_checkpoint(TRUNCATE);"))
+            # すべてのエンジン（デフォルト + binds）に対してチェックポイントを実行
+            for engine in db.engines.values():
+                with engine.connect() as conn:
+                    conn.execute(db.text("PRAGMA wal_checkpoint(TRUNCATE);"))
+            
             # 接続を閉じる
             db.session.remove()
-            print("\nDatabase checkpoint completed and connections closed.")
+            print("\nAll database checkpoints completed and connections closed.")
         except Exception as e:
             print(f"\nError during database cleanup: {e}")
 
