@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, case
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -113,6 +113,36 @@ def safe_commit(retries=3, delay=0.5):
     db.session.commit()
     return True
 
+def safe_get(model, ident, retries=3, delay=0.5):
+    """
+    Attempts to get a record by ID with retries for OperationalError.
+    """
+    for i in range(retries):
+        try:
+            return db.session.get(model, ident)
+        except OperationalError as e:
+            if "disk I/O error" in str(e) or "database is locked" in str(e):
+                app.logger.warning(f"Database get failed (attempt {i+1}/{retries}): {e}. Retrying in {delay}s...")
+                time.sleep(delay)
+                continue
+            raise
+    return db.session.get(model, ident)
+
+def safe_query_all(query, retries=3, delay=0.5):
+    """
+    Attempts to execute a query (all()) with retries for OperationalError.
+    """
+    for i in range(retries):
+        try:
+            return query.all()
+        except OperationalError as e:
+            if "disk I/O error" in str(e) or "database is locked" in str(e):
+                app.logger.warning(f"Database query failed (attempt {i+1}/{retries}): {e}. Retrying in {delay}s...")
+                time.sleep(delay)
+                continue
+            raise
+    return query.all()
+
 @app.route('/')
 def home():
     return redirect(url_for('login'))
@@ -218,7 +248,7 @@ def dashboard_student():
     # ▼ 世界制覇機能：制覇済みのクエストとその挑戦回数、マップタイプを取得
     
     # 1. ユーザーがクリアしたクエストの進捗情報を取得
-    progress_records = UserProgress.query.filter_by(user_id=current_user.id, status='cleared').all()
+    progress_records = safe_query_all(UserProgress.query.filter_by(user_id=current_user.id, status='cleared'))
     cleared_quest_ids = [p.quest_id for p in progress_records]
 
     if not cleared_quest_ids:
@@ -286,7 +316,7 @@ def select_level(title):
 @login_required
 def select_quest_by_title_level(title, level):
     title_key = SUBJECT_JP_TO_KEY.get(title, title)
-    quests = Quest.query.filter_by(title=title_key, level=level).all()
+    quests = safe_query_all(Quest.query.filter_by(title=title_key, level=level))
 
     history_map = {}
     if current_user.is_authenticated:
@@ -335,7 +365,7 @@ def quest(quest_id):
 @app.route("/quest/select/<title>/<level>")
 def select_quest(title, level):
     title_key = SUBJECT_JP_TO_KEY.get(title, title)
-    quests = Quest.query.filter_by(title=title_key, level=level).all()
+    quests = safe_query_all(Quest.query.filter_by(title=title_key, level=level))
     print(quests)
     return render_template(
         'select_quest.html',
@@ -1000,7 +1030,9 @@ def update_user():
     nickname = request.form.get('nickname')
     password = request.form.get('password')
     
-    user = User.query.get_or_404(user_id)
+    user = safe_get(User, user_id)
+    if not user:
+        abort(404)
     user.nickname = nickname
     if password:
         user.set_password(password)
@@ -1074,7 +1106,9 @@ def delete_user(user_id):
     if not current_user.is_admin():
         return redirect(url_for('login'))
     
-    user = User.query.get_or_404(user_id)
+    user = safe_get(User, user_id)
+    if not user:
+        abort(404)
     username = user.username
     role = user.role
 
@@ -1292,7 +1326,9 @@ def edit_quest(quest_id):
     if quest_id == 'new':
         quest = Quest(title=title, level=level, questname='') # Create a new quest object
     else:
-        quest = Quest.query.get_or_404(int(quest_id))
+        quest = safe_get(Quest, int(quest_id))
+        if not quest:
+            abort(404)
     # Fetch all unique titles and levels for dropdowns
     all_titles_raw = db.session.query(Quest.title).distinct().all()
     all_titles_for_select = sorted([
@@ -1463,7 +1499,9 @@ def delete_question_action(quest_id):
 def delete_question(quest_id, question_id):
     title = request.args.get('title', '')
     level = request.args.get('level', '')
-    question = Question.query.get_or_404(question_id)
+    question = safe_get(Question, question_id)
+    if not question:
+        abort(404)
     db.session.delete(question)
     safe_commit()
     flash("問題を削除しました", "success")
@@ -1472,7 +1510,9 @@ def delete_question(quest_id, question_id):
 # 新規Question作成画面
 @app.route('/admin/question/add/<int:quest_id>')
 def add_question(quest_id):
-    quest = Quest.query.get_or_404(quest_id)
+    quest = safe_get(Quest, quest_id)
+    if not quest:
+        abort(404)
     title = request.args.get('title', '')
     level = request.args.get('level', '')
     return render_template('edit_question.html', question=None, quest=quest, quest_id=quest_id, title=title, level=level, choices=[], answers=[])
@@ -1480,7 +1520,9 @@ def add_question(quest_id):
 # 問題の編集画面
 @app.route('/admin/question/edit/<int:quest_id>/<question_id>', methods=['GET'])
 def edit_question(quest_id, question_id):
-    quest = Quest.query.get_or_404(quest_id)
+    quest = safe_get(Quest, quest_id)
+    if not quest:
+        abort(404)
     title = request.args.get('title', '')
     level = request.args.get('level', '')
 
@@ -1877,7 +1919,7 @@ def select_level_admin(title):
 @login_required
 def select_quest_by_title_level_admin(title, level):
     title_key = SUBJECT_JP_TO_KEY.get(title, title)
-    quests = Quest.query.filter_by(title=title_key, level=level).all()
+    quests = safe_query_all(Quest.query.filter_by(title=title_key, level=level))
     print(quests)
     return render_template(
         'select_quest_admin.html',
