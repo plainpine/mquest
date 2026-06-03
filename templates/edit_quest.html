@@ -38,12 +38,13 @@
     </select>
   </div>
   <div class="form-group">
-    <label for="level-select">レベル:</label>
-    <select name="level" id="level-select" required>
+    <label for="level-input">レベル:</label>
+    <input type="text" name="level" id="level-input" list="level-list" value="{{ quest.level }}" required pattern="Lv\d+" title="Lvn形式で入力してください (例: Lv1)">
+    <datalist id="level-list">
       {% for l in all_levels %}
-        <option value="{{ l }}" {% if l == quest.level %}selected{% endif %}>{{ l }}</option>
+        <option value="{{ l }}">
       {% endfor %}
-    </select>
+    </datalist>
   </div>
   <div class="form-group">
     <label>クエスト名:</label>

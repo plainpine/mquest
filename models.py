@@ -57,7 +57,7 @@ class Quest(db.Model):
     world_name = db.Column(db.String(100))
 
     # 同一DB内の関係
-    questions = db.relationship('Question', back_populates='quest', cascade="all, delete-orphan")
+    questions = db.relationship('Question', back_populates='quest', cascade="all, delete-orphan", lazy='joined')
     
     # 異なるDB間（BINDS）の関係
     # Questオブジェクトから他DBのデータを参照できるように primaryjoin を設定

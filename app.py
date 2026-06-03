@@ -6,7 +6,9 @@ from flask_login import LoginManager, login_user, login_required, logout_user, U
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone, timedelta
 from models import QuestHistory, Quest, Question, QuestAttemptLog
+import os
 import json
+import re
 import logging
 import random
 import time
@@ -47,7 +49,8 @@ SUBJECT_JP_TO_KEY = {v: k for k, v in SUBJECT_KEY_TO_JP.items()}
 
 from models import db, User, Quest, UserProgress
 
-app = Flask(__name__)
+basedir = os.path.abspath(os.path.dirname(__file__))
+app = Flask(__name__, template_folder=os.path.join(basedir, 'templates'))
 app.secret_key = 'your-secret-key'  # セッション管理に必要
 
 @app.template_filter('from_json')
@@ -57,11 +60,8 @@ def from_json_filter(s):
     except (json.JSONDecodeError, TypeError):
         return None
 
-import os
-
 # データベース設定（例: SQLite）
 # Flask-SQLAlchemyはデフォルトでinstanceフォルダを探すため、パスから 'instance/' を除外するか絶対パスを使用します。
-basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'mquest_user.db')
 app.config['SQLALCHEMY_BINDS'] = {
     'content': 'sqlite:///' + os.path.join(basedir, 'instance', 'mquest_content.db')
@@ -137,11 +137,26 @@ def safe_query_all(query, retries=3, delay=0.5):
             return query.all()
         except OperationalError as e:
             if "disk I/O error" in str(e) or "database is locked" in str(e):
-                app.logger.warning(f"Database query failed (attempt {i+1}/{retries}): {e}. Retrying in {delay}s...")
+                app.logger.warning(f"Database query all failed (attempt {i+1}/{retries}): {e}. Retrying in {delay}s...")
                 time.sleep(delay)
                 continue
             raise
     return query.all()
+
+def safe_query_first(query, retries=3, delay=0.5):
+    """
+    Attempts to execute a query (first()) with retries for OperationalError.
+    """
+    for i in range(retries):
+        try:
+            return query.first()
+        except OperationalError as e:
+            if "disk I/O error" in str(e) or "database is locked" in str(e):
+                app.logger.warning(f"Database query first failed (attempt {i+1}/{retries}): {e}. Retrying in {delay}s...")
+                time.sleep(delay)
+                continue
+            raise
+    return query.first()
 
 @app.route('/')
 def home():
@@ -150,7 +165,7 @@ def home():
 # ユーザーロード用コールバック
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return safe_get(User, int(user_id))
 
 # ユーザーログイン処理
 @app.route('/login', methods=['GET', 'POST'])
@@ -158,7 +173,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
+        user = safe_query_first(User.query.filter_by(username=username))
 
         if user and user.check_password(password):
             login_user(user)
@@ -255,11 +270,11 @@ def dashboard_student():
         conquered_quest_data = []
     else:
         # 2. クリアしたクエストの詳細情報（world_nameを含む）を取得
-        cleared_quests_details = Quest.query.filter(Quest.id.in_(cleared_quest_ids)).all()
+        cleared_quests_details = safe_query_all(Quest.query.filter(Quest.id.in_(cleared_quest_ids)))
         quest_map = {q.id: q for q in cleared_quests_details}
 
         # 3. ユーザーの全クエスト挑戦履歴を取得
-        histories = QuestHistory.query.filter_by(user_id=current_user.id).all()
+        histories = safe_query_all(QuestHistory.query.filter_by(user_id=current_user.id))
         attempts_map = {h.quest_id: h.attempts for h in histories}
 
         # 4. フロントエンドに渡すための最終的なデータ構造を構築
@@ -297,7 +312,7 @@ def dashboard_admin():
 @app.route('/select_title')
 @login_required
 def select_title():
-    titles = db.session.query(Quest.title).distinct().all()
+    titles = safe_query_all(db.session.query(Quest.title).distinct())
     # ユーザーに表示する際は、ここで日本語に変換
     jp_titles = [SUBJECT_KEY_TO_JP.get(t[0], t[0]) for t in titles]
     return render_template('select_title.html', titles=jp_titles)
@@ -308,7 +323,7 @@ def select_title():
 def select_level(title):
     print(f"Title: {title}")
     title_key = SUBJECT_JP_TO_KEY.get(title, title)
-    levels = db.session.query(Quest.level).filter_by(title=title_key).distinct().all()
+    levels = safe_query_all(db.session.query(Quest.level).filter_by(title=title_key).distinct())
     print(f"Levels: {levels}")
     return render_template('select_level.html', title=title, levels=[l[0] for l in levels])
 
@@ -321,10 +336,10 @@ def select_quest_by_title_level(title, level):
     history_map = {}
     if current_user.is_authenticated:
         user_id = current_user.id
-        histories = QuestHistory.query.filter(
+        histories = safe_query_all(QuestHistory.query.filter(
             QuestHistory.user_id == user_id,
             QuestHistory.quest_id.in_([q.id for q in quests])
-        ).all()
+        ))
         history_map = {h.quest_id: h for h in histories}
 
     return render_template(
@@ -341,7 +356,7 @@ def quest(quest_id):
     if session.get('role') != 'student':
         return redirect(url_for('login'))
 
-    quest_obj = db.session.get(Quest, quest_id)
+    quest_obj = safe_get(Quest, quest_id)
     if not quest_obj:
         return "クエストが見つかりません", 404
 
@@ -376,12 +391,12 @@ def select_quest(title, level):
 
 @app.route("/quest/run/<int:quest_id>")
 def quest_run(quest_id):
-    quest = db.session.get(Quest, quest_id)
+    quest = safe_get(Quest, quest_id)
     if not quest:
         return "指定されたクエストが存在しません", 404
 
     # すべての同タイトルの問題を取得（1問＝1レコード）
-    quest = Quest.query.filter_by(id=quest_id).first()  # ✅ 1件のQuestオブジェクトになる
+    quest = safe_query_first(Quest.query.filter_by(id=quest_id))  # ✅ 1件のQuestオブジェクトになる
     if not quest:
         return "クエストが見つかりません", 404
 
@@ -505,7 +520,7 @@ def quest_run(quest_id):
 @app.route('/quest/<int:quest_id>/result', methods=['GET', 'POST'])
 def quest_result(quest_id):
     if request.method == 'POST':
-        quest = db.session.get(Quest, quest_id)
+        quest = safe_get(Quest, quest_id)
         if not quest:
             return "Quest not found", 404
 
@@ -691,7 +706,7 @@ def quest_result(quest_id):
         if user_id:
             try:
                 # Update or create QuestHistory first
-                history = QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+                history = safe_query_first(QuestHistory.query.filter_by(user_id=user_id, quest_id=quest_id))
                 if history:
                     history.attempts += 1
                     history.correct = all_correct
@@ -726,7 +741,7 @@ def quest_result(quest_id):
 
                 # Now, sync UserProgress based on the definitive 'is_cleared' status from QuestHistory
                 if history.is_cleared:
-                    progress_record = UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id).first()
+                    progress_record = safe_query_first(UserProgress.query.filter_by(user_id=user_id, quest_id=quest_id))
                     if progress_record:
                         if progress_record.status != 'cleared':
                             progress_record.status = 'cleared'
@@ -763,12 +778,12 @@ def quest_result(quest_id):
         # Redirect to the dashboard corresponding to the user's role
         return redirect(url_for(f'dashboard_{role}'))
 
-    quest = db.session.get(Quest, quest_id)
+    quest = safe_get(Quest, quest_id)
     jp_title = SUBJECT_KEY_TO_JP.get(quest.title, quest.title)
 
     # Re-fetch full question objects for the template
     question_ids = [r['question_id'] for r in last_result['results']]
-    questions = Question.query.filter(Question.id.in_(question_ids)).all()
+    questions = safe_query_all(Question.query.filter(Question.id.in_(question_ids)))
     question_map = {q.id: q for q in questions}
 
     # Add the full question object back into the results
@@ -814,7 +829,7 @@ def quest_result(quest_id):
 
 @app.route('/quest')
 def quest_list():
-    return render_template('quest.html', quests=Quest)
+    return render_template('list_quests.html', quests=Quest)
 
 # メダル表示用ルート
 @app.route('/medals')
@@ -826,13 +841,13 @@ def medals():
     user_id = session.get('user_id')
 
     # 1. ユーザーの履歴をすべて取得
-    histories = QuestHistory.query.filter_by(user_id=user_id).all()
+    histories = safe_query_all(QuestHistory.query.filter_by(user_id=user_id))
     if not histories:
         return render_template("medals.html", medal_data=[])
 
     # 2. 履歴に関連するクエスト情報を取得
     quest_ids = list(set(h.quest_id for h in histories))
-    quests = Quest.query.filter(Quest.id.in_(quest_ids)).all()
+    quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)))
     quest_map = {q.id: q for q in quests}
 
     # 3. タイトルとレベルごとに挑戦回数を集計
@@ -864,7 +879,7 @@ def progress():
             user_id = requested_user_id
         elif session.get('role') == 'parent':
             # Verify if the student belongs to this parent
-            student = db.session.get(User, requested_user_id)
+            student = safe_get(User, requested_user_id)
             if student and student.parent_id == session.get('user_id'):
                 user_id = requested_user_id
             else:
@@ -879,20 +894,20 @@ def progress():
             return redirect(url_for('login'))
         user_id = session.get('user_id')
 
-    student = db.session.get(User, user_id)
+    student = safe_get(User, user_id)
     if not student:
         flash("生徒が見つかりません。")
         return redirect(url_for('dashboard'))
 
     # 1. ユーザーがクリアした進捗レコードをすべて取得
-    progress_records = UserProgress.query.filter_by(user_id=user_id, status='cleared').all()
+    progress_records = safe_query_all(UserProgress.query.filter_by(user_id=user_id, status='cleared'))
     
     if not progress_records:
         processed_cleared_data = []
     else:
         # 2. 進捗に関連するクエスト情報を取得
         quest_ids = list(set(p.quest_id for p in progress_records))
-        quests = Quest.query.filter(Quest.id.in_(quest_ids)).all()
+        quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)))
         quest_map = {q.id: q for q in quests}
 
         # 3. タイトルとレベルごとにクリア数を集計
@@ -912,14 +927,14 @@ def progress():
 
     # 2. New query for 4-week chart data
     four_weeks_ago = datetime.now(timezone.utc) - timedelta(weeks=4)
-    weekly_data = db.session.query(
+    weekly_data = safe_query_all(db.session.query(
         func.strftime('%Y-%W', QuestAttemptLog.attempted_at).label('week'),
         func.sum(case((QuestAttemptLog.correct_answers == QuestAttemptLog.total_questions, 1), else_=0)).label('cleared_count'),
         func.count(QuestAttemptLog.id).label('attempt_count')
     ).filter(
         QuestAttemptLog.user_id == user_id,
         QuestAttemptLog.attempted_at >= four_weeks_ago
-    ).group_by('week').order_by('week').all()
+    ).group_by('week').order_by('week'))
 
     weekly_chart_data = {
         'labels': [d.week for d in weekly_data],
@@ -929,14 +944,14 @@ def progress():
 
     # 3. New query for 3-month chart data
     three_months_ago = datetime.now(timezone.utc) - timedelta(days=90)
-    monthly_data = db.session.query(
+    monthly_data = safe_query_all(db.session.query(
         func.strftime('%Y-%m', QuestAttemptLog.attempted_at).label('month'),
         func.sum(case((QuestAttemptLog.correct_answers == QuestAttemptLog.total_questions, 1), else_=0)).label('cleared_count'),
         func.count(QuestAttemptLog.id).label('attempt_count')
     ).filter(
         QuestAttemptLog.user_id == user_id,
         QuestAttemptLog.attempted_at >= three_months_ago
-    ).group_by('month').order_by('month').all()
+    ).group_by('month').order_by('month'))
 
     monthly_chart_data = {
         'labels': [d.month for d in monthly_data],
@@ -958,7 +973,7 @@ def manage_students():
     if session.get('role') != 'admin' :
         return redirect(url_for('login'))
 
-    users = User.query.filter_by(role='student').all()
+    users = safe_query_all(User.query.filter_by(role='student'))
 
     data = []
 
@@ -981,12 +996,12 @@ def manage_students():
             }
 
         # 学習進捗状況の取得（UserProgressから）
-        progress_records = UserProgress.query.filter_by(user_id=user.id, status='cleared').all()
+        progress_records = safe_query_all(UserProgress.query.filter_by(user_id=user.id, status='cleared'))
         if not progress_records:
             user_data['progress'] = []
         else:
             quest_ids = list(set(p.quest_id for p in progress_records))
-            quests = Quest.query.filter(Quest.id.in_(quest_ids)).all()
+            quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)))
             quest_map = {q.id: q for q in quests}
 
             from collections import defaultdict
@@ -1004,17 +1019,17 @@ def manage_students():
             user_data['progress'] = processed_progress
 
         # メダル取得状況の取得（挑戦回数の合計）
-        medal_counts = db.session.query(
+        medal_counts = safe_query_all(db.session.query(
             QuestHistory.quest_id,
             QuestHistory.attempts
-        ).filter_by(user_id=user.id).all()
+        ).filter_by(user_id=user.id))
 
         user_data['medals'] = [{'quest_id': m[0], 'count': m[1]} for m in medal_counts]
 
         data.append(user_data)
 
     # 全保護者のリストを取得（紐付け用）
-    all_parents = User.query.filter_by(role='parent').all()
+    all_parents = safe_query_all(User.query.filter_by(role='parent'))
     parent_list = [{'id': p.id, 'username': p.username, 'nickname': p.nickname} for p in all_parents]
 
     return render_template('manage_students.html', students=data, parents=parent_list)
@@ -1121,7 +1136,7 @@ def delete_user(user_id):
         
         # 保護者の場合、子供たちのparent_idをNULLにする
         elif role == 'parent':
-            children = User.query.filter_by(parent_id=user_id).all()
+            children = safe_query_all(User.query.filter_by(parent_id=user_id))
             for child in children:
                 child.parent_id = None
 
@@ -1145,11 +1160,11 @@ def manage_quests():
     selected_level = request.args.get('level', '')
 
     # 全てのユニークなタイトルを取得
-    all_titles_raw = db.session.query(Quest.title).distinct().all()
+    all_titles_raw = safe_query_all(db.session.query(Quest.title).distinct())
     jp_titles = sorted(list(set([SUBJECT_KEY_TO_JP.get(t[0], t[0]) for t in all_titles_raw])))
 
     # 全てのユニークなレベルを取得
-    all_levels_raw = db.session.query(Quest.level).distinct().all()
+    all_levels_raw = safe_query_all(db.session.query(Quest.level).distinct())
     all_levels = sorted(list(set([l[0] for l in all_levels_raw])))
 
     quest_query = Quest.query
@@ -1160,7 +1175,7 @@ def manage_quests():
     if selected_level:
         quest_query = quest_query.filter_by(level=selected_level)
     
-    quests = quest_query.all()
+    quests = safe_query_all(quest_query)
 
     return render_template('list_quests.html', 
                            quests=quests, 
@@ -1198,7 +1213,7 @@ def handle_quest_action():
         deleted_count = 0
         for qid in quest_ids:
             quest_id_to_delete = int(qid)
-            quest = Quest.query.get(quest_id_to_delete)
+            quest = safe_get(Quest, quest_id_to_delete)
             if quest:
                 # Manually delete dependent records to prevent IntegrityError
                 UserProgress.query.filter_by(quest_id=quest_id_to_delete).delete()
@@ -1250,7 +1265,7 @@ def bulk_edit_ids():
         return redirect(url_for('manage_quests', title=title, level=level))
     
     quest_ids = [int(qid) for qid in quest_ids_str.split(',') if qid]
-    quests = Quest.query.filter(Quest.id.in_(quest_ids)).order_by(Quest.id).all()
+    quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)).order_by(Quest.id))
     
     return render_template('bulk_edit_ids.html', quests=quests, title=title, level=level)
 
@@ -1292,7 +1307,7 @@ def save_bulk_ids():
     
     for _, new_id in updates:
         if new_id not in selected_old_ids:
-            if Quest.query.get(new_id):
+            if safe_get(Quest, new_id):
                 flash(f"エラー: ID {new_id} は既に他のクエストで使用されています。", "danger")
                 return redirect(request.referrer)
 
@@ -1351,6 +1366,11 @@ def save_quest(quest_id):
     level = request.form.get('level')
     questname = request.form.get('questname')
     new_id_str = request.form.get('new_id')
+
+    # Level format validation: Lvn (n is a number)
+    if not re.match(r'^Lv\d+$', level):
+        flash("エラー: レベルは 'Lvn' (nは数字) の形式で入力してください (例: Lv1)。", "danger")
+        return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
     # Helper for robust query
     def get_quest_with_retry(qid):
