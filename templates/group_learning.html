@@ -272,6 +272,13 @@
               <div>{{ loop.index }}. {{ sub_q.prompt }}: {{ sub_q.answer }}</div>
             {% endfor %}
           {% endif %}
+          
+          {% if question.explanation %}
+            <div style="margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed #ccc;">
+              <strong>解説：</strong>
+              <div class="markdown" data-content="{{ question.explanation | e }}"></div>
+            </div>
+          {% endif %}
         </div>
       </div>
       </div>

@@ -2011,7 +2011,8 @@ def quest_run_group(quest_id):
                 "text": q.text,
                 "choices": q.choices, # Pass raw JSON for size extraction in template
                 "svg_content": svg_display,
-                "sub_questions": sub_questions
+                "sub_questions": sub_questions,
+                "explanation": q.explanation
             })
         elif q.type == 'function_graph':
             questions.append({
@@ -2019,7 +2020,8 @@ def quest_run_group(quest_id):
                 "text": q.text,
                 "answer": answer, # This will be the parsed list of dicts
                 "choices": choices,
-                "answers": None
+                "answers": None,
+                "explanation": q.explanation
             })
         elif q.type == 'function_graph_choice':
             # q.choices is graph_data, q.answer is sub_questions
@@ -2042,6 +2044,7 @@ def quest_run_group(quest_id):
                 "text": q.text,
                 "graph_data": graph_data,
                 "sub_questions": sub_questions,
+                "explanation": q.explanation
             })
         else:
             questions.append({
@@ -2049,7 +2052,8 @@ def quest_run_group(quest_id):
                 "text": q.text,
                 "choices": choices,
                 "answer": answer if q.type != "numeric" else None,
-                "answers": answer if q.type == "numeric" else None
+                "answers": answer if q.type == "numeric" else None,
+                "explanation": q.explanation
             })
 
     jp_title = SUBJECT_KEY_TO_JP.get(quest.title, quest.title)

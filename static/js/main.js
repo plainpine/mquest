@@ -34,8 +34,11 @@ window.renderMarkdown = async function(element, text) {
     }
     
     let content = text || '';
-    // 改行コードの正規化
-    content = content.replace(/\\n/g, '\n');
+    // 改行コードの正規化 (LaTeXの \ne などが破壊されないよう、数式ブロック内は除外して置換)
+    content = content.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))|(\\n)/g, (match, math, newline) => {
+        if (math) return math;
+        return '\n';
+    });
     element.innerHTML = marked.parse(content);
 
     // Mermaid の処理
