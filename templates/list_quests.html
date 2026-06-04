@@ -32,7 +32,83 @@
     <button type="submit" name="action" value="delete" onclick="setClickedAction(this.value); return confirm('本当に削除しますか？')">削除</button>
     <button type="submit" name="action" value="challenge" onclick="setClickedAction(this.value)">問題確認</button>
     <button type="submit" name="action" value="bulk_edit" onclick="setClickedAction(this.value)">一括ID変更</button>
+    <button type="button" onclick="handleExportCsv()" style="background-color: #2196f3; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">CSVエクスポート</button>
+    <button type="button" onclick="location.href='{{ url_for('import_questions_gui') }}'" style="background-color: #607d8b; color: white;">CSVインポート</button>
   </div>
+
+  <script>
+    function generateDefaultFilename() {
+      const now = new Date();
+      const Y = now.getFullYear();
+      const M = String(now.getMonth() + 1).padStart(2, '0');
+      const D = String(now.getDate()).padStart(2, '0');
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      return `questions_export_${Y}${M}${D}_${h}${m}${s}.csv`;
+    }
+
+    async function handleExportCsv() {
+        const questIds = Array.from(document.querySelectorAll('input[name="quest_id"]:checked')).map(cb => cb.value);
+        if (questIds.length === 0) {
+            alert("クエストを選択してください");
+            return;
+        }
+
+        const filename = generateDefaultFilename();
+        const title = document.querySelector('input[name="title"]').value;
+        const level = document.querySelector('input[name="level"]').value;
+
+        const formData = new FormData();
+        formData.append('action', 'export_csv');
+        questIds.forEach(id => formData.append('quest_id', id));
+        formData.append('title', title);
+        formData.append('level', level);
+        formData.append('export_filename', filename);
+
+        try {
+            const response = await fetch("{{ url_for('handle_quest_action') }}", {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                alert("エクスポートデータの取得に失敗しました");
+                return;
+            }
+
+            const blob = await response.blob();
+            
+            // File System Access API (Modern browsers like Chrome/Edge)
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: filename,
+                        types: [{
+                            description: 'CSV File',
+                            accept: { 'text/csv': ['.csv'] }
+                        }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                } catch (err) {
+                    console.log('Save cancelled', err);
+                }
+            } else {
+                // Fallback for older browsers
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        } catch (err) {
+            alert("エラーが発生しました: " + err);
+        }
+    }
+  </script>
   <table border="1" cellpadding="8">
     <thead>
       <tr>

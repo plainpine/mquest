@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_file, Response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, case
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -13,6 +13,8 @@ import logging
 import random
 import time
 import atexit
+import csv
+import io
 from utils.svg_preview_bp import bp as svg_preview_bp # Import the blueprint
 
 # ... (rest of imports/mappings)
@@ -1204,11 +1206,28 @@ def handle_quest_action():
 
     if action == 'edit':
         return redirect(url_for('edit_quest', quest_id=quest_ids[0], title=title, level=level))
-    elif action == 'bulk_edit':
-        return redirect(url_for('bulk_edit_ids', quest_ids=','.join(quest_ids), title=title, level=level))
-    elif action == 'challenge':
-        # Preserve title and level filters when challenging a quest from manage_quests
-        return redirect(url_for('quest_run', quest_id=quest_ids[0], title=title, level=level))
+    elif action == 'export_csv':
+        export_filename = request.form.get('export_filename', 'questions_export.csv').strip()
+        if not export_filename.endswith('.csv'):
+            export_filename += '.csv'
+
+        questions = Question.query.filter(Question.quest_id.in_(quest_ids)).order_by(Question.quest_id, Question.id).all()
+        
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['id', 'quest_id', 'type', 'text', 'choices', 'answer', 'explanation'])
+        for q in questions:
+            writer.writerow([q.id, q.quest_id, q.type, q.text, q.choices, q.answer, q.explanation])
+        
+        csv_content = "\ufeff" + output.getvalue()
+
+        # Always return as download
+        response = Response(
+            csv_content,
+            mimetype="text/csv",
+            headers={"Content-disposition": f"attachment; filename={export_filename}"}
+        )
+        return response
     elif action == 'delete':
         deleted_count = 0
         for qid in quest_ids:
@@ -2079,6 +2098,83 @@ def parent_students():
         })
 
     return render_template("parent_students.html", student_data=student_data)
+
+@app.route('/admin/questions/import', methods=['GET'])
+@login_required
+def import_questions_gui():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    return render_template('import_questions.html')
+
+@app.route('/admin/questions/import', methods=['POST'])
+@login_required
+def import_questions_action():
+    if not current_user.is_admin():
+        abort(403)
+    
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        flash("CSVファイルを選択してください", "danger")
+        return redirect(url_for('import_questions_gui'))
+    
+    try:
+        # Read file stream
+        content = file.stream.read().decode("utf-8-sig") # use utf-8-sig to handle BOM
+        stream = io.StringIO(content)
+        reader = csv.DictReader(stream)
+        
+        updated_count = 0
+        inserted_count = 0
+        
+        for row in reader:
+            q_id = row.get('id')
+            quest_id = row.get('quest_id')
+            q_type = row.get('type')
+            text = row.get('text')
+            choices = row.get('choices')
+            answer = row.get('answer')
+            explanation = row.get('explanation')
+            
+            if not quest_id or not q_type or not text:
+                continue # Skip invalid rows
+            
+            question = None
+            if q_id and q_id.strip():
+                question = safe_get(Question, int(q_id))
+            
+            if question:
+                # Update existing
+                question.quest_id = int(quest_id)
+                question.type = q_type
+                question.text = text
+                question.choices = choices if choices and choices.strip() != '' else None
+                question.answer = answer
+                question.explanation = explanation
+                updated_count += 1
+            else:
+                # Insert new
+                new_q = Question(
+                    quest_id=int(quest_id),
+                    type=q_type,
+                    text=text,
+                    choices=choices if choices and choices.strip() != '' else None,
+                    answer=answer,
+                    explanation=explanation
+                )
+                if q_id and q_id.strip():
+                    new_q.id = int(q_id)
+                
+                db.session.add(new_q)
+                inserted_count += 1
+        
+        safe_commit()
+        flash(f"CSVインポート完了: 更新 {updated_count} 件, 新規登録 {inserted_count} 件", "success")
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Import error: {e}")
+        flash(f"インポートエラー: {str(e)}", "danger")
+        
+    return redirect(url_for('import_questions_gui'))
 
 if __name__ == '__main__':
     app.logger.setLevel(logging.DEBUG)  # ログレベルをDEBUGに設定

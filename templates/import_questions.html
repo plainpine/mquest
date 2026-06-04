@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}問題のCSVインポート{% endblock %}
+
+{% block content %}
+<h2>問題のCSVインポート</h2>
+
+<div class="card" style="margin-top: 2rem; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
+    <p>CSVファイルをアップロードして問題を登録・更新します。</p>
+    <ul>
+        <li>CSVには以下のヘッダーを含めてください: <code>id, quest_id, type, text, choices, answer, explanation</code></li>
+        <li><code>id</code> が一致する既存の問題があれば更新し、なければ新規登録します。</li>
+        <li><code>id</code> が空の場合は新規登録されます。</li>
+    </ul>
+
+    <form action="{{ url_for('import_questions_action') }}" method="post" enctype="multipart/form-data" style="margin-top: 1rem;">
+        <div style="margin-bottom: 1rem;">
+            <label for="file">CSVファイル選択:</label><br>
+            <input type="file" name="file" id="file" accept=".csv" required>
+        </div>
+        <button type="submit" class="button" style="background-color: #4CAF50; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer;">インポート実行</button>
+        <a href="{{ url_for('manage_quests') }}" class="button" style="background-color: #607d8b; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-left: 0.5rem;">クエスト一覧に戻る</a>
+    </form>
+</div>
+
+{% if get_flashed_messages() %}
+    <div style="margin-top: 1rem;">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="alert alert-{{ category }}" style="padding: 0.75rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 4px; {{ 'color: #155724; background-color: #d4edda; border-color: #c3e6cb;' if category == 'success' else 'color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;' }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+    </div>
+{% endif %}
+
+{% endblock %}
