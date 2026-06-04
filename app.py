@@ -44,7 +44,8 @@ atexit.register(cleanup_database)
 SUBJECT_KEY_TO_JP = {
     'math': '数学',
     'english': '英語',
-    'japanese': '国語'
+    'japanese': '国語',
+    'misc': 'その他'
 }
 # 日本語名から英語キーへの逆引きマップ
 SUBJECT_JP_TO_KEY = {v: k for k, v in SUBJECT_KEY_TO_JP.items()}
@@ -1206,28 +1207,61 @@ def handle_quest_action():
 
     if action == 'edit':
         return redirect(url_for('edit_quest', quest_id=quest_ids[0], title=title, level=level))
-    elif action == 'export_csv':
-        export_filename = request.form.get('export_filename', 'questions_export.csv').strip()
-        if not export_filename.endswith('.csv'):
-            export_filename += '.csv'
+    elif action == 'export_json':
+        export_filename = request.form.get('export_filename', 'questions_export.json').strip()
+        if not export_filename.endswith('.json'):
+            export_filename += '.json'
 
-        questions = Question.query.filter(Question.quest_id.in_(quest_ids)).order_by(Question.quest_id, Question.id).all()
+        selected_quests = Quest.query.filter(Quest.id.in_(quest_ids)).order_by(Quest.id).all()
         
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(['id', 'quest_id', 'type', 'text', 'choices', 'answer', 'explanation'])
-        for q in questions:
-            writer.writerow([q.id, q.quest_id, q.type, q.text, q.choices, q.answer, q.explanation])
-        
-        csv_content = "\ufeff" + output.getvalue()
+        export_data = []
+        for quest in selected_quests:
+            # 1. Output Quest metadata record
+            export_data.append({
+                'record_type': 'quest',
+                'id': quest.id,
+                'title': quest.title,
+                'level': quest.level,
+                'questname': quest.questname
+            })
+            
+            # 2. Output Question records for this quest
+            questions = Question.query.filter_by(quest_id=quest.id).order_by(Question.id).all()
+            for q in questions:
+                q_data = {
+                    'record_type': 'question',
+                    'id': q.id,
+                    'quest_id': q.quest_id,
+                    'type': q.type,
+                    'text': q.text,
+                    'explanation': q.explanation
+                }
+                
+                try:
+                    q_data['choices'] = json.loads(q.choices) if q.choices else None
+                except (json.JSONDecodeError, TypeError):
+                    q_data['choices'] = q.choices
 
-        # Always return as download
+                try:
+                    q_data['answer'] = json.loads(q.answer) if q.answer else None
+                except (json.JSONDecodeError, TypeError):
+                    q_data['answer'] = q.answer
+                
+                export_data.append(q_data)
+        
+        json_content = json.dumps(export_data, indent=4, ensure_ascii=False)
+        
         response = Response(
-            csv_content,
-            mimetype="text/csv",
+            json_content,
+            mimetype="application/json",
             headers={"Content-disposition": f"attachment; filename={export_filename}"}
         )
         return response
+    elif action == 'bulk_edit':
+        return redirect(url_for('bulk_edit_ids', quest_ids=','.join(quest_ids), title=title, level=level))
+    elif action == 'challenge':
+        # Preserve title and level filters when challenging a quest from manage_quests
+        return redirect(url_for('quest_run', quest_id=quest_ids[0], title=title, level=level))
     elif action == 'delete':
         deleted_count = 0
         for qid in quest_ids:
@@ -2114,61 +2148,170 @@ def import_questions_action():
     
     file = request.files.get('file')
     if not file or file.filename == '':
-        flash("CSVファイルを選択してください", "danger")
+        flash("JSONファイルを選択してください", "danger")
         return redirect(url_for('import_questions_gui'))
     
     try:
-        # Read file stream
-        content = file.stream.read().decode("utf-8-sig") # use utf-8-sig to handle BOM
-        stream = io.StringIO(content)
-        reader = csv.DictReader(stream)
+        filename = file.filename.lower()
+        if not filename.endswith('.json'):
+            flash("サポートされていないファイル形式です (.json を使用してください)", "danger")
+            return redirect(url_for('import_questions_gui'))
+
+        import_data = json.loads(file.read().decode('utf-8'))
         
-        updated_count = 0
-        inserted_count = 0
-        
-        for row in reader:
-            q_id = row.get('id')
-            quest_id = row.get('quest_id')
-            q_type = row.get('type')
-            text = row.get('text')
-            choices = row.get('choices')
-            answer = row.get('answer')
-            explanation = row.get('explanation')
+        # --- Pre-validation ---
+        current_quest_context = None # Can be an int or the string 'PENDING_AUTO'
+        for i, row in enumerate(import_data):
+            rec_type = row.get('record_type', 'question')
             
-            if not quest_id or not q_type or not text:
-                continue # Skip invalid rows
+            if rec_type == 'quest':
+                q_id = row.get('id')
+                if q_id:
+                    try:
+                        current_quest_context = int(q_id)
+                    except (ValueError, TypeError):
+                        flash(f"エラー (行 {i+1}): クエストID '{q_id}' が無効な数値です。", "danger")
+                        return redirect(url_for('import_questions_gui'))
+                else:
+                    current_quest_context = 'PENDING_AUTO'
             
-            question = None
-            if q_id and q_id.strip():
-                question = safe_get(Question, int(q_id))
-            
-            if question:
-                # Update existing
-                question.quest_id = int(quest_id)
-                question.type = q_type
-                question.text = text
-                question.choices = choices if choices and choices.strip() != '' else None
-                question.answer = answer
-                question.explanation = explanation
-                updated_count += 1
-            else:
-                # Insert new
-                new_q = Question(
-                    quest_id=int(quest_id),
-                    type=q_type,
-                    text=text,
-                    choices=choices if choices and choices.strip() != '' else None,
-                    answer=answer,
-                    explanation=explanation
-                )
-                if q_id and q_id.strip():
-                    new_q.id = int(q_id)
+            elif rec_type == 'question':
+                q_id = row.get('id')
+                # quest_id for this question: explicit in row, or inherited from context
+                quest_id = row.get('quest_id')
                 
-                db.session.add(new_q)
-                inserted_count += 1
+                effective_qid = None
+                if quest_id:
+                    try:
+                        effective_qid = int(quest_id)
+                    except (ValueError, TypeError):
+                        flash(f"エラー (行 {i+1}): quest_id '{quest_id}' が無効な数値です。", "danger")
+                        return redirect(url_for('import_questions_gui'))
+                elif current_quest_context:
+                    effective_qid = current_quest_context
+
+                if effective_qid is None:
+                    flash(f"エラー (行 {i+1}): quest_id が指定されておらず、直前にクエスト情報もありません。", "danger")
+                    return redirect(url_for('import_questions_gui'))
+
+                # Check id inconsistency (ONLY if both quest_id and question id are explicit integers)
+                if q_id and isinstance(effective_qid, int):
+                    try:
+                        id_int = int(q_id)
+                        if id_int // 100 != effective_qid:
+                            flash(f"エラー (行 {i+1}): 問題ID {id_int} と クエストID {effective_qid} に矛盾があります。", "danger")
+                            return redirect(url_for('import_questions_gui'))
+                    except (ValueError, TypeError):
+                        flash(f"エラー (行 {i+1}): id '{q_id}' が無効な数値です。", "danger")
+                        return redirect(url_for('import_questions_gui'))
+        # --- End Pre-validation ---
+
+        updated_q_count = 0
+        inserted_q_count = 0
+        updated_quest_count = 0
+        inserted_quest_count = 0
+        
+        checked_quest_ids = set()
+        last_processed_quest_id = None
+
+        for row in import_data:
+            rec_type = row.get('record_type', 'question')
+            
+            if rec_type == 'quest':
+                qid_raw = row.get('id')
+                if qid_raw:
+                    qid = int(qid_raw)
+                else:
+                    # Auto-assign Quest ID
+                    max_id = db.session.query(func.max(Quest.id)).scalar() or 0
+                    qid = max_id + 1
+                
+                quest = safe_get(Quest, qid)
+                if quest:
+                    quest.title = row.get('title', quest.title)
+                    quest.level = row.get('level', quest.level)
+                    quest.questname = row.get('questname', quest.questname)
+                    updated_quest_count += 1
+                else:
+                    new_quest = Quest(
+                        id=qid,
+                        title=row.get('title', 'misc'),
+                        level=row.get('level', 'Lv1'),
+                        questname=row.get('questname', f'Imported Quest {qid}')
+                    )
+                    db.session.add(new_quest)
+                    inserted_quest_count += 1
+                db.session.flush()
+                checked_quest_ids.add(qid)
+                last_processed_quest_id = qid
+                
+            elif rec_type == 'question':
+                q_id_raw = row.get('id')
+                quest_id = int(row.get('quest_id') or last_processed_quest_id)
+                q_type = row.get('type')
+                text = row.get('text')
+                choices = row.get('choices')
+                answer = row.get('answer')
+                explanation = row.get('explanation')
+                
+                if not q_type or not text: continue
+
+                # Ensure parent Quest exists
+                if quest_id not in checked_quest_ids:
+                    if not safe_get(Quest, quest_id):
+                        new_quest = Quest(id=quest_id, title='misc', level='Lv1', questname=f'Imported Quest {quest_id}')
+                        db.session.add(new_quest)
+                        db.session.flush()
+                        inserted_quest_count += 1
+                    checked_quest_ids.add(quest_id)
+
+                if choices is not None and not isinstance(choices, str):
+                    choices = json.dumps(choices, ensure_ascii=False)
+                if answer is not None and not isinstance(answer, str):
+                    answer = json.dumps(answer, ensure_ascii=False)
+
+                question = None
+                if q_id_raw:
+                    question = safe_get(Question, int(q_id_raw))
+                
+                if question:
+                    # Update existing
+                    question.quest_id = quest_id
+                    question.type = q_type
+                    question.text = text
+                    question.choices = choices if choices and str(choices).strip() != '' else None
+                    question.answer = answer
+                    question.explanation = explanation
+                    updated_q_count += 1
+                else:
+                    # Insert new
+                    new_q = Question(
+                        quest_id=quest_id, type=q_type, text=text,
+                        choices=choices if choices and str(choices).strip() != '' else None,
+                        answer=answer, explanation=explanation
+                    )
+                    if q_id_raw:
+                        new_q.id = int(q_id_raw)
+                    else:
+                        # Auto-assign Question ID (QuestID * 100 + next serial)
+                        base_id = quest_id * 100
+                        max_q_id = db.session.query(func.max(Question.id)).filter(Question.id > base_id, Question.id < base_id + 100).scalar()
+                        new_q.id = (max_q_id + 1) if max_q_id else (base_id + 1)
+                    
+                    db.session.add(new_q)
+                    inserted_q_count += 1
+                    db.session.flush() # Flush to update max_q_id for next item in same batch
         
         safe_commit()
-        flash(f"CSVインポート完了: 更新 {updated_count} 件, 新規登録 {inserted_count} 件", "success")
+        list_url = url_for('manage_quests')
+        flash(f'インポート完了: クエスト(更新{updated_quest_count}/新規{inserted_quest_count}), 問題(更新{updated_q_count}/新規{inserted_q_count})。 <a href="{list_url}">クエスト一覧で確認する</a>', "success")
+    except IntegrityError as ie:
+        db.session.rollback()
+        msg = str(ie)
+        if "FOREIGN KEY" in msg:
+            flash("インポートエラー: 指定された クエストID が存在しません。先に「問題の追加」からクエストを作成してください。", "danger")
+        else:
+            flash(f"データベース整合性エラー: {msg}", "danger")
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Import error: {e}")

@@ -32,8 +32,8 @@
     <button type="submit" name="action" value="delete" onclick="setClickedAction(this.value); return confirm('本当に削除しますか？')">削除</button>
     <button type="submit" name="action" value="challenge" onclick="setClickedAction(this.value)">問題確認</button>
     <button type="submit" name="action" value="bulk_edit" onclick="setClickedAction(this.value)">一括ID変更</button>
-    <button type="button" onclick="handleExportCsv()" style="background-color: #2196f3; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">CSVエクスポート</button>
-    <button type="button" onclick="location.href='{{ url_for('import_questions_gui') }}'" style="background-color: #607d8b; color: white;">CSVインポート</button>
+    <button type="button" onclick="handleExportJson()" style="background-color: #2196f3; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">JSONエクスポート</button>
+    <button type="button" onclick="location.href='{{ url_for('import_questions_gui') }}'" style="background-color: #607d8b; color: white;">JSONインポート</button>
   </div>
 
   <script>
@@ -45,10 +45,10 @@
       const h = String(now.getHours()).padStart(2, '0');
       const m = String(now.getMinutes()).padStart(2, '0');
       const s = String(now.getSeconds()).padStart(2, '0');
-      return `questions_export_${Y}${M}${D}_${h}${m}${s}.csv`;
+      return `questions_export_${Y}${M}${D}_${h}${m}${s}.json`;
     }
 
-    async function handleExportCsv() {
+    async function handleExportJson() {
         const questIds = Array.from(document.querySelectorAll('input[name="quest_id"]:checked')).map(cb => cb.value);
         if (questIds.length === 0) {
             alert("クエストを選択してください");
@@ -60,7 +60,7 @@
         const level = document.querySelector('input[name="level"]').value;
 
         const formData = new FormData();
-        formData.append('action', 'export_csv');
+        formData.append('action', 'export_json');
         questIds.forEach(id => formData.append('quest_id', id));
         formData.append('title', title);
         formData.append('level', level);
@@ -79,14 +79,14 @@
 
             const blob = await response.blob();
             
-            // File System Access API (Modern browsers like Chrome/Edge)
+            // File System Access API
             if (window.showSaveFilePicker) {
                 try {
                     const handle = await window.showSaveFilePicker({
                         suggestedName: filename,
                         types: [{
-                            description: 'CSV File',
-                            accept: { 'text/csv': ['.csv'] }
+                            description: 'JSON File',
+                            accept: { 'application/json': ['.json'] }
                         }]
                     });
                     const writable = await handle.createWritable();
@@ -96,7 +96,6 @@
                     console.log('Save cancelled', err);
                 }
             } else {
-                // Fallback for older browsers
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
