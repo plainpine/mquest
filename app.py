@@ -1023,14 +1023,13 @@ def progress():
     if not progress_records and not histories:
         processed_progress_data = []
     else:
-        # 進捗と履歴に関連するクエスト情報を取得
+        # 進捗と履歴に関連する全クエストIDを取得
         quest_ids = list(set([p.quest_id for p in progress_records] + [h.quest_id for h in histories]))
         quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)))
         quest_map = {q.id: q for q in quests}
 
         # タイトルとレベルごとに集計
         from collections import defaultdict
-        # aggregated = {(title, level): {'cleared': count, 'medals': attempts}}
         aggregated = defaultdict(lambda: {'cleared': 0, 'medals': 0})
         
         for p in progress_records:
@@ -1043,15 +1042,35 @@ def progress():
             if quest:
                 aggregated[(quest.title, quest.level)]['medals'] += h.attempts
         
-        # 表示用にデータを整形（ソート）
+        # 各タイトル・レベルの「全問題数」を取得してメダルを判定
         processed_progress_data = []
         for (title, level), stats in sorted(aggregated.items()):
             jp_title = SUBJECT_KEY_TO_JP.get(title, title)
+            
+            # その科目・レベルの総問題数を取得
+            total_q_count = safe_query_first(db.session.query(func.count(Quest.id)).filter_by(title=title, level=level))[0]
+            
+            # メダル判定ロジック (挑戦回数 ÷ 総問題数)
+            ratio = stats['medals'] / total_q_count if total_q_count > 0 else 0
+            
+            medal = None
+            if ratio >= 2.0:
+                medal = {'icon': 'fa-gem', 'color': '#00d2ff', 'label': 'ダイヤモンド', 'text': 'text-info'}
+            elif ratio >= 1.5:
+                medal = {'icon': 'fa-medal', 'color': '#FFD700', 'label': '金', 'text': 'text-warning'}
+            elif ratio >= 1.0:
+                medal = {'icon': 'fa-medal', 'color': '#C0C0C0', 'label': '銀', 'text': 'text-secondary'}
+            elif ratio >= 0.5:
+                medal = {'icon': 'fa-medal', 'color': '#CD7F32', 'label': '銅', 'text': 'text-brown'}
+
             processed_progress_data.append({
                 'title': jp_title,
                 'level': level,
                 'cleared_count': stats['cleared'],
-                'medal_count': stats['medals']
+                'total_count': total_q_count,
+                'medal_count': stats['medals'],
+                'medal': medal,
+                'ratio': round(ratio, 2)
             })
 
     # 2. New query for 4-week chart data

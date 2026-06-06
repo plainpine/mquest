@@ -64,13 +64,27 @@
 </div>
 
 <h2>クエスト制覇状況 - {{ student.nickname or student.username }}</h2>
-<table border="1" cellpadding="6" cellspacing="0" style="margin: 20px auto;">
-    <thead>
+
+<div style="max-width: 600px; margin: 0 auto 20px auto; padding: 15px; border: 1px solid #eee; border-radius: 8px; background-color: #fcfcfc;">
+    <h5 class="mb-2"><i class="fas fa-info-circle"></i> メダル獲得条件</h5>
+    <div class="d-flex justify-content-around flex-wrap gap-2" style="font-size: 0.9rem;">
+        <span><i class="fas fa-medal" style="color: #CD7F32;"></i> 銅: 0.5以上</span>
+        <span><i class="fas fa-medal" style="color: #C0C0C0;"></i> 銀: 1.0以上</span>
+        <span><i class="fas fa-medal" style="color: #FFD700;"></i> 金: 1.5以上</span>
+        <span><i class="fas fa-gem" style="color: #00d2ff;"></i> ダイヤ: 2.0以上</span>
+    </div>
+    <div class="text-center mt-2 text-muted" style="font-size: 0.8rem;">※ 努力比率 = 挑戦回数 ÷ 問題数</div>
+</div>
+
+<table border="1" cellpadding="6" cellspacing="0" style="margin: 20px auto; width: 90%; max-width: 800px; text-align: center;">
+    <thead style="background-color: #f8f9fa;">
         <tr>
             <th>科目</th>
             <th>レベル</th>
             <th>制覇クエスト数</th>
-            <th>メダル獲得数</th>
+            <th>挑戦回数</th>
+            <th>努力比率</th>
+            <th>獲得メダル</th>
         </tr>
     </thead>
     <tbody>
@@ -78,12 +92,23 @@
         <tr>
             <td>{{ item.title }}</td>
             <td>{{ item.level }}</td>
-            <td>{{ item.cleared_count }}</td>
+            <td>{{ item.cleared_count }} / {{ item.total_count }}</td>
             <td>{{ item.medal_count }}</td>
+            <td>{{ item.ratio }}</td>
+            <td>
+                {% if item.medal %}
+                    <span class="{{ item.medal.text }}" title="{{ item.medal.label }}">
+                        <i class="fas {{ item.medal.icon }} fa-2x" style="color: {{ item.medal.color }}; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.2));"></i>
+                        <div style="font-size: 0.7rem; font-weight: bold;">{{ item.medal.label }}</div>
+                    </span>
+                {% else %}
+                    <span class="text-muted" style="font-size: 0.8rem;">-</span>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
         {% if not progress_data %}
-        <tr><td colspan="4">まだ達成記録がありません。</td></tr>
+        <tr><td colspan="6">まだ達成記録がありません。</td></tr>
         {% endif %}
     </tbody>
 </table>
