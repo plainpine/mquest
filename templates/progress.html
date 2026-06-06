@@ -70,18 +70,20 @@
             <th>科目</th>
             <th>レベル</th>
             <th>制覇クエスト数</th>
+            <th>メダル獲得数</th>
         </tr>
     </thead>
     <tbody>
-        {% for title, level, count in cleared %}
+        {% for item in progress_data %}
         <tr>
-            <td>{{ title }}</td>
-            <td>{{ level }}</td>
-            <td>{{ count }}</td>
+            <td>{{ item.title }}</td>
+            <td>{{ item.level }}</td>
+            <td>{{ item.cleared_count }}</td>
+            <td>{{ item.medal_count }}</td>
         </tr>
         {% endfor %}
-        {% if not cleared %}
-        <tr><td colspan="3">まだ達成記録がありません。</td></tr>
+        {% if not progress_data %}
+        <tr><td colspan="4">まだ達成記録がありません。</td></tr>
         {% endif %}
     </tbody>
 </table>

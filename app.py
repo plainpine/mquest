@@ -982,42 +982,6 @@ def quest_result(quest_id):
 def quest_list():
     return render_template('list_quests.html', quests=Quest)
 
-# メダル表示用ルート
-@app.route('/medals')
-@login_required
-def medals():
-    if session.get('role') != 'student':
-        return redirect(url_for('login'))
-
-    user_id = session.get('user_id')
-
-    # 1. ユーザーの履歴をすべて取得
-    histories = safe_query_all(QuestHistory.query.filter_by(user_id=user_id))
-    if not histories:
-        return render_template("medals.html", medal_data=[])
-
-    # 2. 履歴に関連するクエスト情報を取得
-    quest_ids = list(set(h.quest_id for h in histories))
-    quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)))
-    quest_map = {q.id: q for q in quests}
-
-    # 3. タイトルとレベルごとに挑戦回数を集計
-    from collections import defaultdict
-    aggregated = defaultdict(int)
-    for h in histories:
-        quest = quest_map.get(h.quest_id)
-        if quest:
-            key = (quest.title, quest.level)
-            aggregated[key] += h.attempts
-
-    # 4. 表示用にデータを整形（日本語変換とソート）
-    processed_medal_data = []
-    for (title, level), total_attempts in sorted(aggregated.items()):
-        jp_title = SUBJECT_KEY_TO_JP.get(title, title)
-        processed_medal_data.append((jp_title, level, total_attempts))
-
-    return render_template("medals.html", medal_data=processed_medal_data)
-
 # 進捗表示用ルート
 @app.route('/progress')
 @login_required
@@ -1053,28 +1017,42 @@ def progress():
     # 1. ユーザーがクリアした進捗レコードをすべて取得
     progress_records = safe_query_all(UserProgress.query.filter_by(user_id=user_id, status='cleared'))
     
-    if not progress_records:
-        processed_cleared_data = []
+    # ユーザーの全履歴（メダル計算用）を取得
+    histories = safe_query_all(QuestHistory.query.filter_by(user_id=user_id))
+
+    if not progress_records and not histories:
+        processed_progress_data = []
     else:
-        # 2. 進捗に関連するクエスト情報を取得
-        quest_ids = list(set(p.quest_id for p in progress_records))
+        # 進捗と履歴に関連するクエスト情報を取得
+        quest_ids = list(set([p.quest_id for p in progress_records] + [h.quest_id for h in histories]))
         quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)))
         quest_map = {q.id: q for q in quests}
 
-        # 3. タイトルとレベルごとにクリア数を集計
+        # タイトルとレベルごとに集計
         from collections import defaultdict
-        aggregated = defaultdict(int)
+        # aggregated = {(title, level): {'cleared': count, 'medals': attempts}}
+        aggregated = defaultdict(lambda: {'cleared': 0, 'medals': 0})
+        
         for p in progress_records:
             quest = quest_map.get(p.quest_id)
             if quest:
-                key = (quest.title, quest.level)
-                aggregated[key] += 1
+                aggregated[(quest.title, quest.level)]['cleared'] += 1
         
-        # 4. 表示用にデータを整形（ソート）
-        processed_cleared_data = []
-        for (title, level), count in sorted(aggregated.items()):
+        for h in histories:
+            quest = quest_map.get(h.quest_id)
+            if quest:
+                aggregated[(quest.title, quest.level)]['medals'] += h.attempts
+        
+        # 表示用にデータを整形（ソート）
+        processed_progress_data = []
+        for (title, level), stats in sorted(aggregated.items()):
             jp_title = SUBJECT_KEY_TO_JP.get(title, title)
-            processed_cleared_data.append((jp_title, level, count))
+            processed_progress_data.append({
+                'title': jp_title,
+                'level': level,
+                'cleared_count': stats['cleared'],
+                'medal_count': stats['medals']
+            })
 
     # 2. New query for 4-week chart data
     four_weeks_ago = datetime.now(timezone.utc) - timedelta(weeks=4)
@@ -1130,7 +1108,7 @@ def progress():
     return render_template(
         "progress.html", 
         student=student,
-        cleared=processed_cleared_data,
+        progress_data=processed_progress_data,
         weekly_chart_data=weekly_chart_data,
         monthly_chart_data=monthly_chart_data
     )
