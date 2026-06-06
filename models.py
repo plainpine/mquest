@@ -5,6 +5,7 @@ from flask_login import UserMixin
 from datetime import datetime, timezone
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import foreign, remote
+import json
 
 db = SQLAlchemy()
 

@@ -423,8 +423,10 @@ def dashboard_student():
             attempts_map = {h.quest_id: h.attempts for h in histories}
             
             for q_id in cleared_quest_ids:
+                # SVGのIDと一致させるため、(ID % 1000) // 10 に変換
+                map_marker_id = (q_id % 1000) // 10
                 conquered_quest_data.append({
-                    "quest_id": q_id,
+                    "quest_id": map_marker_id,
                     "attempts": attempts_map.get(q_id, 0),
                     "map_type": world_name
                 })
@@ -1076,7 +1078,7 @@ def progress():
 
     # 2. New query for 4-week chart data
     four_weeks_ago = datetime.now(timezone.utc) - timedelta(weeks=4)
-    weekly_data = safe_query_all(db.session.query(
+    weekly_data_raw = safe_query_all(db.session.query(
         func.strftime('%Y-%W', QuestAttemptLog.attempted_at).label('week'),
         func.sum(case((QuestAttemptLog.correct_answers == QuestAttemptLog.total_questions, 1), else_=0)).label('cleared_count'),
         func.count(QuestAttemptLog.id).label('attempt_count')
@@ -1085,15 +1087,23 @@ def progress():
         QuestAttemptLog.attempted_at >= four_weeks_ago
     ).group_by('week').order_by('week'))
 
-    weekly_chart_data = {
-        'labels': [d.week for d in weekly_data],
-        'cleared_count': [d.cleared_count for d in weekly_data],
-        'attempt_count': [d.attempt_count for d in weekly_data]
-    }
+    # Fill gaps for weeks
+    weekly_chart_data = {'labels': [], 'cleared_count': [], 'attempt_count': []}
+    weekly_map = {d.week: d for d in weekly_data_raw}
+    for i in range(4, -1, -1):
+        dt = datetime.now(timezone.utc) - timedelta(weeks=i)
+        w_key = dt.strftime('%Y-%W')
+        weekly_chart_data['labels'].append(w_key)
+        if w_key in weekly_map:
+            weekly_chart_data['cleared_count'].append(int(weekly_map[w_key].cleared_count or 0))
+            weekly_chart_data['attempt_count'].append(int(weekly_map[w_key].attempt_count or 0))
+        else:
+            weekly_chart_data['cleared_count'].append(0)
+            weekly_chart_data['attempt_count'].append(0)
 
     # 3. New query for 3-month chart data
     three_months_ago = datetime.now(timezone.utc) - timedelta(days=90)
-    monthly_data = safe_query_all(db.session.query(
+    monthly_data_raw = safe_query_all(db.session.query(
         func.strftime('%Y-%m', QuestAttemptLog.attempted_at).label('month'),
         func.sum(case((QuestAttemptLog.correct_answers == QuestAttemptLog.total_questions, 1), else_=0)).label('cleared_count'),
         func.count(QuestAttemptLog.id).label('attempt_count')
@@ -1102,11 +1112,20 @@ def progress():
         QuestAttemptLog.attempted_at >= three_months_ago
     ).group_by('month').order_by('month'))
 
-    monthly_chart_data = {
-        'labels': [d.month for d in monthly_data],
-        'cleared_count': [d.cleared_count for d in monthly_data],
-        'attempt_count': [d.attempt_count for d in monthly_data]
-    }
+    # Fill gaps for months
+    monthly_chart_data = {'labels': [], 'cleared_count': [], 'attempt_count': []}
+    monthly_map = {d.month: d for d in monthly_data_raw}
+    for i in range(2, -1, -1):
+        # Rough month subtraction
+        dt = datetime.now(timezone.utc) - timedelta(days=i*30)
+        m_key = dt.strftime('%Y-%m')
+        monthly_chart_data['labels'].append(m_key)
+        if m_key in monthly_map:
+            monthly_chart_data['cleared_count'].append(int(monthly_map[m_key].cleared_count or 0))
+            monthly_chart_data['attempt_count'].append(int(monthly_map[m_key].attempt_count or 0))
+        else:
+            monthly_chart_data['cleared_count'].append(0)
+            monthly_chart_data['attempt_count'].append(0)
 
     return render_template(
         "progress.html", 
