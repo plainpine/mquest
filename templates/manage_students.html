@@ -100,7 +100,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h3 style="margin: 0; color: #2196F3;">{{ student.nickname }} ({{ student.username }}) の詳細</h3>
             <div style="display: flex; gap: 10px;">
-                <a href="{{ url_for('progress', user_id=student.id) }}" class="button" style="background-color: #FF9800; padding: 5px 15px; font-size: 0.9rem;">進捗画面を表示</a>
+                <a href="{{ url_for('progress', user_id=student.id) }}" class="button" style="background-color: #FF9800; padding: 5px 15px; font-size: 0.9rem;">学習進捗状況</a>
                 <button type="button" onclick="closeAllDetails()" style="background: #666; padding: 5px 10px;">閉じる</button>
             </div>
         </div>
@@ -171,42 +171,44 @@
 
         <hr style="margin: 20px 0;">
 
-        <h4>学習状況</h4>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 300px;">
-                <h5>進捗状況</h5>
-                <table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                    <tr style="background: #eee;">
-                        <th>タイトル</th>
-                        <th>レベル</th>
-                        <th>全問正解回数</th>
-                    </tr>
-                    {% for p in student.progress %}
-                    <tr>
-                        <td>{{ p.title }}</td>
-                        <td>{{ p.level }}</td>
-                        <td>{{ p.count }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
+        <details>
+            <summary style="cursor: pointer; font-weight: bold; font-size: 1.1rem; color: #333;">学習状況</summary>
+            <div style="margin-top: 1rem; display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h5>進捗状況</h5>
+                    <table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <tr style="background: #eee;">
+                            <th>タイトル</th>
+                            <th>レベル</th>
+                            <th>全問正解回数</th>
+                        </tr>
+                        {% for p in student.progress %}
+                        <tr>
+                            <td>{{ p.title }}</td>
+                            <td>{{ p.level }}</td>
+                            <td>{{ p.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
 
-            <div style="flex: 1; min-width: 300px;">
-                <h5>メダル取得数</h5>
-                <table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                    <tr style="background: #eee;">
-                        <th>クエストID</th>
-                        <th>挑戦回数</th>
-                    </tr>
-                    {% for m in student.medals %}
-                    <tr>
-                        <td>{{ m.quest_id }}</td>
-                        <td>{{ m.count }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
+                <div style="flex: 1; min-width: 300px;">
+                    <h5>メダル取得数</h5>
+                    <table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <tr style="background: #eee;">
+                            <th>クエストID</th>
+                            <th>挑戦回数</th>
+                        </tr>
+                        {% for m in student.medals %}
+                        <tr>
+                            <td>{{ m.quest_id }}</td>
+                            <td>{{ m.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
             </div>
-        </div>
+        </details>
     </div>
     {% endfor %}
 </div>

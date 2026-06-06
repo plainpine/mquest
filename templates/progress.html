@@ -115,11 +115,11 @@
 
 <br>
 {% if current_user.role == 'admin' %}
-    <a href="{{ url_for('manage_students') }}" class="button">← 生徒一覧に戻る</a>
+    <a href="{{ url_for('manage_students') }}" class="button">生徒一覧に戻る</a>
 {% elif current_user.role == 'parent' %}
-    <a href="{{ url_for('parent_students') }}" class="button">← 生徒の一覧に戻る</a>
+    <a href="{{ url_for('parent_students') }}" class="button">生徒の一覧に戻る</a>
 {% else %}
-    <a href="{{ url_for('dashboard_student') }}" class="button">← ダッシュボードに戻る</a>
+    <a href="{{ url_for('dashboard_student') }}" class="button">ダッシュボードに戻る</a>
 {% endif %}
 {% endblock %}
 

@@ -30,10 +30,10 @@
     <button type="submit" name="action" value="edit" onclick="setClickedAction(this.value)">編集</button>
     <button type="button" onclick="location.href='{{ url_for('edit_quest', quest_id='new', title=selected_title, level=selected_level) }}'">追加</button>
     <button type="submit" name="action" value="delete" onclick="setClickedAction(this.value); return confirm('本当に削除しますか？')">削除</button>
-    <button type="submit" name="action" value="challenge" onclick="setClickedAction(this.value)">問題確認</button>
     <button type="submit" name="action" value="bulk_edit" onclick="setClickedAction(this.value)">一括ID変更</button>
-    <button type="button" onclick="handleExportJson()" style="background-color: #2196f3; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">JSONエクスポート</button>
-    <button type="button" onclick="location.href='{{ url_for('import_questions_gui') }}'" style="background-color: #607d8b; color: white;">JSONインポート</button>
+    <button type="submit" name="action" value="challenge" onclick="setClickedAction(this.value)" class="btn btn-primary">問題確認</button>
+    <button type="button" onclick="handleExportJson()" class="btn btn-secondary">JSONエクスポート</button>
+    <button type="button" onclick="location.href='{{ url_for('import_questions_gui') }}'" class="btn btn-secondary">JSONインポート</button>
   </div>
 
   <script>
