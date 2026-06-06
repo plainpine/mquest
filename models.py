@@ -17,17 +17,37 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False)  # 'admin', 'student', 'parent'
     is_first_login = db.Column(db.Boolean, default=True, nullable=False)
     nickname = db.Column(db.String(80), nullable=True)
-    avatar = db.Column(db.LargeBinary, nullable=True)
+    avatar = db.Column(db.String(200), nullable=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     # ▼ 世界制覇機能用のカラム
     user_level = db.Column(db.Integer, default=1)
     medals = db.Column(db.Integer, default=0)
     user_title = db.Column(db.String(100), default='見習い')
+    
+    # ▼ 科目ごとの目標レベル設定 (JSON: {"math": "Lv1", "english": "Lv1", "japanese": "Lv1"})
+    target_levels_json = db.Column(db.String(200), default='{"math": "Lv1", "english": "Lv1", "japanese": "Lv1"}')
+
+    @property
+    def target_levels(self):
+        try:
+            return json.loads(self.target_levels_json)
+        except:
+            return {"math": "Lv1", "english": "Lv1", "japanese": "Lv1"}
 
     # ▼ 保護者 ↔ 生徒の関係（1対多）
     children = db.relationship('User', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
     attempt_logs = db.relationship('QuestAttemptLog', back_populates='user', cascade="all, delete-orphan")
+
+    @property
+    def display_name(self):
+        return self.nickname if self.nickname else self.username
+
+    @property
+    def avatar_url(self):
+        if self.avatar:
+            return f"/static/images/avatars/{self.avatar}"
+        return "/static/images/avatars/default.svg"
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

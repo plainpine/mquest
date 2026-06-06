@@ -225,6 +225,125 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+import io
+import base64
+import time
+from werkzeug.utils import secure_filename
+
+# ... (rest of imports)
+
+# プロフィール設定処理
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    avatars_dir = os.path.join(app.static_folder, 'images', 'avatars')
+    try:
+        all_files = os.listdir(avatars_dir)
+        # プリセットアバター（custom_で始まらないもの）と、自分のカスタムアバターのみを表示
+        avatars = [f for f in all_files if (f.endswith('.svg') or f.endswith('.png') or f.endswith('.jpg')) 
+                   and (not f.startswith('custom_') or f.startswith(f'custom_{current_user.id}_'))]
+        
+        # default.svgを先頭にする
+        if 'default.svg' in avatars:
+            avatars.remove('default.svg')
+            avatars.insert(0, 'default.svg')
+    except OSError:
+        avatars = ['default.svg']
+
+    # 利用可能な全レベルを取得
+    all_levels_raw = safe_query_all(db.session.query(Quest.level).distinct())
+    all_levels = sorted(list(set([l[0] for l in all_levels_raw])))
+
+    if request.method == 'POST':
+        nickname = request.form.get('nickname', '').strip()
+        avatar_choice = request.form.get('avatar', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        # 目標レベルの更新
+        target_math = request.form.get('target_level_math')
+        target_english = request.form.get('target_level_english')
+        target_japanese = request.form.get('target_level_japanese')
+        current_user.target_levels_json = json.dumps({
+            "math": target_math,
+            "english": target_english,
+            "japanese": target_japanese
+        })
+
+        # ファイルアップロードの処理
+        avatar_file = request.files.get('avatar_file')
+        new_avatar_filename = None
+
+        if avatar_file and avatar_file.filename != '':
+            ext = os.path.splitext(avatar_file.filename)[1].lower()
+            if ext in ['.png', '.bmp']:
+                # 画像をSVGに変換（埋め込み）
+                try:
+                    img_data = avatar_file.read()
+                    base64_data = base64.b64encode(img_data).decode('utf-8')
+                    mime_type = "image/png" if ext == '.png' else "image/bmp"
+                    
+                    # 100x100のSVGとして保存（40px円形にクリップ）
+                    svg_content = f'''<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="circleView">
+      <circle cx="50" cy="50" r="50" />
+    </clipPath>
+  </defs>
+  <image width="100" height="100" href="data:{mime_type};base64,{base64_data}" clip-path="url(#circleView)" />
+</svg>'''
+                    
+                    # 古いカスタムアバターがあれば削除
+                    if current_user.avatar and current_user.avatar.startswith(f'custom_{current_user.id}_'):
+                        old_path = os.path.join(avatars_dir, current_user.avatar)
+                        if os.path.exists(old_path):
+                            os.remove(old_path)
+                    
+                    # 新しいファイル名作成
+                    new_avatar_filename = f"custom_{current_user.id}_{int(time.time())}.svg"
+                    with open(os.path.join(avatars_dir, new_avatar_filename), 'w', encoding='utf-8') as f:
+                        f.write(svg_content)
+                    
+                    current_user.avatar = new_avatar_filename
+                except Exception as e:
+                    app.logger.error(f"Avatar upload/conversion error: {e}")
+                    flash('画像のアップロードに失敗しました。', 'error')
+            else:
+                flash('PNGまたはBMP形式の画像を選択してください。', 'error')
+        elif avatar_choice:
+            # プリセット選択時、もし今の自分のアバターがカスタムなら削除する
+            if current_user.avatar and current_user.avatar.startswith(f'custom_{current_user.id}_') and avatar_choice != current_user.avatar:
+                old_path = os.path.join(avatars_dir, current_user.avatar)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            current_user.avatar = avatar_choice
+
+        # ニックネーム更新
+        current_user.nickname = nickname if nickname else None
+        session['nickname'] = current_user.nickname
+
+        # パスワード更新（入力がある場合のみ）
+        if new_password:
+            if new_password != confirm_password:
+                flash('新しいパスワードが一致しません。', 'error')
+                return render_template('profile.html', avatars=avatars, all_levels=all_levels)
+            
+            current_user.set_password(new_password)
+            current_user.is_first_login = False
+            flash('パスワードを更新しました。', 'success')
+
+        try:
+            safe_commit()
+            flash('プロフィールを更新しました。', 'success')
+        except Exception as e:
+            app.logger.error(f"Profile update error: {e}")
+            flash('プロフィールの更新に失敗しました。', 'error')
+            return render_template('profile.html', avatars=avatars, all_levels=all_levels)
+
+        return redirect(url_for('profile'))
+
+    return render_template('profile.html', avatars=avatars, all_levels=all_levels)
+
 # 初回のユーザー作成（ロール付き）
 @app.route('/create_user', methods=['GET', 'POST'])
 def create_user():
@@ -263,38 +382,65 @@ def dashboard_student():
     if session.get('role') != 'student':
         return redirect(url_for('login'))
 
-    # ▼ 世界制覇機能：制覇済みのクエストとその挑戦回数、マップタイプを取得
+    target_levels = current_user.target_levels
     
-    # 1. ユーザーがクリアしたクエストの進捗情報を取得
-    progress_records = safe_query_all(UserProgress.query.filter_by(user_id=current_user.id, status='cleared'))
-    cleared_quest_ids = [p.quest_id for p in progress_records]
+    # 科目ごとの進捗計算
+    progress_summary = {}
+    subjects = {
+        'math': 'europe',
+        'english': 'americus',
+        'japanese': 'zipangu'
+    }
 
-    if not cleared_quest_ids:
-        conquered_quest_data = []
-    else:
-        # 2. クリアしたクエストの詳細情報（world_nameを含む）を取得
-        cleared_quests_details = safe_query_all(Quest.query.filter(Quest.id.in_(cleared_quest_ids)))
-        quest_map = {q.id: q for q in cleared_quests_details}
+    conquered_quest_data = []
 
-        # 3. ユーザーの全クエスト挑戦履歴を取得
-        histories = safe_query_all(QuestHistory.query.filter_by(user_id=current_user.id))
-        attempts_map = {h.quest_id: h.attempts for h in histories}
+    for sub_key, world_name in subjects.items():
+        target_level = target_levels.get(sub_key, 'Lv1')
+        
+        # 1. ターゲットレベルの全クエストを取得
+        all_quests_in_level = safe_query_all(Quest.query.filter_by(title=sub_key, level=target_level))
+        total_count = len(all_quests_in_level)
+        
+        # 2. その中からクリア済みのものを取得
+        quest_ids = [q.id for q in all_quests_in_level]
+        cleared_records = safe_query_all(UserProgress.query.filter(
+            UserProgress.user_id == current_user.id,
+            UserProgress.status == 'cleared',
+            UserProgress.quest_id.in_(quest_ids)
+        ))
+        cleared_count = len(cleared_records)
+        cleared_quest_ids = [p.quest_id for p in cleared_records]
 
-        # 4. フロントエンドに渡すための最終的なデータ構造を構築
-        conquered_quest_data = []
-        for quest_id in cleared_quest_ids:
-            quest_detail = quest_map.get(quest_id)
-            if quest_detail:
+        # 3. 割合計算
+        percentage = int((cleared_count / total_count * 100)) if total_count > 0 else 0
+        
+        # 4. マップ表示用の詳細データ収集 (ターゲットレベルのもののみ)
+        if cleared_quest_ids:
+            histories = safe_query_all(QuestHistory.query.filter(
+                QuestHistory.user_id == current_user.id,
+                QuestHistory.quest_id.in_(cleared_quest_ids)
+            ))
+            attempts_map = {h.quest_id: h.attempts for h in histories}
+            
+            for q_id in cleared_quest_ids:
                 conquered_quest_data.append({
-                    "quest_id": quest_id,
-                    "attempts": attempts_map.get(quest_id, 0),
-                    "map_type": quest_detail.world_name 
+                    "quest_id": q_id,
+                    "attempts": attempts_map.get(q_id, 0),
+                    "map_type": world_name
                 })
+        
+        progress_summary[sub_key] = {
+            "cleared": cleared_count,
+            "total": total_count,
+            "percentage": percentage,
+            "level": target_level
+        }
 
     return render_template(
         'dashboard_student.html',
         user_id=current_user.id, 
-        conquered_quest_data=conquered_quest_data # 新しいデータをテンプレートに渡す
+        conquered_quest_data=conquered_quest_data,
+        progress_summary=progress_summary
     )
 
 @app.route('/dashboard/parent')

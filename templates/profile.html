@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}プロフィール設定{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css">
+<style>
+    .profile-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .section {
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #eee;
+    }
+    .section:last-child {
+        border-bottom: none;
+    }
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-bottom: 1.2rem;
+        color: #3f51b5;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .avatar-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 15px;
+        margin-top: 1rem;
+    }
+    .avatar-option {
+        cursor: pointer;
+        border: 3px solid transparent;
+        border-radius: 50%;
+        transition: all 0.2s;
+        padding: 2px;
+    }
+    .avatar-option:hover {
+        transform: scale(1.1);
+        border-color: #e0e0e0;
+    }
+    .avatar-option.selected {
+        border-color: #3f51b5;
+        background-color: #e8eaf6;
+    }
+    .avatar-option img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        display: block;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .simple-keyboard {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 800px;
+        background-color: #f0f0f0;
+        border-top: 1px solid #ccc;
+        border-radius: 8px 8px 0 0;
+        padding: 10px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        display: none;
+    }
+    .simple-keyboard.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-container">
+        <h2 class="mb-4 text-center">プロフィール設定</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="profile-form" enctype="multipart/form-data">
+            <!-- ニックネーム設定 -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-user-tag"></i> ニックネーム
+                </div>
+                <div class="form-group">
+                    <input type="text" name="nickname" class="form-control form-control-lg" value="{{ current_user.nickname or '' }}" placeholder="{{ current_user.username }}">
+                    <small class="text-muted">設定しない場合はユーザーID（{{ current_user.username }}）が表示されます。</small>
+                </div>
+            </div>
+
+            <!-- アバター設定 -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-user-circle"></i> アバター選択
+                </div>
+                
+                <!-- 新規アップロード -->
+                <div class="mb-3">
+                    <label class="form-label">自分の画像をアップロード (PNG / BMP)</label>
+                    <input type="file" name="avatar_file" class="form-control" accept=".png,.bmp">
+                    <small class="text-muted">アップロードすると自動的に新しいアバターとして設定されます。</small>
+                </div>
+
+                <hr>
+
+                <input type="hidden" name="avatar" id="selected-avatar" value="{{ current_user.avatar or 'default.svg' }}">
+                <div class="avatar-gallery">
+                    {% for avatar_file in avatars %}
+                    <div class="avatar-option {{ 'selected' if current_user.avatar == avatar_file }}" data-filename="{{ avatar_file }}">
+                        <img src="{{ url_for('static', filename='images/avatars/' + avatar_file) }}" alt="{{ avatar_file }}">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- パスワード変更 -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-bullseye"></i> 制覇目標レベル設定
+                </div>
+                {% set target_levels = current_user.target_levels %}
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">数学（エウロパ）</label>
+                        <select name="target_level_math" class="form-select">
+                            {% for level in all_levels %}
+                            <option value="{{ level }}" {{ 'selected' if target_levels.get('math') == level }}>{{ level }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">英語（アメリクス）</label>
+                        <select name="target_level_english" class="form-select">
+                            {% for level in all_levels %}
+                            <option value="{{ level }}" {{ 'selected' if target_levels.get('english') == level }}>{{ level }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">国語（ジパング）</label>
+                        <select name="target_level_japanese" class="form-select">
+                            {% for level in all_levels %}
+                            <option value="{{ level }}" {{ 'selected' if target_levels.get('japanese') == level }}>{{ level }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <small class="text-muted">ダッシュボードの制覇マップに反映されるレベルを選択してください。</small>
+            </div>
+
+            <!-- パスワード変更 -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-key"></i> パスワード変更
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">新しいパスワード</label>
+                    <input type="password" name="new_password" class="form-control virtual-keyboard-input" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">確認用パスワード</label>
+                    <input type="password" name="confirm_password" class="form-control virtual-keyboard-input" autocomplete="new-password">
+                </div>
+                <small class="text-muted">パスワードを変更しない場合は空欄のままにしてください。</small>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">設定を保存する</button>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">戻る</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 仮想キーボードのコンテナ -->
+<div class="simple-keyboard"></div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // アバター選択ロジック
+        const avatarOptions = document.querySelectorAll('.avatar-option');
+        const avatarInput = document.getElementById('selected-avatar');
+
+        avatarOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                avatarOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                avatarInput.value = this.dataset.filename;
+            });
+        });
+
+        // 仮想キーボードロジック
+        const Keyboard = window.SimpleKeyboard.default;
+        const keyboard = new Keyboard('.simple-keyboard', {
+            onChange: input => onChange(input),
+            onKeyPress: button => onKeyPress(button),
+            layout: {
+                'default': [
+                    '1 2 3 4 5 6 7 8 9 0',
+                    'q w e r t y u i o p',
+                    'a s d f g h j k l',
+                    '{shift} z x c v b n m {backspace}',
+                    '{space}'
+                ],
+                'shift': [
+                    '! @ # $ % ^ & * ( )',
+                    'Q W E R T Y U I O P',
+                    'A S D F G H J K L',
+                    '{shift} Z X C V B N M {backspace}',
+                    '{space}'
+                ]
+            },
+            display: {
+                '{shift}': '⇧',
+                '{backspace}': '⌫',
+                '{space}': ' '
+            }
+        });
+
+        const keyboardElement = document.querySelector('.simple-keyboard');
+        let activeInput = null;
+
+        document.querySelectorAll('.virtual-keyboard-input').forEach(input => {
+            input.addEventListener('focus', (e) => {
+                activeInput = e.target;
+                keyboard.setInput(activeInput.value);
+                keyboardElement.classList.add('show');
+            });
+        });
+
+        function onChange(input) {
+            if (activeInput) {
+                activeInput.value = input;
+            }
+        }
+
+        function onKeyPress(button) {
+            if (button === '{shift}') {
+                const currentLayout = keyboard.options.layoutName;
+                const newLayout = currentLayout === 'default' ? 'shift' : 'default';
+                keyboard.setOptions({ layoutName: newLayout });
+            }
+        }
+
+        document.addEventListener('mousedown', (e) => {
+            if (!keyboardElement.contains(e.target) && !e.target.classList.contains('virtual-keyboard-input')) {
+                keyboardElement.classList.remove('show');
+                activeInput = null;
+            }
+        });
+    });
+</script>
+{% endblock %}

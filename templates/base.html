@@ -32,6 +32,15 @@
         <div style="flex-grow: 1;"></div>
         
         <nav style="display: flex; align-items: center; gap: 1.2rem; flex-shrink: 0;">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('profile') }}" style="display: flex; align-items: center; gap: 10px; color: white; text-decoration: none; background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 30px; transition: background 0.2s;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background-color: #eee; flex-shrink: 0; border: 2px solid white;">
+                    <img src="{{ current_user.avatar_url }}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <span style="font-weight: bold; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ current_user.display_name }}</span>
+            </a>
+            {% endif %}
+
             {% if request.path and ('/quest/run/' in request.path or '/group_learning/' in request.path) %}
             <div id="header-kb-toggle-container" style="display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px;">
                 <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: bold; margin-bottom: 0; color: white; font-size: 0.9rem; white-space: nowrap; user-select: none;">
