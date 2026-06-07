@@ -352,7 +352,7 @@ def create_user():
         password = request.form['password']
         role = request.form['role']
 
-        if role not in ['admin', 'student', 'parent']:
+        if role not in ['admin', 'student', 'parent', 'teacher']:
             return '無効なロールです'
 
         user = User(username=username, role=role)
@@ -458,6 +458,14 @@ def dashboard_admin():
     if session.get('role') != 'admin':
         return redirect(url_for('login'))
     return render_template('dashboard_admin.html', user_id=session.get('user_id'))
+
+@app.route('/dashboard/teacher')
+@login_required
+def dashboard_teacher():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    return render_template('dashboard_teacher.html', user_id=session.get('user_id'))
+
 
 # タイトル一覧表示（ステップ1）
 @app.route('/select_title')
@@ -1199,35 +1207,43 @@ def manage_students():
 
     return render_template('manage_students.html', students=data, parents=parent_list)
 
-@app.route('/admin/user/update', methods=['POST'])
+@app.route('/admin/user/edit/<int:user_id>', methods=['GET'])
 @login_required
-def update_user():
-    # ... (既存の更新処理) ...
+def edit_user_admin(user_id):
     if not current_user.is_admin():
         return redirect(url_for('login'))
-    
-    user_id = request.form.get('user_id')
-    nickname = request.form.get('nickname')
-    password = request.form.get('password')
     
     user = safe_get(User, user_id)
     if not user:
         abort(404)
-    user.nickname = nickname
+        
+    return render_template('edit_user_admin.html', user=user)
+
+@app.route('/admin/user/update/<int:user_id>', methods=['POST'])
+@login_required
+def update_user_admin(user_id):
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    user = safe_get(User, user_id)
+    if not user:
+        abort(404)
+        
+    user.nickname = request.form.get('nickname')
+    password = request.form.get('password')
     if password:
         user.set_password(password)
     
-    # 生徒の場合のみ保護者の紐付けを更新
-    if user.is_student():
-        parent_id = request.form.get('parent_id')
-        if parent_id == "":
-            user.parent_id = None
-        elif parent_id:
-            user.parent_id = int(parent_id)
-    
     safe_commit()
-    flash(f"{user.username} ( {user.role} ) の情報を更新しました", "success")
-    return redirect(url_for('manage_students'))
+    flash(f"{user.username} の設定を更新しました。", "success")
+    
+    if user.role == 'teacher':
+        return redirect(url_for('manage_teachers'))
+    elif user.role == 'admin':
+        return redirect(url_for('manage_admins'))
+    else:
+        return redirect(url_for('manage_students'))
+
 
 @app.route('/admin/user/add', methods=['POST'])
 @login_required
@@ -1280,11 +1296,44 @@ def add_student_with_parent():
 
     return redirect(url_for('manage_students'))
 
+@app.route('/admin/admins')
+@login_required
+def manage_admins():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    admins = safe_query_all(User.query.filter_by(role='admin'))
+    return render_template('manage_admins.html', admins=admins)
+
+@app.route('/admin/admin/add', methods=['POST'])
+@login_required
+def add_admin():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    username = request.form.get('username')
+    nickname = request.form.get('nickname')
+    password = request.form.get('password')
+    
+    if User.query.filter_by(username=username).first():
+        flash("そのユーザー名は既に使用されています。", "danger")
+        return redirect(url_for('manage_admins'))
+        
+    admin = User(username=username, nickname=nickname, role='admin')
+    admin.set_password(password)
+    db.session.add(admin)
+    safe_commit()
+    flash(f"管理者 {username} を登録しました。", "success")
+    return redirect(url_for('manage_admins'))
+
 @app.route('/admin/user/delete/<int:user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):
     if not current_user.is_admin():
         return redirect(url_for('login'))
+    
+    if user_id == current_user.id:
+        flash("自分自身を削除することはできません。", "danger")
+        return redirect(request.referrer or url_for('manage_students'))
     
     user = safe_get(User, user_id)
     if not user:
@@ -1312,13 +1361,42 @@ def delete_user(user_id):
         db.session.rollback()
         flash(f"削除エラー: {str(e)}", "danger")
 
-    return redirect(url_for('manage_students'))
+    return redirect(request.referrer or url_for('manage_students'))
+
+@app.route('/admin/teachers')
+@login_required
+def manage_teachers():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    teachers = safe_query_all(User.query.filter_by(role='teacher'))
+    return render_template('manage_teachers.html', teachers=teachers)
+
+@app.route('/admin/teacher/add', methods=['POST'])
+@login_required
+def add_teacher():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    username = request.form.get('username')
+    nickname = request.form.get('nickname')
+    password = request.form.get('password')
+    
+    if User.query.filter_by(username=username).first():
+        flash("そのユーザー名は既に使用されています。", "danger")
+        return redirect(url_for('manage_teachers'))
+        
+    teacher = User(username=username, nickname=nickname, role='teacher')
+    teacher.set_password(password)
+    db.session.add(teacher)
+    safe_commit()
+    flash(f"教師 {username} を登録しました。", "success")
+    return redirect(url_for('manage_teachers'))
 
 # クエストの一覧　追加・削除
 @app.route('/manage_quests')
 @login_required
 def manage_quests():
-    if not current_user.is_admin():
+    if not (current_user.is_admin() or current_user.is_teacher()):
         return redirect(url_for(f"dashboard_{current_user.role}"))
 
     selected_title_jp = request.args.get('title', '')
@@ -2138,9 +2216,12 @@ def preview_question():
 @app.route('/select_title_admin')
 @login_required
 def select_title_admin():
+    if not (current_user.is_admin() or current_user.is_teacher()):
+        return redirect(url_for(f"dashboard_{current_user.role}"))
     titles = db.session.query(Quest.title).distinct().all()
     jp_titles = [SUBJECT_KEY_TO_JP.get(t[0], t[0]) for t in titles]
     return render_template('select_title_admin.html', titles=jp_titles)
+
 
 # レベル選択（ステップ2）
 @app.route('/select_level_admin/<title>')

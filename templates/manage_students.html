@@ -61,11 +61,12 @@
 <hr>
 
 <!-- 生徒一覧テーブル -->
-<h3>登録生徒一覧</h3>
+<h3>生徒の一覧</h3>
 <div style="overflow-x: auto; margin-bottom: 2rem;">
     <table border="1" cellpadding="10" style="width: 100%; border-collapse: collapse; background: white;">
         <thead style="background: #f2f2f2;">
             <tr>
+                <th>アバター</th>
                 <th>ニックネーム</th>
                 <th>ユーザーID</th>
                 <th>保護者</th>
@@ -75,6 +76,11 @@
         <tbody>
             {% for student in students %}
             <tr id="row_{{ student.id }}">
+                <td style="text-align: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; margin: 0 auto; border: 1px solid #ccc;">
+                        <img src="{{ url_for('static', filename='images/avatars/' + (student.avatar if student.avatar else 'default.svg')) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </td>
                 <td>{{ student.nickname }}</td>
                 <td>{{ student.username }}</td>
                 <td>
@@ -114,7 +120,7 @@
                         <button type="submit" style="background-color: #ff4d4d; padding: 5px 10px; font-size: 0.8rem;">生徒削除</button>
                     </form>
                 </div>
-                <form action="{{ url_for('update_user') }}" method="POST" style="background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
+                <form action="{{ url_for('update_user_admin', user_id=student.id) }}" method="POST" style="background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
                     <input type="hidden" name="user_id" value="{{ student.id }}">
                     <div style="margin-bottom: 10px;">
                         <label>ニックネーム:</label><br>
@@ -149,7 +155,7 @@
                         </form>
                     </div>
                     <p style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">※この保護者に紐付くすべての生徒に影響します。</p>
-                    <form action="{{ url_for('update_user') }}" method="POST" style="background: #eef; padding: 15px; border-radius: 5px; border: 1px solid #ccd;">
+                    <form action="{{ url_for('update_user_admin', user_id=student.parent.id) }}" method="POST" style="background: #eef; padding: 15px; border-radius: 5px; border: 1px solid #ccd;">
                         <input type="hidden" name="user_id" value="{{ student.parent.id }}">
                         <div style="margin-bottom: 10px;">
                             <label>ニックネーム:</label><br>
@@ -213,7 +219,7 @@
     {% endfor %}
 </div>
 
-<p><a href="{{ url_for('dashboard_admin') }}" class="button">管理者ダッシュボードに戻る</a></p>
+<p><a href="{{ url_for('dashboard_' + current_user.role) }}" class="button">ダッシュボードに戻る</a></p>
 
 <script>
 function showStudentDetail(studentId) {

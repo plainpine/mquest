@@ -119,7 +119,7 @@
 {% elif current_user.role == 'parent' %}
     <a href="{{ url_for('parent_students') }}" class="button">生徒の一覧に戻る</a>
 {% else %}
-    <a href="{{ url_for('dashboard_student') }}" class="button">ダッシュボードに戻る</a>
+    <a href="{{ url_for('dashboard_' + current_user.role) }}" class="button">ダッシュボードに戻る</a>
 {% endif %}
 {% endblock %}
 

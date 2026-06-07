@@ -118,9 +118,12 @@
                 
                 <!-- 新規アップロード -->
                 <div class="mb-3">
-                    <label class="form-label">自分の画像をアップロード (PNG / BMP)</label>
-                    <input type="file" name="avatar_file" class="form-control" accept=".png,.bmp">
-                    <small class="text-muted">アップロードすると自動的に新しいアバターとして設定されます。</small>
+                    <label class="form-label">自分の画像をアップロード (PNG / BMP / JPEG)</label>
+                    <input type="file" name="avatar_file" class="form-control" accept=".png,.bmp,.jpg,.jpeg">
+                    <small class="text-muted">
+                        アップロードすると自動的に新しいアバターとして設定されます。<br>
+                        <span class="text-danger">※顔写真など、個人が特定される画像はアップロードしないでください。</span>
+                    </small>
                 </div>
 
                 <hr>
@@ -135,7 +138,8 @@
                 </div>
             </div>
 
-            <!-- パスワード変更 -->
+            {% if current_user.role == 'student' %}
+            <!-- 制覇目標レベル設定 -->
             <div class="section">
                 <div class="section-title">
                     <i class="fas fa-bullseye"></i> 制覇目標レベル設定
@@ -169,6 +173,7 @@
                 </div>
                 <small class="text-muted">ダッシュボードの制覇マップに反映されるレベルを選択してください。</small>
             </div>
+            {% endif %}
 
             <!-- パスワード変更 -->
             <div class="section">

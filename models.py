@@ -65,6 +65,9 @@ class User(UserMixin, db.Model):
     def is_parent(self):
         return self.role == 'parent'
 
+    def is_teacher(self):
+        return self.role == 'teacher'
+
 
 class Quest(db.Model):
     __tablename__ = 'quests'

@@ -156,7 +156,7 @@
 
     <div class="mt-4">
         {% if all_correct %}
-            <a href="{{ url_for('dashboard_' + role) }}" class="btn btn-primary">ダッシュボードに戻る</a>
+            <a href="{{ url_for('dashboard_' + role) }}" class="button">ダッシュボードに戻る</a>
             {% if role == 'admin' %}
                 <a href="{{ url_for('manage_quests', title=original_title, level=original_level) }}" class="btn btn-secondary">クエスト一覧に戻る</a>
             {% else %}
@@ -169,7 +169,7 @@
             {% else %}
                 <a href="{{ url_for('select_quest_by_title_level', title=title, level=quest.level) }}" class="btn btn-secondary">クエスト選択に戻る</a>
             {% endif %}
-            <a href="{{ url_for('dashboard_' + role) }}" class="btn btn-primary">ダッシュボードに戻る</a>
+            <a href="{{ url_for('dashboard_' + role) }}" class="button">ダッシュボードに戻る</a>
         {% endif %}
     </div>
 </div>

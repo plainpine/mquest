@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}ユーザー設定編集{% endblock %}
+
+{% block content %}
+<h2>{{ user.username }} ({{ user.role }}) の設定編集</h2>
+
+<form action="{{ url_for('update_user_admin', user_id=user.id) }}" method="POST" style="max-width: 500px;">
+    <div class="form-group mb-3">
+        <label>ニックネーム:</label>
+        <input type="text" name="nickname" class="form-control" value="{{ user.nickname or '' }}">
+    </div>
+    <div class="form-group mb-3">
+        <label>新しいパスワード (変更しない場合は空欄):</label>
+        <input type="password" name="password" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">更新</button>
+    <a href="{{ request.referrer or url_for('manage_admins') }}" class="btn btn-secondary">戻る</a>
+</form>
+{% endblock %}

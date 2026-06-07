@@ -134,7 +134,7 @@
   </table>
   </form>
   <br>
-  <a href="{{ url_for('dashboard_admin') }}" class="button">管理者ダッシュボードに戻る</a>
+  <a href="{{ url_for('dashboard_' + current_user.role) }}" class="button">ダッシュボードに戻る</a>
 
   <script>
   let clickedAction = "";
