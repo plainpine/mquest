@@ -1547,7 +1547,7 @@ def _update_quest_id_internal(old_id, new_id):
 @app.route('/admin/quest/bulk_edit_ids', methods=['GET'])
 @login_required
 def bulk_edit_ids():
-    if not current_user.is_admin():
+    if not (current_user.is_admin() or current_user.is_teacher()):
         return redirect(url_for('login'))
     
     quest_ids_str = request.args.get('quest_ids', '')
@@ -1629,6 +1629,8 @@ def save_bulk_ids():
 @app.route('/admin/quest/edit/<quest_id>', methods=['GET'])
 @login_required
 def edit_quest(quest_id):
+    if not (current_user.is_admin() or current_user.is_teacher()):
+        return redirect(url_for('login'))
     title = request.args.get('title', '')
     level = request.args.get('level', '')
     if quest_id == 'new':
@@ -1809,7 +1811,10 @@ def delete_question_action(quest_id):
 
 # Questionの削除
 @app.route('/admin/question/delete/<int:quest_id>/<int:question_id>', methods=['GET','POST'])
+@login_required
 def delete_question(quest_id, question_id):
+    if not (current_user.is_admin() or current_user.is_teacher()):
+        abort(403)
     title = request.args.get('title', '')
     level = request.args.get('level', '')
     question = safe_get(Question, question_id)
@@ -1822,7 +1827,10 @@ def delete_question(quest_id, question_id):
 
 # 新規Question作成画面
 @app.route('/admin/question/add/<int:quest_id>')
+@login_required
 def add_question(quest_id):
+    if not (current_user.is_admin() or current_user.is_teacher()):
+        abort(403)
     quest = safe_get(Quest, quest_id)
     if not quest:
         abort(404)
@@ -1832,7 +1840,10 @@ def add_question(quest_id):
 
 # 問題の編集画面
 @app.route('/admin/question/edit/<int:quest_id>/<question_id>', methods=['GET'])
+@login_required
 def edit_question(quest_id, question_id):
+    if not (current_user.is_admin() or current_user.is_teacher()):
+        abort(403)
     quest = safe_get(Quest, quest_id)
     if not quest:
         abort(404)
@@ -1900,7 +1911,10 @@ def edit_question(quest_id, question_id):
 
 # 問題の保存画面
 @app.route('/admin/question/save/<int:quest_id>', methods=['POST'])
+@login_required
 def save_question(quest_id):
+    if not (current_user.is_admin() or current_user.is_teacher()):
+        abort(403)
     try:
         question_id = request.values.get('question_id')
         title = request.form.get('title', '')
@@ -2379,14 +2393,14 @@ def parent_students():
 @app.route('/admin/questions/import', methods=['GET'])
 @login_required
 def import_questions_gui():
-    if not current_user.is_admin():
+    if not (current_user.is_admin() or current_user.is_teacher()):
         return redirect(url_for('login'))
     return render_template('import_questions.html')
 
 @app.route('/admin/questions/import', methods=['POST'])
 @login_required
 def import_questions_action():
-    if not current_user.is_admin():
+    if not (current_user.is_admin() or current_user.is_teacher()):
         abort(403)
     
     file = request.files.get('file')
