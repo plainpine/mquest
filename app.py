@@ -2400,151 +2400,231 @@ def import_questions_action():
             flash("サポートされていないファイル形式です (.json を使用してください)", "danger")
             return redirect(url_for('import_questions_gui'))
 
-        import_data = json.loads(file.read().decode('utf-8'))
+        raw_data = json.loads(file.read().decode('utf-8'))
         
-        # --- Pre-validation ---
-        current_quest_context = None # Can be an int or the string 'PENDING_AUTO'
-        for i, row in enumerate(import_data):
-            rec_type = row.get('record_type', 'question')
+        # --- Normalization ---
+        normalized_quests = []
+        normalized_questions = []
+        
+        # Context and counters for normalization
+        context = {'last_quest_id': None}
+        temp_id_counter = 0
+
+        def process_entry(row, inherited_quest_id=None):
+            nonlocal temp_id_counter
+            # Detect type
+            rec_type = row.get('record_type')
+            if not rec_type:
+                if 'questname' in row or 'subject' in row:
+                    rec_type = 'quest'
+                elif 'text' in row and 'type' in row:
+                    rec_type = 'question'
+                elif 'questions' in row and isinstance(row['questions'], list):
+                    rec_type = 'quest'
             
             if rec_type == 'quest':
                 q_id = row.get('id')
-                if q_id:
-                    try:
-                        current_quest_context = int(q_id)
-                    except (ValueError, TypeError):
-                        flash(f"エラー (行 {i+1}): クエストID '{q_id}' が無効な数値です。", "danger")
-                        return redirect(url_for('import_questions_gui'))
-                else:
-                    current_quest_context = 'PENDING_AUTO'
+                # Assign a temporary ID if no ID is present, to link nested questions
+                if not q_id:
+                    temp_id_counter += 1
+                    q_id = f"_temp_quest_{temp_id_counter}"
+                
+                context['last_quest_id'] = q_id
+                
+                quest_data = {
+                    'id': q_id,
+                    'title': row.get('title') or row.get('subject'),
+                    'level': row.get('level'),
+                    'questname': row.get('questname'),
+                    'world_name': row.get('world_name')
+                }
+                normalized_quests.append(quest_data)
+
+                # Process nested questions
+                if 'questions' in row and isinstance(row['questions'], list):
+                    for q_row in row['questions']:
+                        process_entry(q_row, inherited_quest_id=q_id)
             
             elif rec_type == 'question':
-                q_id = row.get('id')
-                # quest_id for this question: explicit in row, or inherited from context
-                quest_id = row.get('quest_id')
+                # Link to quest: explicit > inherited > flat list context
+                quest_id = row.get('quest_id') or row.get('questId') or row.get('quest') or inherited_quest_id or context['last_quest_id']
                 
-                effective_qid = None
-                if quest_id:
-                    try:
-                        effective_qid = int(quest_id)
-                    except (ValueError, TypeError):
-                        flash(f"エラー (行 {i+1}): quest_id '{quest_id}' が無効な数値です。", "danger")
-                        return redirect(url_for('import_questions_gui'))
-                elif current_quest_context:
-                    effective_qid = current_quest_context
+                q_data = {
+                    'id': row.get('id'),
+                    'quest_id': quest_id,
+                    'type': row.get('type'),
+                    'text': row.get('text'),
+                    'explanation': row.get('explanation'),
+                    'choices': row.get('choices'),
+                    'answer': row.get('answer')
+                }
+                # Flexible mapping for special types and field names
+                if q_data['type'] == 'numeric' and 'answers' in row:
+                    q_data['answer'] = row['answers']
+                elif q_data['type'] == 'svg_interactive' or q_data['type'] == 'figure_choice':
+                    if 'svg_content' in row:
+                        q_data['choices'] = row['svg_content']
+                    if 'sub_questions' in row:
+                        q_data['answer'] = row['sub_questions']
+                
+                normalized_questions.append(q_data)
 
-                if effective_qid is None:
-                    flash(f"エラー (行 {i+1}): quest_id が指定されておらず、直前にクエスト情報もありません。", "danger")
-                    return redirect(url_for('import_questions_gui'))
+        if isinstance(raw_data, dict):
+            # Handle quests.json format: { "101": { ... }, "102": { ... } }
+            for key, val in raw_data.items():
+                if isinstance(val, dict):
+                    if 'id' not in val:
+                        try:
+                            val['id'] = int(key)
+                        except ValueError:
+                            # Keep as string (e.g. "q101")
+                            val['id'] = key
+                    process_entry(val)
+        elif isinstance(raw_data, list):
+            for entry in raw_data:
+                process_entry(entry)
+        
+        app.logger.debug(f"Normalized: {len(normalized_quests)} quests, {len(normalized_questions)} questions")
 
-                # Check id inconsistency (ONLY if both quest_id and question id are explicit integers)
-                if q_id and isinstance(effective_qid, int):
-                    try:
-                        id_int = int(q_id)
-                        if id_int // 100 != effective_qid:
-                            flash(f"エラー (行 {i+1}): 問題ID {id_int} と クエストID {effective_qid} に矛盾があります。", "danger")
-                            return redirect(url_for('import_questions_gui'))
-                    except (ValueError, TypeError):
-                        flash(f"エラー (行 {i+1}): id '{q_id}' が無効な数値です。", "danger")
-                        return redirect(url_for('import_questions_gui'))
-        # --- End Pre-validation ---
-
-        updated_q_count = 0
-        inserted_q_count = 0
+        # --- Phase 1: Process Quests ---
         updated_quest_count = 0
         inserted_quest_count = 0
-        
-        checked_quest_ids = set()
-        last_processed_quest_id = None
+        quest_id_map = {} # Identifier (from JSON) to real DB ID
+        quest_name_map = {} # questname to real DB ID
 
-        for row in import_data:
-            rec_type = row.get('record_type', 'question')
+        for q_row in normalized_quests:
+            qid_json = q_row.get('id')
+            title_raw = q_row.get('title', 'misc')
+            title = SUBJECT_JP_TO_KEY.get(title_raw, title_raw)
+            level = q_row.get('level', 'Lv1')
+            questname = q_row.get('questname', f'Imported Quest' if not qid_json else f'Quest {qid_json}')
+            world_name = q_row.get('world_name', 'fantasy')
+
+            quest = None
+            # 1. Try by ID
+            if qid_json:
+                try:
+                    quest = safe_get(Quest, int(qid_json))
+                except (ValueError, TypeError):
+                    pass
             
-            if rec_type == 'quest':
-                qid_raw = row.get('id')
-                if qid_raw:
-                    qid = int(qid_raw)
-                else:
-                    # Auto-assign Quest ID
-                    max_id = db.session.query(func.max(Quest.id)).scalar() or 0
-                    qid = max_id + 1
+            # 2. Try by questname + title + level if still not found
+            if not quest and questname:
+                quest = safe_query_first(Quest.query.filter_by(questname=questname, title=title, level=level))
+            
+            if quest:
+                quest.title = title
+                quest.level = level
+                quest.questname = questname
+                if world_name: quest.world_name = world_name
+                updated_quest_count += 1
+                assigned_id = quest.id
+            else:
+                new_quest = Quest(
+                    title=title,
+                    level=level,
+                    questname=questname,
+                    world_name=world_name
+                )
+                # Only set explicit ID if it's a numeric ID from JSON
+                if qid_json:
+                    try:
+                        new_quest.id = int(qid_json)
+                    except (ValueError, TypeError):
+                        pass
                 
-                quest = safe_get(Quest, qid)
-                if quest:
-                    quest.title = row.get('title', quest.title)
-                    quest.level = row.get('level', quest.level)
-                    quest.questname = row.get('questname', quest.questname)
-                    updated_quest_count += 1
-                else:
-                    new_quest = Quest(
-                        id=qid,
-                        title=row.get('title', 'misc'),
-                        level=row.get('level', 'Lv1'),
-                        questname=row.get('questname', f'Imported Quest {qid}')
-                    )
-                    db.session.add(new_quest)
-                    inserted_quest_count += 1
+                db.session.add(new_quest)
                 db.session.flush()
-                checked_quest_ids.add(qid)
-                last_processed_quest_id = qid
-                
-            elif rec_type == 'question':
-                q_id_raw = row.get('id')
-                quest_id = int(row.get('quest_id') or last_processed_quest_id)
-                q_type = row.get('type')
-                text = row.get('text')
-                choices = row.get('choices')
-                answer = row.get('answer')
-                explanation = row.get('explanation')
-                
-                if not q_type or not text: continue
-
-                # Ensure parent Quest exists
-                if quest_id not in checked_quest_ids:
-                    if not safe_get(Quest, quest_id):
-                        new_quest = Quest(id=quest_id, title='misc', level='Lv1', questname=f'Imported Quest {quest_id}')
-                        db.session.add(new_quest)
-                        db.session.flush()
-                        inserted_quest_count += 1
-                    checked_quest_ids.add(quest_id)
-
-                if choices is not None and not isinstance(choices, str):
-                    choices = json.dumps(choices, ensure_ascii=False)
-                if answer is not None and not isinstance(answer, str):
-                    answer = json.dumps(answer, ensure_ascii=False)
-
-                question = None
-                if q_id_raw:
-                    question = safe_get(Question, int(q_id_raw))
-                
-                if question:
-                    # Update existing
-                    question.quest_id = quest_id
-                    question.type = q_type
-                    question.text = text
-                    question.choices = choices if choices and str(choices).strip() != '' else None
-                    question.answer = answer
-                    question.explanation = explanation
-                    updated_q_count += 1
-                else:
-                    # Insert new
-                    new_q = Question(
-                        quest_id=quest_id, type=q_type, text=text,
-                        choices=choices if choices and str(choices).strip() != '' else None,
-                        answer=answer, explanation=explanation
-                    )
-                    if q_id_raw:
-                        new_q.id = int(q_id_raw)
-                    else:
-                        # Auto-assign Question ID (QuestID * 100 + next serial)
-                        base_id = quest_id * 100
-                        max_q_id = db.session.query(func.max(Question.id)).filter(Question.id > base_id, Question.id < base_id + 100).scalar()
-                        new_q.id = (max_q_id + 1) if max_q_id else (base_id + 1)
-                    
-                    db.session.add(new_q)
-                    inserted_q_count += 1
-                    db.session.flush() # Flush to update max_q_id for next item in same batch
+                inserted_quest_count += 1
+                assigned_id = new_quest.id
+            
+            if qid_json:
+                quest_id_map[str(qid_json)] = assigned_id
+            if questname:
+                quest_name_map[questname] = assigned_id
         
+        # --- Phase 2: Process Questions ---
+        updated_q_count = 0
+        inserted_q_count = 0
+        
+        for row in normalized_questions:
+            q_id_raw = row.get('id')
+            raw_quest_id = row.get('quest_id')
+            
+            # Resolve quest_id
+            quest_id = None
+            if raw_quest_id:
+                # Try identifier map first
+                quest_id = quest_id_map.get(str(raw_quest_id))
+                if not quest_id:
+                    # Try direct cast
+                    try:
+                        quest_id = int(raw_quest_id)
+                    except (ValueError, TypeError):
+                        pass
+            
+            if not quest_id:
+                # Last resort: if this question record also has a questname (redundant but helpful)
+                q_questname = row.get('questname')
+                if q_questname:
+                    quest_id = quest_name_map.get(q_questname)
+            
+            if quest_id:
+                quest_id = int(quest_id)
+            else:
+                app.logger.debug(f"Skipping question (unresolved quest_id): {row.get('text', '')[:20]}")
+                continue
+
+            q_type = row.get('type')
+            text = row.get('text')
+            choices = row.get('choices')
+            answer = row.get('answer')
+            explanation = row.get('explanation')
+            
+            if not q_type or not text: continue
+
+            if choices is not None and not isinstance(choices, str):
+                choices = json.dumps(choices, ensure_ascii=False)
+            if answer is not None and not isinstance(answer, str):
+                answer = json.dumps(answer, ensure_ascii=False)
+
+            question = None
+            if q_id_raw:
+                try:
+                    question = safe_get(Question, int(q_id_raw))
+                except (ValueError, TypeError):
+                    pass
+            
+            if question:
+                question.quest_id = quest_id
+                question.type = q_type
+                question.text = text
+                question.choices = choices if choices and str(choices).strip() != '' else None
+                question.answer = answer
+                question.explanation = explanation
+                updated_q_count += 1
+            else:
+                new_q = Question(
+                    quest_id=quest_id, type=q_type, text=text,
+                    choices=choices if choices and str(choices).strip() != '' else None,
+                    answer=answer, explanation=explanation
+                )
+                if q_id_raw:
+                    try:
+                        new_q.id = int(q_id_raw)
+                    except (ValueError, TypeError):
+                        pass
+                
+                if not new_q.id:
+                    # Auto-assign Question ID (QuestID * 100 + next serial)
+                    base_id = quest_id * 100
+                    max_q_id = db.session.query(func.max(Question.id)).filter(Question.id > base_id, Question.id < base_id + 100).scalar()
+                    new_q.id = (max_q_id + 1) if max_q_id else (base_id + 1)
+                
+                db.session.add(new_q)
+                inserted_q_count += 1
+                db.session.flush()
+
         safe_commit()
         list_url = url_for('manage_quests')
         flash(f'インポート完了: クエスト(更新{updated_quest_count}/新規{inserted_quest_count}), 問題(更新{updated_q_count}/新規{inserted_q_count})。 <a href="{list_url}">クエスト一覧で確認する</a>', "success")
