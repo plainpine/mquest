@@ -43,7 +43,7 @@
 <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
     <a class="button secondary" href="{{ url_for('select_level', title=title) }}">レベル選択に戻る</a>
     <a class="button secondary" href="{{ url_for('select_title') }}">科目選択に戻る</a>
-    <a class="button" href="{{ url_for('dashboard_student') }}">ダッシュボードに戻る</a>
+    <a class="button" href="{{ url_for('dashboard_' + current_user.role) }}">ダッシュボードに戻る</a>
 </div>
 {% endblock %}
 

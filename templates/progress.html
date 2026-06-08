@@ -114,7 +114,7 @@
 </table>
 
 <br>
-{% if current_user.role == 'admin' %}
+{% if current_user.role == 'admin' or current_user.role == 'teacher' %}
     <a href="{{ url_for('manage_students') }}" class="button">生徒一覧に戻る</a>
 {% elif current_user.role == 'parent' %}
     <a href="{{ url_for('parent_students') }}" class="button">生徒の一覧に戻る</a>
