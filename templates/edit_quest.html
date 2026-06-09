@@ -30,7 +30,7 @@
     {% if quest.id is not none %}<input type="hidden" name="old_id" value="{{ quest.id }}">{% endif %}
   </div>
   <div class="form-group">
-    <label for="title-select">タイトル:</label>
+    <label for="title-select">科目:</label>
     <select name="title" id="title-select" required>
       {% for jp_title, en_key in all_titles %}
         <option value="{{ en_key }}" {% if jp_title == quest_display_title %}selected{% endif %}>{{ jp_title }}</option>

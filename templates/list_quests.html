@@ -5,7 +5,7 @@
 <h2>クエスト一覧</h2>
 
 <form method="get" action="{{ url_for('manage_quests') }}" style="margin-bottom: 1rem;">
-  <label for="title-select">タイトルで絞り込み:</label>
+  <label for="title-select">科目で絞り込み:</label>
   <select name="title" id="title-select">
     <option value="">すべて</option>
     {% for title in titles %}
@@ -113,7 +113,7 @@
       <tr>
         <th><input type="checkbox" id="select-all"></th>
         <th>ID</th>
-        <th>タイトル</th>
+        <th>科目</th>
         <th>レベル</th>
         <th>クエスト名</th>
       </tr>
