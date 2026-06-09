@@ -23,6 +23,28 @@
   <button type="submit">絞り込み</button>
 </form>
 
+<script>
+  // Prepare a map of title to levels
+  const titleToLevels = {{ title_to_levels | tojson }};
+  const titleSelect = document.getElementById('title-select');
+  const levelSelect = document.getElementById('level-select');
+  const selectedLevel = "{{ selected_level }}";
+
+  titleSelect.addEventListener('change', function() {
+    const selectedTitle = this.value;
+    const availableLevels = selectedTitle ? titleToLevels[selectedTitle] : {{ all_levels_list | tojson }};
+    
+    levelSelect.innerHTML = '<option value="">すべて</option>';
+    availableLevels.forEach(level => {
+      const option = document.createElement('option');
+      option.value = level;
+      option.text = level;
+      if (level === selectedLevel) option.selected = true;
+      levelSelect.appendChild(option);
+    });
+  });
+</script>
+
 <form method="post" action="{{ url_for('handle_quest_action') }}" onsubmit="return validateQuestSelection()">
   <input type="hidden" name="title" value="{{ selected_title }}">
   <input type="hidden" name="level" value="{{ selected_level }}">

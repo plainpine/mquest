@@ -1410,6 +1410,13 @@ def manage_quests():
     all_levels_raw = safe_query_all(db.session.query(Quest.level).distinct())
     all_levels = sorted(list(set([l[0] for l in all_levels_raw])))
 
+    # 科目ごとのレベルマッピングを作成
+    title_to_levels = {}
+    for jp_title in jp_titles:
+        title_key = SUBJECT_JP_TO_KEY.get(jp_title, jp_title)
+        levels_raw = safe_query_all(db.session.query(Quest.level).filter_by(title=title_key).distinct())
+        title_to_levels[jp_title] = sorted(list(set([l[0] for l in levels_raw])))
+
     quest_query = Quest.query
     if selected_title_jp:
         title_key = SUBJECT_JP_TO_KEY.get(selected_title_jp, selected_title_jp)
@@ -1425,6 +1432,8 @@ def manage_quests():
                            titles=jp_titles, 
                            selected_title=selected_title_jp,
                            levels=all_levels,
+                           all_levels_list=all_levels,
+                           title_to_levels=title_to_levels,
                            selected_level=selected_level)
 
 #　クエストの編集・問題の追加
