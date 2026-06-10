@@ -621,11 +621,16 @@ def quest_run(quest_id):
                 "answers": None
             })
         elif q.type == 'function_graph_choice':
-            # q.choices is graph_data, q.answer is sub_questions
+            # q.choices is now an object containing {'definitions': [...], 'width': ..., 'height': ...}
             try:
-                graph_data = json.loads(q.choices) if q.choices else []
+                choices_parsed = json.loads(q.choices) if q.choices else {}
+                if isinstance(choices_parsed, dict):
+                    graph_data = choices_parsed
+                else:
+                    # Legacy support: if it was just a list, keep it as definitions
+                    graph_data = {'definitions': choices_parsed, 'width': '', 'height': ''}
             except json.JSONDecodeError:
-                graph_data = []
+                graph_data = {'definitions': [], 'width': '', 'height': ''}
 
             try:
                 sub_questions = json.loads(q.answer) if q.answer else []
@@ -641,6 +646,7 @@ def quest_run(quest_id):
                 "text": q.text,
                 "graph_data": graph_data,
                 "sub_questions": sub_questions,
+                "explanation": q.explanation
             })
         else:
             questions.append({
@@ -2039,9 +2045,16 @@ def save_question(quest_id):
         elif q_type == 'function_graph':
             # The 'answer' field stores the function definitions for the graph
             graph_definitions_json = request.form.get('answer_function_graph', '[]')
+            width = request.form.get('function_graph_width', '')
+            height = request.form.get('function_graph_height', '')
             try:
-                json.loads(graph_definitions_json)
-                question.answer = graph_definitions_json
+                definitions = json.loads(graph_definitions_json)
+                # Store width/height in the answer JSON
+                question.answer = json.dumps({
+                    'definitions': definitions,
+                    'width': width,
+                    'height': height
+                })
             except json.JSONDecodeError:
                 question.answer = '[]'
                 flash('方程式グラフの定義データ形式が無効だったため、保存されませんでした。', 'error')
@@ -2058,14 +2071,27 @@ def save_question(quest_id):
         elif q_type == 'function_graph_choice':
             # Graph definitions are stored in question.choices
             graph_definitions_json = request.form.get('function_graph_choice_definitions', '[]')
+            width = request.form.get('function_graph_choice_width', '')
+            height = request.form.get('function_graph_choice_height', '')
             try:
-                json.loads(graph_definitions_json)
-                question.choices = graph_definitions_json
+                # フォームから受け取った JSON 文字列をパースする
+                data = json.loads(graph_definitions_json)
+                
+                # 構造を整理して保存 (definitionsリスト, 幅, 高さ)
+                # dataがすでに入力データ構造であれば、definitionsプロパティから取得する
+                definitions = data.get('definitions', data)
+                
+                question.choices = json.dumps({
+                    'definitions': definitions,
+                    'width': width,
+                    'height': height
+                })
             except json.JSONDecodeError:
                 question.choices = '[]'
                 flash('方程式グラフ（選択）のグラフ定義データ形式が無効だったため、保存されませんでした。', 'error')
 
             # Sub-questions are stored in question.answer
+            # (assuming sub-questions parsing logic exists further down in save_question)
             sub_prompts = request.form.getlist('fgc_sub_prompt')
             sub_answers = request.form.getlist('fgc_sub_answer')
             sub_questions = []
@@ -2188,10 +2214,10 @@ def preview_question():
         question_data['answer'] = sub_questions
 
     elif q_type == 'function_graph':
-        # Get graph definitions
+        # Get graph definitions (definitions + width + height)
         graph_json_string = request.form.get('answer_function_graph', '[]')
         try:
-            # The answer is a list of function definitions
+            # We want the whole object {definitions, width, height}
             question_data['answer'] = json.loads(graph_json_string)
         except json.JSONDecodeError:
             question_data['answer'] = []
@@ -2205,7 +2231,7 @@ def preview_question():
             question_data['choices'] = []
 
     elif q_type == 'function_graph_choice':
-        # Get graph definitions
+        # Get graph definitions (definitions + width + height)
         graph_json_string = request.form.get('function_graph_choice_definitions', '[]')
         try:
             question_data['graph_data'] = json.loads(graph_json_string)
@@ -2226,11 +2252,8 @@ def preview_question():
                     'choices': choices_for_sub_q,
                     'answer': sub_answers[i] if i < len(sub_answers) else ''
                 })
-        question_data['sub_questions'] = sub_questions_list # Store sub-questions in 'sub_questions' for template
-        
-        # No general 'correct_answer_text' for the whole FGC question type from form submission,
-        # as answers are tied to each sub_question.
-        question_data['correct_answer_text'] = None # Clear this or set appropriately if needed for overall FGC.
+        question_data['sub_questions'] = sub_questions_list
+        question_data['correct_answer_text'] = None
 
     return render_template('question_preview.html', question=question_data)
 

@@ -23,6 +23,10 @@
 
 <h2>クエスト編集</h2>
 
+<p style="color: #856404; background-color: #fff3cd; padding: 10px; border-radius: 4px; font-size: 0.9rem;">
+  ※ クエストIDは同じ桁数に、問題数は99問までにしてください。
+</p>
+
 <form method="post" action="{{ url_for('save_quest', quest_id=quest_id) }}">
   <div class="form-group">
     <label for="quest-id">ID:</label>

@@ -554,7 +554,7 @@
                               return entry;
                           });
 
-              const instance = functionPlot({ target: targetId, data: plotData, grid: true, xAxis: xAxisConfig, yAxis: yAxisConfig, width: plotWidth, height: plotHeight });
+              const instance = functionPlot({ target: targetId, data: plotData, grid: true, xAxis: xAxisConfig, yAxis: yAxisConfig, width: plotWidth, height: plotHeight, disableZoom: true });
               const drawInterceptLabels = () => {
                   try {
                       const svg = d3.select(targetId).select('svg');

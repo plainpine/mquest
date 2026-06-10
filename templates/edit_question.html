@@ -721,7 +721,7 @@
     }
 </style>
 
-<form method="post" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
+<form method="post" id="save-question-form" action="{{ url_for('save_question', quest_id=quest_id, question_id=question.id if question else 'new') }}">
   <input type="hidden" name="title" value="{{ title }}">
   <input type="hidden" name="level" value="{{ level }}">
   
@@ -829,6 +829,7 @@
       <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; font-size: 0.9rem;">
         <h6 style="margin-top: 0; color: #0056b3;"><i class="fas fa-info-circle"></i> 設定方法</h6>
         <ul style="margin-bottom: 0; padding-left: 1.2rem;">
+          <li><strong>サイズ設定:</strong> 横幅と高さを指定してください。</li>
           <li><strong>キャプションを表示:</strong> 方程式の後に <code>| 説明文</code> を付けると、グラフ線上に表示されます。<br>例: <code>y = 2x + 1 | 直線A</code></li>
           <li><strong>切片を表示:</strong> <code>| show_intercepts: true</code> を付けると、x軸・y軸との交点に数値を表示します。<br>例: <code>y = -x + 4 | show_intercepts: true</code></li>
           <li><strong>個別範囲指定:</strong> 方程式の後に <code>[x最小, xMax]</code> を付けると、その範囲のみ描画します。<br>例: <code>y = 2x + 3 [0, 5]</code></li>
@@ -836,6 +837,11 @@
           <li><strong>軸のラベル:</strong> <code>label:x軸名,y軸名</code> で各軸に説明文を表示できます。</li>
           <li><strong>目盛の間隔:</strong> <code>step:xの間隔,yの間隔</code> で目盛の刻みを指定できます。</li>
         </ul>
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <label>グラフサイズ:</label>
+        <input type="number" name="function_graph_width" id="function-graph-width" placeholder="横 (例: 600)" style="width: 100px;" value="{{ (question.choices | from_json).width if question and question.type == 'function_graph' and question.choices and question.choices.startswith('{') else '' }}"> x
+        <input type="number" name="function_graph_height" id="function-graph-height" placeholder="縦 (例: 400)" style="width: 100px;" value="{{ (question.choices | from_json).height if question and question.type == 'function_graph' and question.choices and question.choices.startswith('{') else '' }}">
       </div>
       <div id="function-entries-container"></div>
       <button type="button" id="add-function-entry">方程式を追加</button>
@@ -852,6 +858,7 @@
       <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; font-size: 0.9rem;">
         <h6 style="margin-top: 0; color: #0056b3;"><i class="fas fa-info-circle"></i> 設定方法</h6>
         <ul style="margin-bottom: 0; padding-left: 1.2rem;">
+          <li><strong>サイズ設定:</strong> 横幅と高さを指定してください。</li>
           <li><strong>キャプションを表示:</strong> 方程式の後に <code>| 説明文</code> を付けると、グラフ線上に表示されます。<br>例: <code>y = 2x + 1 | 直線A</code></li>
           <li><strong>切片を表示:</strong> <code>| show_intercepts: true</code> を付けると、x軸・y軸との交点に数値を表示します。<br>例: <code>y = -x + 4 | show_intercepts: true</code></li>
           <li><strong>個別範囲指定:</strong> 方程式の後に <code>[x最小, xMax]</code> を付けると、その範囲のみ描画します。<br>例: <code>y = 2x + 3 [0, 5]</code></li>
@@ -859,6 +866,11 @@
           <li><strong>軸のラベル:</strong> <code>label:x軸名,y軸名</code> で各軸に説明文を表示できます。</li>
           <li><strong>目盛の間隔:</strong> <code>step:xの間隔,yの間隔</code> で目盛の刻みを指定できます。</li>
         </ul>
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <label>グラフサイズ:</label>
+        <input type="number" name="function_graph_choice_width" id="function-graph-choice-width" placeholder="横 (例: 600)" style="width: 100px;" value="{{ (question.answer | from_json).width if question and question.type == 'function_graph_choice' and question.answer and question.answer.startswith('{') else '' }}"> x
+        <input type="number" name="function_graph_choice_height" id="function-graph-choice-height" placeholder="縦 (例: 400)" style="width: 100px;" value="{{ (question.answer | from_json).height if question and question.type == 'function_graph_choice' and question.answer and question.answer.startswith('{') else '' }}">
       </div>
       <div id="function-graph-choice-entries-container"></div>
       <button type="button" id="add-function-graph-choice-entry">方程式を追加</button>
@@ -880,7 +892,7 @@
   // MathJax Config
   window.MathJax = {
     tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-    startup: { ready: () => { MathJax.startup.defaultReady(); if(window.updatePreviews) updatePreviews(); } }
+    startup: { ready: () => { MathJax.startup.defaultReady(); } }
   };
 </script>
 
@@ -921,7 +933,17 @@
                 fn: el.querySelector('.function-fn-input').value,
                 caption: el.querySelector('.function-caption-input').value
             }));
-            document.getElementById('answer_function_graph_hidden').value = JSON.stringify(fns);
+            
+            const widthVal = document.getElementById('function-graph-width').value;
+            const heightVal = document.getElementById('function-graph-height').value;
+            console.log("Serialize: widthVal:", widthVal, "heightVal:", heightVal);
+            
+            const graphData = {
+                definitions: fns,
+                width: widthVal,
+                height: heightVal
+            };
+            document.getElementById('answer_function_graph_hidden').value = JSON.stringify(graphData);
 
             const ans = Array.from(document.querySelectorAll('#function-graph-answers-container .fg-answer-item')).map(el => ({
                 prompt: el.querySelector('.fg-answer-prompt').value,
@@ -933,7 +955,17 @@
                 fn: el.querySelector('.function-fn-input').value,
                 caption: el.querySelector('.function-caption-input').value
             }));
-            document.getElementById('function_graph_choice_definitions_hidden').value = JSON.stringify(fns);
+            
+            const widthVal = document.getElementById('function-graph-choice-width').value;
+            const heightVal = document.getElementById('function-graph-choice-height').value;
+            console.log("Serialize FGC: widthVal:", widthVal, "heightVal:", heightVal);
+            
+            const graphData = {
+                definitions: fns,
+                width: widthVal,
+                height: heightVal
+            };
+            document.getElementById('function_graph_choice_definitions_hidden').value = JSON.stringify(graphData);
             // sub-questions are handled by standard form fields fgc_sub_prompt etc.
         }
     }
@@ -1249,24 +1281,53 @@
     }
 
     // Load Data
+    // Ensure the section corresponding to the initial type is visible
     updateSections();
     updatePreviews();
+    
+    // Populate data based on the type
+    const qType = typeSelect.value;
     const qData = {{ question.answer | tojson | safe if question else 'null' }};
     const cData = {{ choices | tojson | safe if choices else 'null' }};
     const aData = {{ answers | tojson | safe if answers else 'null' }};
+    
+    console.log("Loading data for type:", qType);
+    console.log("qData:", qData);
 
-    if (typeSelect.value === 'function_graph') {
+    if (qType === 'function_graph') {
+        console.log("Entering function_graph loading block");
         try {
             const graph = typeof qData === 'string' ? JSON.parse(qData) : qData;
-            if(Array.isArray(graph)) graph.forEach(d => createFunctionEntry('function-entries-container', d.fn, d.caption));
+            console.log("Parsed graph data:", graph);
+            if (graph && graph.definitions) {
+                if(Array.isArray(graph.definitions)) graph.definitions.forEach(d => createFunctionEntry('function-entries-container', d.fn, d.caption));
+                document.getElementById('function-graph-width').value = graph.width || '';
+                document.getElementById('function-graph-height').value = graph.height || '';
+                console.log("Populated width/height");
+            } else if (Array.isArray(graph)) {
+                // Legacy support for old format
+                graph.forEach(d => createFunctionEntry('function-entries-container', d.fn, d.caption));
+                console.log("Populated legacy graph data");
+            }
             if(Array.isArray(aData)) aData.forEach(d => createFunctionGraphAnswerEntry(d.prompt, d.answer));
-        } catch(e) {}
-    } else if (typeSelect.value === 'function_graph_choice') {
+        } catch(e) { console.error("Error loading function_graph data:", e); }
+    } else if (qType === 'function_graph_choice') {
+        console.log("Entering function_graph_choice loading block");
         try {
-            if(Array.isArray(cData)) cData.forEach(d => createFunctionEntry('function-graph-choice-entries-container', d.fn, d.caption));
+            // function_graph_choice stores definitions in 'choices' (cData)
+            const graph = typeof cData === 'string' ? JSON.parse(cData) : cData;
+            console.log("Parsed graph data for fgc (from cData):", graph);
+            if (graph && graph.definitions) {
+                if(Array.isArray(graph.definitions)) graph.definitions.forEach(d => createFunctionEntry('function-graph-choice-entries-container', d.fn, d.caption));
+                document.getElementById('function-graph-choice-width').value = graph.width || '';
+                document.getElementById('function-graph-choice-height').value = graph.height || '';
+            } else if (Array.isArray(graph)) {
+                // Legacy support
+                graph.forEach(d => createFunctionEntry('function-graph-choice-entries-container', d.fn, d.caption));
+            }
             if(Array.isArray(aData)) aData.forEach(d => createFgcSubQuestion(d.prompt, d.choices, d.answer));
-        } catch(e) {}
-    } else if (typeSelect.value === 'svg_interactive') {
+        } catch(e) { console.error("Error loading function_graph_choice data:", e); }
+    } else if (qType === 'svg_interactive') {
         try {
             if(Array.isArray(aData)) aData.forEach(d => createSubQuestion(d.prompt, d.answer, d.id));
         } catch(e) {}

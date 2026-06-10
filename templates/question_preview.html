@@ -250,6 +250,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+        console.log("Preview JS: DOMContentLoaded reached.");
         renderMarkdownAndMath();
 
         document.querySelectorAll('.numeric-input').forEach(input => {
@@ -266,21 +267,50 @@
 
         // --- Function Plotting Logic ---
         const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
-        document.querySelectorAll('.function-graph-container').forEach((container, i) => {
+        const containers = document.querySelectorAll('.function-graph-container');
+        console.log("Found containers:", containers.length);
+        
+        containers.forEach((container, i) => {
             const functionsDataRaw = container.dataset.functions;
             const targetId = `#graph-target-${i}`;
             const legendId = `graph-legend-${i}`;
-            
+            console.log(`Processing container ${i}, target: ${targetId}, functionsDataRaw:`, functionsDataRaw);
+
             if (functionsDataRaw && document.querySelector(targetId)) {
+                console.log(`Found data and target for container ${i}`);
                 try {
-                    const functionsData = JSON.parse(functionsDataRaw);
-                    if (!functionsData || !Array.isArray(functionsData)) return;
+                    const parsedData = JSON.parse(functionsDataRaw);
+                    console.log("Parsed graph data:", parsedData);
+
+                    // Handle both legacy array format and new object format
+                    const functionsData = Array.isArray(parsedData) ? parsedData : (parsedData.definitions || []);
 
                     let xAxisConfig = { domain: [-10.1, 10.1] }, yAxisConfig = { domain: [-10.1, 10.1] };
                     const containerWidth = container.clientWidth;
                     let plotWidth = 800;
                     if (containerWidth > 0 && containerWidth < 800) plotWidth = containerWidth;
                     let plotHeight = 600;
+
+                    // Apply size from parsed object if present
+                    console.log("Checking size - raw width:", parsedData.width, "raw height:", parsedData.height);
+                    if (parsedData.width !== undefined && parsedData.width !== "" && parsedData.width !== null) {
+                        const w = parseFloat(parsedData.width);
+                        console.log("Parsed width result:", w);
+                        if (!isNaN(w)) {
+                            plotWidth = Math.min(w, containerWidth || w);
+                            console.log("Applied plotWidth:", plotWidth);
+                        }
+                    }
+                    if (parsedData.height !== undefined && parsedData.height !== "" && parsedData.height !== null) {
+                        const h = parseFloat(parsedData.height);
+                        console.log("Parsed height result:", h);
+                        if (!isNaN(h)) {
+                            const w = parseFloat(parsedData.width) || 800;
+                            plotHeight = h * (plotWidth / w);
+                            console.log("Applied plotHeight:", plotHeight);
+                        }
+                    }
+                    console.log("Final plot dimensions:", { plotWidth, plotHeight });
 
                     // 設定コマンドを先に処理（range, size を優先）
                     functionsData.forEach(item => {
@@ -335,8 +365,8 @@
                     }
 
                     const targetEl = document.querySelector(targetId);
-                    targetEl.style.height = plotHeight + 'px';
-                    targetEl.style.width = plotWidth + 'px';
+                    targetEl.style.setProperty('height', plotHeight + 'px', 'important');
+                    targetEl.style.setProperty('width', plotWidth + 'px', 'important');
                     targetEl.style.margin = '0 auto';
 
                     const annotations = [];
@@ -421,14 +451,15 @@
                         return entry;
                         });
 
-                    const instance = functionPlot({ 
-                        target: targetId, 
-                        data: plotData, 
-                        grid: true, 
-                        xAxis: xAxisConfig, 
-                        yAxis: yAxisConfig, 
-                        width: plotWidth, 
-                        height: plotHeight
+                    const instance = functionPlot({
+                        target: targetId,
+                        data: plotData,
+                        grid: true,
+                        xAxis: xAxisConfig,
+                        yAxis: yAxisConfig,
+                        width: plotWidth,
+                        height: plotHeight,
+                        disableZoom: true
                     });
 
                     const drawInterceptLabels = () => {

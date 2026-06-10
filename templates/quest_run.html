@@ -195,7 +195,7 @@
           {% endfor %}
         </div>
       {% elif question.type == 'function_graph' %}
-        <div class="function-graph-container" data-functions='{{ question.answer | tojson }}' style="margin-bottom: 1rem;">
+        <div class="function-graph-container" data-q-index="{{ q_index }}" data-functions='{{ question.answer | tojson }}' style="margin-bottom: 1rem;">
           <div id="graph-target-{{ q_index }}"></div>
           <div class="graph-legend" id="graph-legend-{{ q_index }}"></div>
         </div>
@@ -306,7 +306,7 @@
   .key-btn-en:active { background-color: #e0e0e0; }
 
   /* Graph styles */
-  [id^="graph-target-"] { height: 500px; width: 100%; max-width: 800px; margin: 0 auto; }
+  [id^="graph-target-"] { width: 100%; max-width: 800px; margin: 0 auto; }
   .graph-legend { margin-top: 1rem; }
   .legend-item { display: flex; align-items: center; margin-bottom: 0.5rem; }
   .legend-color { width: 20px; height: 10px; margin-right: 10px; border: 1px solid #ccc; }
@@ -515,10 +515,11 @@
 
     // --- Function Plotting ---
     const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
-    document.querySelectorAll('.function-graph-container').forEach((container, i) => {
+    document.querySelectorAll('.function-graph-container').forEach((container) => {
         const functionsDataRaw = container.dataset.functions;
-        const targetId = `#graph-target-${i}`;
-        const legendId = `graph-legend-${i}`;
+        const qIndex = container.dataset.qIndex;
+        const targetId = `#graph-target-${qIndex}`;
+        const legendId = `graph-legend-${qIndex}`;
         if (functionsDataRaw && targetId) {
             try {
                 const functionsData = JSON.parse(functionsDataRaw);
@@ -528,8 +529,13 @@
                 if (containerWidth > 0 && containerWidth < 800) plotWidth = containerWidth;
                 let plotHeight = 600;
 
+                // Handle both array (old) and object (new) formats for functionsData
+                let definitions = Array.isArray(functionsData) ? functionsData : (functionsData.definitions || []);
+                let w = functionsData.width || null;
+                let h = functionsData.height || null;
+
                 // 設定コマンドを先に処理（range, size を優先）
-                functionsData.forEach(item => {
+                definitions.forEach(item => {
                     const fn = item.fn.trim();
                     if (fn.startsWith('range:')) {
                         const p = fn.replace('range:', '').split(',').map(parseFloat);
@@ -539,9 +545,21 @@
                         if (p.length === 2) { plotWidth = Math.min(p[0], containerWidth || p[0]); plotHeight = p[1] * (plotWidth / p[0]); }
                     }
                 });
+                
+                // NEW: Use width/height from parsed JSON if present
+                if (w) {
+                    const parsedW = parseFloat(w);
+                    if (!isNaN(parsedW)) { plotWidth = Math.min(parsedW, containerWidth || parsedW); }
+                }
+                if (h) {
+                    const parsedH = parseFloat(h);
+                    if (!isNaN(parsedH)) { plotHeight = parsedH * (plotWidth / (parseFloat(w) || 800)); }
+                }
+                
+                console.log("Plotting graph:", { plotWidth, plotHeight, definitions });
 
                 // その他の設定を処理
-                functionsData.forEach(item => {
+                definitions.forEach(item => {
                     if (!item.fn) return;
                     const fn = item.fn.trim();
                     if (fn.startsWith('label:')) {
@@ -580,12 +598,12 @@
                 }
 
                 const targetEl = document.querySelector(targetId);
-                targetEl.style.height = plotHeight + 'px';
-                targetEl.style.width = plotWidth + 'px';
+                targetEl.style.setProperty('height', plotHeight + 'px', 'important');
+                targetEl.style.setProperty('width', plotWidth + 'px', 'important');
                 targetEl.style.margin = '0 auto';
 
                 const annotations = [];
-                const plotData = functionsData.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
+                const plotData = definitions.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
                     .map((it, idx) => {
                         let fnStr = it.fn.trim();
                         let domain = null;
@@ -686,8 +704,10 @@
                     xAxis: xAxisConfig, 
                     yAxis: yAxisConfig, 
                     width: plotWidth, 
-                    height: plotHeight
+                    height: plotHeight,
+                    disableZoom: true
                 });
+                console.log("functionPlot called.");
 
                 // 描画イベントに同期してラベルを更新
                 const drawInterceptLabels = () => {
@@ -812,7 +832,7 @@
                 const legendEl = document.getElementById(legendId);
                 legendEl.style.display = 'none'; // 凡例を非表示にする
                 legendEl.innerHTML = '';
-                functionsData.forEach((it, idx) => {
+                definitions.forEach((it, idx) => {
                     if (it.caption) {
                         const item = document.createElement('div');
                         item.classList.add('legend-item');
