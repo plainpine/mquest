@@ -306,7 +306,7 @@
   .key-btn-en:active { background-color: #e0e0e0; }
 
   /* Graph styles */
-  [id^="graph-target-"] { width: 100%; max-width: 800px; margin: 0 auto; }
+  [id^="graph-target-"] { width: 100%; max-width: 800px; margin: 0 auto; min-height: 320px; background-color: #fdfdfd; border-radius: 4px; }
   .graph-legend { margin-top: 1rem; }
   .legend-item { display: flex; align-items: center; margin-bottom: 0.5rem; }
   .legend-color { width: 20px; height: 10px; margin-right: 10px; border: 1px solid #ccc; }
@@ -327,7 +327,10 @@
   #clear-memo-btn:hover { background-color: #d0d0d0; }
   .svg-interactive-container svg, .figure-choice-container svg { width: 100%; height: auto; display: block; }
 </style>
+{% endblock %}
 
+{% block scripts %}
+{{ super() }}
 <!-- JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 

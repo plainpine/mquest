@@ -288,417 +288,340 @@
       <a href="{{ url_for('select_quest_by_title_level_admin', title=title, level=quest.level) }}"
       class="button secondary">クエスト選択に戻る</a>
 
-      <!-- JS: Markdown・Sort・Numeric入力・答え表示 -->
-      <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-      <script>
-      async function renderMarkdownAndMath(root = document) {
-      const elements = root.querySelectorAll('.markdown[data-content]');
-      for (let div of elements) {
-      await window.renderMarkdown(div, div.getAttribute('data-content'));
-      }
-      }
+<style>
+  .choice-option { padding: 1rem; border: 1px solid #ccc; border-radius: 8px; margin: 0.5rem 0; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; display: flex; align-items: center; user-select: none; }
+  .choice-option.selected { background-color: #d0ebff; border-color: #339af0; }
+  .sortable-item { list-style: none; background: #f0f0f0; padding: 0.5rem; margin: 0.25rem 0; border: 1px solid #ccc; border-radius: 5px; cursor: move; }
+  .keypad .key-btn, .virtual-keyboard .key-btn-en { margin: 0.25rem; padding: 0.5rem 0.75rem; font-size: 1rem; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: white; }
+  .keypad .key-btn:active, .virtual-keyboard .key-btn-en:active { background: #ddd; }
+  .keyboard-row { display: flex; justify-content: center; width: 100%; }
+  .svg-interactive-container svg, .figure-choice-container svg { width: 100%; height: auto; display: block; }
+  [id^="graph-target-"] { width: 100%; max-width: 800px; margin: 0 auto; min-height: 320px; background-color: #fdfdfd; border-radius: 4px; }
+</style>
+{% endblock %}
 
-      document.addEventListener("DOMContentLoaded", () => {
-      renderMarkdownAndMath();
+{% block scripts %}
+{{ super() }}
+<!-- JS: Markdown・Sort・Numeric入力・答え表示 -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+async function renderMarkdownAndMath(root = document) {
+    const elements = root.querySelectorAll('.markdown[data-content]');
+    for (let div of elements) {
+        await window.renderMarkdown(div, div.getAttribute('data-content'));
+    }
+}
 
-      // 並び替え
-      document.querySelectorAll('.sortable').forEach(list => {
-      Sortable.create(list, { animation: 150 });
-      });
+document.addEventListener("DOMContentLoaded", () => {
+    renderMarkdownAndMath();
 
-      // --- Keypad/Keyboard Toggle Logic ---
-      const kbToggle = document.getElementById('kb-toggle');
-      const allInputs = document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input');
-      
-      // Load preference from localStorage (default to false/unchecked)
-      const useAppKb = localStorage.getItem('useAppKb') === 'true';
-      if (kbToggle) {
+    // 並び替え
+    document.querySelectorAll('.sortable').forEach(list => {
+        Sortable.create(list, { animation: 150 });
+    });
+
+    // --- Keypad/Keyboard Toggle Logic ---
+    const kbToggle = document.getElementById('kb-toggle');
+    const allInputs = document.querySelectorAll('.numeric-input, .en-fill-in-the-blank-input');
+    
+    const useAppKb = localStorage.getItem('useAppKb') === 'true';
+    if (kbToggle) {
         kbToggle.checked = useAppKb;
         kbToggle.addEventListener('change', updateInputMode);
-      }
+    }
 
-      function updateInputMode() {
+    function updateInputMode() {
         const useApp = kbToggle ? kbToggle.checked : useAppKb;
         allInputs.forEach(input => {
-          if (useApp) {
-            input.setAttribute('inputmode', 'none');
-          } else {
-            if (input.classList.contains('numeric-input')) {
-              input.setAttribute('inputmode', 'decimal');
+            if (useApp) {
+                input.setAttribute('inputmode', 'none');
             } else {
-              input.removeAttribute('inputmode');
+                if (input.classList.contains('numeric-input')) {
+                    input.setAttribute('inputmode', 'decimal');
+                } else {
+                    input.removeAttribute('inputmode');
+                }
             }
-          }
         });
         localStorage.setItem('useAppKb', useApp);
-      }
+    }
+    updateInputMode();
 
-      updateInputMode(); // Initialize on load
-
-      // 数値テンキー
-      let activeInput = null, activeEnInput = null;
-      const showKeyboard = (input) => {
-        if (kbToggle && !kbToggle.checked) return; // Don't show app keyboard if toggled off
-
+    let activeInput = null, activeEnInput = null;
+    const showKeyboard = (input) => {
+        if (kbToggle && !kbToggle.checked) return;
         document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
         const qid = input.dataset.qid;
         const selector = input.classList.contains('numeric-input') ? `.keypad[data-qid="${qid}"]` : `.virtual-keyboard[data-qid="${qid}"]`;
         const keyboard = input.closest('.question-block, .sub-questions-container').querySelector(selector);
         if (keyboard) {
-          keyboard.style.display = input.classList.contains('numeric-input') ? 'inline-block' : 'flex';
-          if (input.classList.contains('numeric-input')) activeInput = input; else activeEnInput = input;
+            keyboard.style.display = input.classList.contains('numeric-input') ? 'inline-block' : 'flex';
+            if (input.classList.contains('numeric-input')) activeInput = input; else activeEnInput = input;
         }
-      };
+    };
 
-      document.querySelectorAll('.numeric-input').forEach(input => {
+    document.querySelectorAll('.numeric-input').forEach(input => {
         input.addEventListener('click', (e) => { e.stopPropagation(); showKeyboard(input); });
         input.addEventListener('keypress', (e) => {
-          const allowedChars = /[0-9\.\-\/]/;
-          if (!allowedChars.test(e.key)) e.preventDefault();
+            const allowedChars = /[0-9\.\-\/]/;
+            if (!allowedChars.test(e.key)) e.preventDefault();
         });
         input.addEventListener('input', (e) => {
-          e.target.value = e.target.value.replace(/[^0-9\.\-\/]/g, '');
+            e.target.value = e.target.value.replace(/[^0-9\.\-\/]/g, '');
         });
-      });
+    });
 
-      document.querySelectorAll('.en-fill-in-the-blank-input').forEach(input => {
+    document.querySelectorAll('.en-fill-in-the-blank-input').forEach(input => {
         input.addEventListener('click', (e) => { e.stopPropagation(); showKeyboard(input); });
-      });
+    });
 
-      document.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
         if (!e.target.closest('.numeric-input, .en-fill-in-the-blank-input, .keypad, .virtual-keyboard')) {
-          document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
-          activeInput = activeEnInput = null;
+            document.querySelectorAll('.keypad, .virtual-keyboard').forEach(k => k.style.display = 'none');
+            activeInput = activeEnInput = null;
         }
-      });
+    });
 
-      document.querySelectorAll('.keypad').forEach(keypad => {
+    document.querySelectorAll('.keypad').forEach(keypad => {
         const qid = keypad.dataset.qid;
         keypad.querySelectorAll('.key-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            if (!activeInput || activeInput.dataset.qid !== qid) return;
-            const char = btn.dataset.num;
-            if (char === 'del') activeInput.value = activeInput.value.slice(0, -1);
-            else if (char === 'clear') activeInput.value = '';
-            else activeInput.value += char;
-          });
+            btn.addEventListener('click', () => {
+                if (!activeInput || activeInput.dataset.qid !== qid) return;
+                const char = btn.dataset.num;
+                if (char === 'del') activeInput.value = activeInput.value.slice(0, -1);
+                else if (char === 'clear') activeInput.value = '';
+                else activeInput.value += char;
+            });
         });
-      });
+    });
 
-      document.querySelectorAll('.virtual-keyboard').forEach(keyboard => {
+    document.querySelectorAll('.virtual-keyboard').forEach(keyboard => {
         const qid = keyboard.dataset.qid;
         keyboard.querySelectorAll('.key-btn-en').forEach(btn => {
-          btn.addEventListener('click', () => {
-            if (!activeEnInput || activeEnInput.dataset.qid !== qid) return;
-            const key = btn.dataset.key;
-            if (key === 'del') activeEnInput.value = activeEnInput.value.slice(0, -1);
-            else if (key === 'clear') activeEnInput.value = '';
-            else activeEnInput.value += key;
-          });
+            btn.addEventListener('click', () => {
+                if (!activeEnInput || activeEnInput.dataset.qid !== qid) return;
+                const key = btn.dataset.key;
+                if (key === 'del') activeEnInput.value = activeEnInput.value.slice(0, -1);
+                else if (key === 'clear') activeEnInput.value = '';
+                else activeEnInput.value += key;
+            });
         });
-      });
+    });
 
-      // 選択肢のクリック
-      document.querySelectorAll('.choice-option').forEach(option => {
+    document.querySelectorAll('.choice-option').forEach(option => {
         option.addEventListener('click', () => {
-          if (option.classList.contains('multiple-choice')) {
-            option.classList.toggle('selected');
-          } else {
-            const qname = option.dataset.qname;
-            document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => el.classList.remove('selected'));
-            option.classList.add('selected');
-          }
+            if (option.classList.contains('multiple-choice')) {
+                option.classList.toggle('selected');
+            } else {
+                const qname = option.dataset.qname;
+                document.querySelectorAll(`.choice-option[data-qname="${qname}"]`).forEach(el => el.classList.remove('selected'));
+                option.classList.add('selected');
+            }
         });
-      });
+    });
 
-      // 答え表示・非表示
-      document.querySelectorAll('.toggle-answer').forEach(btn => {
-      btn.addEventListener('click', () => {
-      const idx = btn.dataset.index;
-      const answer = document.getElementById(`answer-${idx}`);
-      const isVisible = answer.style.display === 'block';
-      answer.style.display = isVisible ? 'none' : 'block';
-      btn.textContent = isVisible ? '答え' : '隠す';
-      });
-      });
+    document.querySelectorAll('.toggle-answer').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = btn.dataset.index;
+            const answer = document.getElementById(`answer-${idx}`);
+            const isVisible = answer.style.display === 'block';
+            answer.style.display = isVisible ? 'none' : 'block';
+            btn.textContent = isVisible ? '答え' : '隠す';
+        });
+    });
 
-      // --- Function Plotting ---
-      const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
-      setTimeout(() => {
-      document.querySelectorAll('.function-graph-container').forEach((container) => {
-      const functionsDataRaw = container.dataset.functions;
-      const qIndex = container.dataset.qIndex;
-      const targetId = `#graph-target-${qIndex}`;
-      const legendId = `graph-legend-${qIndex}`;
+    // --- Function Plotting ---
+    const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
+    setTimeout(() => {
+        document.querySelectorAll('.function-graph-container').forEach((container) => {
+            const functionsDataRaw = container.dataset.functions;
+            const qIndex = container.dataset.qIndex;
+            const targetId = `#graph-target-${qIndex}`;
+            const legendId = `graph-legend-${qIndex}`;
 
-      if (functionsDataRaw && document.querySelector(targetId)) {
-          try {
-              const functionsData = JSON.parse(functionsDataRaw);
-              let xAxisConfig = { domain: [-10.1, 10.1] }, yAxisConfig = { domain: [-10.1, 10.1] };
-              const containerWidth = container.clientWidth;
-              let plotWidth = 800;
-              if (containerWidth > 0 && containerWidth < 800) plotWidth = containerWidth;
-              let plotHeight = 600;
-
-              // 設定コマンドを先に処理（range, size を優先）
-              functionsData.forEach(item => {
-                  const fn = item.fn.trim();
-                  if (fn.startsWith('range:')) {
-                      const p = fn.replace('range:', '').split(',').map(parseFloat);
-                      if (p.length === 4) { xAxisConfig.domain = [p[0], p[1]]; yAxisConfig.domain = [p[2], p[3]]; }
-                  } else if (fn.startsWith('size:')) {
-                      const p = fn.replace('size:', '').split(',').map(parseFloat);
-                      if (p.length === 2) { plotWidth = Math.min(p[0], containerWidth || p[0]); plotHeight = p[1] * (plotWidth / p[0]); }
-                  }
-              });
-
-              // その他の設定を処理
-              functionsData.forEach(item => {
-                  if (!item.fn) return;
-                  const fn = item.fn.trim();
-                  if (fn.startsWith('label:')) {
-                      const p = fn.replace('label:', '').split(',');
-                      if (p.length >= 1) xAxisConfig.label = p[0].trim();
-                      if (p.length >= 2) yAxisConfig.label = p[1].trim();
-                  } else if (fn.startsWith('step:')) {
-                      const p = fn.replace('step:', '').split(',').map(parseFloat);
-                      if (p.length >= 1 && !isNaN(p[0]) && p[0] > 0) {
-                          const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = p[0];
-                          xAxisConfig.tickValues = d3.range(
-                              Math.ceil(start / step) * step,
-                              end + step / 2,
-                              step
-                          );
-                      }
-                      if (p.length >= 2 && !isNaN(p[1]) && p[1] > 0) {
-                          const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = p[1];
-                          yAxisConfig.tickValues = d3.range(
-                              Math.ceil(start / step) * step,
-                              end + step / 2,
-                              step
-                          );
-                      }
-                  }
-              });
-
-              // デフォルトのステップを5に設定（設定がない場合）
-              if (!xAxisConfig.tickValues) {
-                  const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = 5;
-                  xAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
-              }
-              if (!yAxisConfig.tickValues) {
-                  const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = 5;
-                  yAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
-              }
-
-              const targetEl = document.querySelector(targetId);
-              targetEl.style.height = plotHeight + 'px';
-              targetEl.style.width = plotWidth + 'px';
-              targetEl.style.margin = '0 auto';
-
-              const annotations = [];
-                      const plotData = functionsData.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
-                          .map((it, idx) => {
-                              let fnStr = it.fn.trim();
-                              let domain = null;
-                              let range = null;
-                              let showIntercepts = it.show_intercepts === true || it.show_intercepts === "true" || fnStr.toLowerCase().includes('show_intercepts:true') || fnStr.toLowerCase().includes('show_intercepts: true');
-                              let pureFn = fnStr.split('|')[0].trim();
-                              const rangeMatch = pureFn.match(/\[(.*?)\]/);
-                              if (rangeMatch) {
-                                  const parts = rangeMatch[1].split(',').map(s => parseFloat(s.trim()));
-                                  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) { domain = [parts[0], parts[1]]; }
-                                  if (parts.length >= 4 && !isNaN(parts[2]) && !isNaN(parts[3])) { range = [parts[2], parts[3]]; }
-                                  pureFn = pureFn.replace(/\[.*?\]/, '').trim();
-                              }
-                              let entry = { color: colors[idx % colors.length], caption: it.caption };
-                              const xMatch = pureFn.match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
-                              if (xMatch) {
-                                  const constant = parseFloat(xMatch[1]);
-                                  entry.fn = 'x - (' + constant + ')';
-                                  entry.fnType = 'implicit';
-                                  if (showIntercepts) annotations.push({ x: constant, text: `x:${constant}` });
-                              } else {
-                                  let cleanFn = pureFn.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
-                                  entry.fn = cleanFn;
-                                  entry.graphType = 'polyline';
-                                  try {
-                                      // JSで評価可能な形式に変換
-                                      let evalFn = cleanFn.replace(/(\d)\s*([a-z\(])/gi, '$1*$2')
-                                                         .replace(/([a-z])\s*(\d)/gi, '$1*$2')
-                                                         .replace(/\)\s*\(/g, ')*(')
-                                                         .replace(/\)\s*([a-z0-9])/gi, ')*$1');
-                                      
-                                      // 単項マイナスの処理
-                                      evalFn = evalFn.replace(/(^|[\(\+\-\*\/\^])\s*-\s*([a-z0-9\(])/gi, '$1(0-1)*$2');
-                                      
-                                      // べき乗の処理
-                                      evalFn = evalFn.replace(/\^/g, '**');
-
-                                      if (evalFn.trim()) {
-                                          entry.evalFn = evalFn;
-                                          if (showIntercepts) {
-                                              let y0_expr = evalFn.replace(/\bx\b/g, '(0)');
-                                              const y0 = new Function('return ' + y0_expr)();
-                                              if (!isNaN(y0) && isFinite(y0)) annotations.push({ y: y0, text: `y:${y0.toFixed(1).replace(/\.0$/, '')}` });
-                                              const simpleLinear = cleanFn.match(/^(-?[\d\.]*)\*?x\s*([\+\-]\s*[\d\.]+)$/);
-                                              if (simpleLinear) {
-                                                  let a_str = simpleLinear[1];
-                                                  let a = (a_str === "" || a_str === undefined) ? 1 : (a_str === "-" ? -1 : parseFloat(a_str));
-                                                  let b = parseFloat(simpleLinear[2].replace(/\s+/g, ''));
-                                                  if (a !== 0) { const x0 = -b / a; annotations.push({ x: x0, text: `x:${x0.toFixed(1).replace(/\.0$/, '')}` }); }
-                                              }
-                                          }
-                                      }
-                                  } catch(e) {}
-                              }
-                              if (domain) entry.range = domain;
-                              return entry;
-                          });
-
-              const instance = functionPlot({ target: targetId, data: plotData, grid: true, xAxis: xAxisConfig, yAxis: yAxisConfig, width: plotWidth, height: plotHeight, disableZoom: true });
-              const drawInterceptLabels = () => {
-                  try {
-                      const svg = d3.select(targetId).select('svg');
-                      let container = svg.select('.canvas');
-                      if (container.empty()) container = svg.select('g');
-                      const xScale = instance.meta.xScale;
-                      const yScale = instance.meta.yScale;
-                      const xDomain = xScale.domain(), yDomain = yScale.domain(), y0Pos = yScale(0), x0Pos = xScale(0);
-                      container.selectAll('.custom-intercept-label').remove();
-                      container.selectAll('.custom-function-caption').remove();
-                      const usedYPositions = [];
-                      annotations.forEach(anno => {
-                          if (anno.x !== undefined) {
-                              const xPx = xScale(anno.x);
-                              if (xPx >= 0 && xPx <= plotWidth) {
-                                  container.append('text').attr('class', 'custom-intercept-label').attr('x', xPx).attr('y', y0Pos - 1).attr('text-anchor', 'middle').style('font-weight', 'bold').style('fill', '#d32f2f').style('font-size', '13px').style('pointer-events', 'none').style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff').text(anno.text.replace('x:', ''));
-                              }
-                          } else if (anno.y !== undefined) {
-                              const yPx = yScale(anno.y);
-                              if (yPx >= 0 && yPx <= plotHeight) {
-                                  container.append('text').attr('class', 'custom-intercept-label').attr('x', x0Pos + 2).attr('y', yPx).attr('dominant-baseline', 'middle').style('font-weight', 'bold').style('fill', '#1976d2').style('font-size', '13px').style('pointer-events', 'none').style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff').text(anno.text.replace('y:', ''));
-                              }
-                          }
-                      });
-                      plotData.forEach((entry, idx) => {
-                          if (!entry.caption) return;
-                          let xVal, yVal;
-                          if (entry.fnType === 'implicit') {
-                              const match = entry.fn.match(/x\s*-\s*\((.*?)\)/);
-                              if (match) { xVal = parseFloat(match[1]); yVal = yDomain[1] - (yDomain[1] - yDomain[0]) * 0.1; }
-                          } else if (entry.evalFn) {
-                              const centerX = (xDomain[0] + xDomain[1]) / 2, xRange = xDomain[1] - xDomain[0];
-                              for (let i = 0; i <= 20; i++) {
-                                  let offsetFactor = Math.ceil(i / 2) * (i % 2 === 0 ? 1 : -1);
-                                  let tx = centerX + (xRange * offsetFactor / 40);
-                                  if (tx < xDomain[0] || tx > xDomain[1]) continue;
-                                  try {
-                                      let ty = new Function('x', 'return ' + entry.evalFn)(tx);
-                                      if (ty >= yDomain[0] && ty <= yDomain[1]) { xVal = tx; yVal = ty; break; }
-                                  } catch (e) {}
-                              }
-                          }
-                          if (xVal !== undefined && yVal !== undefined) {
-                              let finalY = yScale(yVal);
-                              let attempts = 0;
-                              while (usedYPositions.some(pos => Math.abs(pos - finalY) < 25) && attempts < 10) { finalY -= 25; attempts++; }
-                              usedYPositions.push(finalY);
-
-                              // foreignObjectを使用してMarkdown/MathJaxをサポート
-                              container.append('foreignObject')
-                                  .attr('class', 'custom-function-caption')
-                                  .attr('x', xScale(xVal) + 5)
-                                  .attr('y', finalY - 15)
-                                  .attr('width', 150)
-                                  .attr('height', 40)
-                                  .append('xhtml:div')
-                                  .attr('class', 'markdown')
-                                  .attr('data-content', entry.caption)
-                                  .style('color', entry.color)
-                                  .style('font-weight', 'bold')
-                                  .style('font-size', '14px')
-                                  .style('pointer-events', 'none')
-                                  .style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff')
-                                  .style('white-space', 'nowrap')
-                                  .style('overflow', 'visible');
-                          }
-                      });
-                      renderMarkdownAndMath(container);
-                  } catch (err) {}
-              };
-              instance.on('draw', drawInterceptLabels);
-              drawInterceptLabels();
-              const legendEl = document.getElementById(legendId);
-              if (legendEl) {
-                legendEl.style.display = 'block'; // 凡例を表示
-                legendEl.innerHTML = '';
-                functionsData.forEach((it, idx) => {
-                    if (it.caption) {
-                        const item = document.createElement('div');
-                        item.classList.add('legend-item');
-                        item.innerHTML = `<div class="legend-color" style="background-color: ${colors[idx % colors.length]}"></div><div class="legend-text markdown" data-content="${it.caption.replace(/"/g, '&quot;')}"></div>`;
-                        legendEl.appendChild(item);
+            if (functionsDataRaw && document.querySelector(targetId)) {
+                try {
+                    const functionsData = JSON.parse(functionsDataRaw);
+                    let xAxisConfig = { domain: [-10.1, 10.1] }, yAxisConfig = { domain: [-10.1, 10.1] };
+                    
+                    let containerWidth = container.clientWidth;
+                    if (containerWidth === 0 && container.parentElement) {
+                        containerWidth = container.parentElement.clientWidth;
                     }
-                });
-                renderMarkdownAndMath(legendEl);
-              }
-          } catch (e) { console.error(e); }
-      }
-  });
+                    let plotWidth = 800;
+                    if (containerWidth > 0 && containerWidth < 800) plotWidth = containerWidth;
+                    let plotHeight = Math.min(600, plotWidth * 0.75);
+
+                    functionsData.forEach(item => {
+                        const fn = item.fn.trim();
+                        if (fn.startsWith('range:')) {
+                            const p = fn.replace('range:', '').split(',').map(parseFloat);
+                            if (p.length === 4) { xAxisConfig.domain = [p[0], p[1]]; yAxisConfig.domain = [p[2], p[3]]; }
+                        } else if (fn.startsWith('size:')) {
+                            const p = fn.replace('size:', '').split(',').map(parseFloat);
+                            if (p.length === 2) { plotWidth = Math.min(p[0], containerWidth || p[0]); plotHeight = p[1] * (plotWidth / p[0]); }
+                        }
+                    });
+
+                    functionsData.forEach(item => {
+                        if (!item.fn) return;
+                        const fn = item.fn.trim();
+                        if (fn.startsWith('label:')) {
+                            const p = fn.replace('label:', '').split(',');
+                            if (p.length >= 1) xAxisConfig.label = p[0].trim();
+                            if (p.length >= 2) yAxisConfig.label = p[1].trim();
+                        } else if (fn.startsWith('step:')) {
+                            const p = fn.replace('step:', '').split(',').map(parseFloat);
+                            if (p.length >= 1 && !isNaN(p[0]) && p[0] > 0) {
+                                const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = p[0];
+                                xAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
+                            }
+                            if (p.length >= 2 && !isNaN(p[1]) && p[1] > 0) {
+                                const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = p[1];
+                                yAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
+                            }
+                        }
+                    });
+
+                    if (!xAxisConfig.tickValues) {
+                        const start = xAxisConfig.domain[0], end = xAxisConfig.domain[1], step = 5;
+                        xAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
+                    }
+                    if (!yAxisConfig.tickValues) {
+                        const start = yAxisConfig.domain[0], end = yAxisConfig.domain[1], step = 5;
+                        yAxisConfig.tickValues = d3.range(Math.ceil(start / step) * step, end + step / 2, step);
+                    }
+
+                    const targetEl = document.querySelector(targetId);
+                    if (targetEl) {
+                        targetEl.style.height = plotHeight + 'px';
+                        targetEl.style.width = plotWidth + 'px';
+                        targetEl.style.margin = '0 auto';
+                        targetEl.style.display = 'block';
+                    }
+
+                    const annotations = [];
+                    const plotData = functionsData.filter(it => it.fn && !it.fn.startsWith('range:') && !it.fn.startsWith('size:') && !it.fn.startsWith('label:') && !it.fn.startsWith('step:'))
+                        .map((it, idx) => {
+                            let fnStr = it.fn.trim();
+                            let domain = null;
+                            let showIntercepts = it.show_intercepts === true || it.show_intercepts === "true" || fnStr.toLowerCase().includes('show_intercepts:true');
+                            let pureFn = fnStr.split('|')[0].trim();
+                            const rangeMatch = pureFn.match(/\[(.*?)\]/);
+                            if (rangeMatch) {
+                                const parts = rangeMatch[1].split(',').map(s => parseFloat(s.trim()));
+                                if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) domain = [parts[0], parts[1]];
+                                pureFn = pureFn.replace(/\[.*?\]/, '').trim();
+                            }
+                            let entry = { color: colors[idx % colors.length], caption: it.caption };
+                            const xMatch = pureFn.match(/^x\s*=\s*(-?\d+(\.\d+)?)$/i);
+                            if (xMatch) {
+                                const constant = parseFloat(xMatch[1]);
+                                entry.fn = 'x - (' + constant + ')';
+                                entry.fnType = 'implicit';
+                                if (showIntercepts) annotations.push({ x: constant, text: `x:${constant}` });
+                            } else {
+                                let cleanFn = pureFn.replace(/^y\s*=\s*/i, '').replace(/(\d)([a-z])/gi, '$1*$2');
+                                entry.fn = cleanFn;
+                                entry.graphType = 'polyline';
+                                try {
+                                    let evalFn = cleanFn.replace(/(\d)\s*([a-z\(])/gi, '$1*$2').replace(/([a-z])\s*(\d)/gi, '$1*$2').replace(/\)\s*\(/g, ')*(').replace(/\)\s*([a-z0-9])/gi, ')*$1');
+                                    evalFn = evalFn.replace(/(^|[\(\+\-\*\/\^])\s*-\s*([a-z0-9\(])/gi, '$1(0-1)*$2').replace(/\^/g, '**');
+                                    if (evalFn.trim()) {
+                                        entry.evalFn = evalFn;
+                                        if (showIntercepts) {
+                                            let y0_expr = evalFn.replace(/\bx\b/g, '(0)');
+                                            const y0 = new Function('return ' + y0_expr)();
+                                            if (!isNaN(y0) && isFinite(y0)) annotations.push({ y: y0, text: `y:${y0.toFixed(1).replace(/\.0$/, '')}` });
+                                            const simpleLinear = cleanFn.match(/^(-?[\d\.]*)\*?x\s*([\+\-]\s*[\d\.]+)$/);
+                                            if (simpleLinear) {
+                                                let a_str = simpleLinear[1];
+                                                let a = (a_str === "" || a_str === undefined) ? 1 : (a_str === "-" ? -1 : parseFloat(a_str));
+                                                let b = parseFloat(simpleLinear[2].replace(/\s+/g, ''));
+                                                if (a !== 0) { const x0 = -b / a; annotations.push({ x: x0, text: `x:${x0.toFixed(1).replace(/\.0$/, '')}` }); }
+                                            }
+                                        }
+                                    }
+                                } catch(e) {}
+                            }
+                            if (domain) entry.range = domain;
+                            return entry;
+                        });
+
+                    const instance = functionPlot({ target: targetId, data: plotData, grid: true, xAxis: xAxisConfig, yAxis: yAxisConfig, width: plotWidth, height: plotHeight, disableZoom: true });
+                    const drawInterceptLabels = () => {
+                        try {
+                            const svg = d3.select(targetId).select('svg');
+                            let containerG = svg.select('.canvas');
+                            if (containerG.empty()) containerG = svg.select('g');
+                            const xScale = instance.meta.xScale, yScale = instance.meta.yScale;
+                            const xDomain = xScale.domain(), yDomain = yScale.domain(), y0Pos = yScale(0), x0Pos = xScale(0);
+                            containerG.selectAll('.custom-intercept-label').remove();
+                            containerG.selectAll('.custom-function-caption').remove();
+                            const usedYPositions = [];
+                            annotations.forEach(anno => {
+                                if (anno.x !== undefined) {
+                                    const xPx = xScale(anno.x);
+                                    if (xPx >= 0 && xPx <= plotWidth) {
+                                        containerG.append('text').attr('class', 'custom-intercept-label').attr('x', xPx).attr('y', y0Pos - 1).attr('text-anchor', 'middle').style('font-weight', 'bold').style('fill', '#d32f2f').style('font-size', '13px').style('pointer-events', 'none').style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff').text(anno.text.replace('x:', ''));
+                                    }
+                                } else if (anno.y !== undefined) {
+                                    const yPx = yScale(anno.y);
+                                    if (yPx >= 0 && yPx <= plotHeight) {
+                                        containerG.append('text').attr('class', 'custom-intercept-label').attr('x', x0Pos + 2).attr('y', yPx).attr('dominant-baseline', 'middle').style('font-weight', 'bold').style('fill', '#1976d2').style('font-size', '13px').style('pointer-events', 'none').style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff').text(anno.text.replace('y:', ''));
+                                    }
+                                }
+                            });
+                            plotData.forEach((entry, idx) => {
+                                if (!entry.caption) return;
+                                let xVal, yVal;
+                                if (entry.fnType === 'implicit') {
+                                    const match = entry.fn.match(/x\s*-\s*\((.*?)\)/);
+                                    if (match) { xVal = parseFloat(match[1]); yVal = yDomain[1] - (yDomain[1] - yDomain[0]) * 0.1; }
+                                } else if (entry.evalFn) {
+                                    const centerX = (xDomain[0] + xDomain[1]) / 2, xRange = xDomain[1] - xDomain[0];
+                                    for (let i = 0; i <= 20; i++) {
+                                        let offsetFactor = Math.ceil(i / 2) * (i % 2 === 0 ? 1 : -1);
+                                        let tx = centerX + (xRange * offsetFactor / 40);
+                                        if (tx < xDomain[0] || tx > xDomain[1]) continue;
+                                        try {
+                                            let ty = new Function('x', 'return ' + entry.evalFn)(tx);
+                                            if (ty >= yDomain[0] && ty <= yDomain[1]) { xVal = tx; yVal = ty; break; }
+                                        } catch (e) {}
+                                    }
+                                }
+                                if (xVal !== undefined && yVal !== undefined) {
+                                    let finalY = yScale(yVal);
+                                    let attempts = 0;
+                                    while (usedYPositions.some(pos => Math.abs(pos - finalY) < 25) && attempts < 10) { finalY -= 25; attempts++; }
+                                    usedYPositions.push(finalY);
+                                    containerG.append('foreignObject').attr('class', 'custom-function-caption').attr('x', xScale(xVal) + 5).attr('y', finalY - 15).attr('width', 150).attr('height', 40).append('xhtml:div').attr('class', 'markdown').attr('data-content', entry.caption).style('color', entry.color).style('font-weight', 'bold').style('font-size', '14px').style('pointer-events', 'none').style('text-shadow', '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff').style('white-space', 'nowrap').style('overflow', 'visible');
+                                }
+                            });
+                            renderMarkdownAndMath(container);
+                        } catch (err) {}
+                    };
+                    instance.on('draw', drawInterceptLabels);
+                    drawInterceptLabels();
+                    const legendEl = document.getElementById(legendId);
+                    if (legendEl) {
+                        legendEl.style.display = 'block';
+                        legendEl.innerHTML = '';
+                        functionsData.forEach((it, idx) => {
+                            if (it.caption) {
+                                const item = document.createElement('div');
+                                item.classList.add('legend-item');
+                                item.innerHTML = `<div class="legend-color" style="background-color: ${colors[idx % colors.length]}"></div><div class="legend-text markdown" data-content="${it.caption.replace(/"/g, '&quot;')}"></div>`;
+                                legendEl.appendChild(item);
+                            }
+                        });
+                        renderMarkdownAndMath(legendEl);
+                    }
+                } catch (e) { console.error(e); }
+            }
+        });
+    }, 100);
 });
 </script>
-
-<style>
-  .choice-option {
-    padding: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    margin: 0.5rem 0;
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
-    display: flex;
-    align-items: center;
-    user-select: none;
-  }
-
-  .choice-option.selected {
-    background-color: #d0ebff;
-    border-color: #339af0;
-  }
-
-  .sortable-item {
-    list-style: none;
-    background: #f0f0f0;
-    padding: 0.5rem;
-    margin: 0.25rem 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    cursor: move;
-  }
-
-  .keypad .key-btn, .virtual-keyboard .key-btn-en {
-    margin: 0.25rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 1rem;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: white;
-  }
-  .keypad .key-btn:active, .virtual-keyboard .key-btn-en:active {
-    background: #ddd;
-  }
-  .keyboard-row {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-  .svg-interactive-container svg, .figure-choice-container svg { width: 100%; height: auto; display: block; }
-</style>
-{% endblock %}
-
-gure-choice-container svg { width: 100%; height: auto; display: block; }
-</style>
 {% endblock %}
 
