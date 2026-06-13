@@ -242,8 +242,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-    async function renderMarkdownAndMath() {
-        const markdownElements = document.querySelectorAll('.markdown[data-content]');
+    async function renderMarkdownAndMath(root = document) {
+        const markdownElements = root.querySelectorAll('.markdown[data-content]');
         for (let div of markdownElements) {
             await window.renderMarkdown(div, div.getAttribute('data-content'));
         }
@@ -267,29 +267,29 @@
 
         // --- Function Plotting Logic ---
         const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
-        const containers = document.querySelectorAll('.function-graph-container');
-        console.log("Found containers:", containers.length);
         
-        containers.forEach((container, i) => {
-            const functionsDataRaw = container.dataset.functions;
-            const targetId = `#graph-target-${i}`;
-            const legendId = `graph-legend-${i}`;
-            console.log(`Processing container ${i}, target: ${targetId}, functionsDataRaw:`, functionsDataRaw);
+        setTimeout(() => {
+            const containers = document.querySelectorAll('.function-graph-container');
+            containers.forEach((container, i) => {
+                const functionsDataRaw = container.dataset.functions;
+                const targetId = `#graph-target-${i}`;
+                const legendId = `graph-legend-${i}`;
 
-            if (functionsDataRaw && document.querySelector(targetId)) {
-                console.log(`Found data and target for container ${i}`);
-                try {
-                    const parsedData = JSON.parse(functionsDataRaw);
-                    console.log("Parsed graph data:", parsedData);
+                if (functionsDataRaw && document.querySelector(targetId)) {
+                    try {
+                        const parsedData = JSON.parse(functionsDataRaw);
+                        const functionsData = Array.isArray(parsedData) ? parsedData : (parsedData.definitions || []);
 
-                    // Handle both legacy array format and new object format
-                    const functionsData = Array.isArray(parsedData) ? parsedData : (parsedData.definitions || []);
-
-                    let xAxisConfig = { domain: [-10.1, 10.1] }, yAxisConfig = { domain: [-10.1, 10.1] };
-                    const containerWidth = container.clientWidth;
-                    let plotWidth = 800;
-                    if (containerWidth > 0 && containerWidth < 800) plotWidth = containerWidth;
-                    let plotHeight = 600;
+                        let xAxisConfig = { domain: [-10.1, 10.1] }, yAxisConfig = { domain: [-10.1, 10.1] };
+                        
+                        let containerWidth = container.clientWidth;
+                        if (containerWidth === 0 && container.parentElement) {
+                            containerWidth = container.parentElement.clientWidth;
+                        }
+                        
+                        let plotWidth = 800;
+                        if (containerWidth > 0 && containerWidth < 800) plotWidth = containerWidth;
+                        let plotHeight = Math.min(600, plotWidth * 0.75);
 
                     // Apply size from parsed object if present
                     console.log("Checking size - raw width:", parsedData.width, "raw height:", parsedData.height);
@@ -569,10 +569,9 @@
                                         .style('overflow', 'visible');
                                 }
                             });
-                            renderMarkdownAndMath();
+                            renderMarkdownAndMath(container);
                         } catch (err) {}
                     };
-
                     instance.on('draw', drawInterceptLabels);
                     drawInterceptLabels();
 
@@ -588,7 +587,7 @@
                                 legendEl.appendChild(item);
                             }
                         });
-                        renderMarkdownAndMath();
+                        renderMarkdownAndMath(legendEl);
                     }
                 } catch (e) { console.error("Preview graph rendering error:", e); }
             }

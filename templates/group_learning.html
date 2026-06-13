@@ -291,10 +291,11 @@
       <!-- JS: Markdown・Sort・Numeric入力・答え表示 -->
       <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
       <script>
-      function renderMarkdownAndMath() {
-      document.querySelectorAll('.markdown[data-content]').forEach(div => {
-      window.renderMarkdown(div, div.getAttribute('data-content'));
-      });
+      async function renderMarkdownAndMath(root = document) {
+      const elements = root.querySelectorAll('.markdown[data-content]');
+      for (let div of elements) {
+      await window.renderMarkdown(div, div.getAttribute('data-content'));
+      }
       }
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -423,6 +424,7 @@
 
       // --- Function Plotting ---
       const colors = ['#339af0', '#f76707', '#ae3ec9', '#40c057', '#fcc419'];
+      setTimeout(() => {
       document.querySelectorAll('.function-graph-container').forEach((container) => {
       const functionsDataRaw = container.dataset.functions;
       const qIndex = container.dataset.qIndex;
@@ -622,23 +624,25 @@
                                   .style('overflow', 'visible');
                           }
                       });
-                      renderMarkdownAndMath();
+                      renderMarkdownAndMath(container);
                   } catch (err) {}
               };
               instance.on('draw', drawInterceptLabels);
               drawInterceptLabels();
               const legendEl = document.getElementById(legendId);
-              legendEl.style.display = 'block'; // 凡例を表示
-              legendEl.innerHTML = '';
-              functionsData.forEach((it, idx) => {
-                  if (it.caption) {
-                      const item = document.createElement('div');
-                      item.classList.add('legend-item');
-                      item.innerHTML = `<div class="legend-color" style="background-color: ${colors[idx % colors.length]}"></div><div class="legend-text markdown" data-content="${it.caption.replace(/"/g, '&quot;')}"></div>`;
-                      legendEl.appendChild(item);
-                  }
-              });
-              renderMarkdownAndMath();
+              if (legendEl) {
+                legendEl.style.display = 'block'; // 凡例を表示
+                legendEl.innerHTML = '';
+                functionsData.forEach((it, idx) => {
+                    if (it.caption) {
+                        const item = document.createElement('div');
+                        item.classList.add('legend-item');
+                        item.innerHTML = `<div class="legend-color" style="background-color: ${colors[idx % colors.length]}"></div><div class="legend-text markdown" data-content="${it.caption.replace(/"/g, '&quot;')}"></div>`;
+                        legendEl.appendChild(item);
+                    }
+                });
+                renderMarkdownAndMath(legendEl);
+              }
           } catch (e) { console.error(e); }
       }
   });
@@ -691,6 +695,10 @@
     width: 100%;
   }
   .svg-interactive-container svg, .figure-choice-container svg { width: 100%; height: auto; display: block; }
+</style>
+{% endblock %}
+
+gure-choice-container svg { width: 100%; height: auto; display: block; }
 </style>
 {% endblock %}
 
