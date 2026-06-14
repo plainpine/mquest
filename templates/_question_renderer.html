@@ -12,7 +12,7 @@
           {% if choice and choice.strip() %}
           <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
             <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
-            <span class="markdown" data-content="{{ choice | e }}"></span>
+            <div class="markdown" data-content="{{ choice | e }}"></div>
           </div>
           {% endif %}
         {% endfor %}
@@ -24,7 +24,7 @@
           {% if choice and choice.strip() %}
           <div class="choice-option multiple-choice" data-qname="q{{ q_index }}">
             <input type="checkbox" name="q{{ q_index }}" value="{{ choice | e }}" style="margin-right: 0.5rem;">
-            <span class="markdown" data-content="{{ choice | e }}"></span>
+            <div class="markdown" data-content="{{ choice | e }}"></div>
           </div>
           {% endif %}
         {% endfor %}
@@ -183,7 +183,7 @@
                 {% if choice and choice.strip() %}
                 <div class="choice-option" data-qname="q{{ q_index }}_{{ loop.parent.loop.index0 }}" data-value="{{ choice | e }}">
                   <input type="radio" name="q{{ q_index }}_{{ loop.parent.loop.index0 }}" value="{{ choice | e }}" style="display: none;">
-                  <span class="markdown" data-content="{{ choice | e }}"></span>
+                  <div class="markdown" data-content="{{ choice | e }}"></div>
                 </div>
                 {% endif %}
               {% endfor %}
@@ -213,7 +213,7 @@
                 {% if choice and choice.strip() %}
                 <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
                   <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
-                  <span class="markdown" data-content="{{ choice | e }}"></span>
+                  <div class="markdown" data-content="{{ choice | e }}"></div>
                 </div>
                 {% endif %}
               {% endfor %}

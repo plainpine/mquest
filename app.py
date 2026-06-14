@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_file, Response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_file, Response, get_flashed_messages
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, case
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -2427,6 +2427,8 @@ def parent_students():
 def import_questions_gui():
     if not (current_user.is_admin() or current_user.is_teacher()):
         return redirect(url_for('login'))
+    # 過去のフラッシュメッセージをすべて消費（破棄）して、再読み込み時に表示されないようにする
+    get_flashed_messages()
     return render_template('import_questions.html')
 
 @app.route('/admin/questions/import', methods=['POST'])

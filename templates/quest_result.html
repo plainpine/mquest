@@ -79,8 +79,8 @@
                     <div class="answer-grid">
                     {% for ans in res.user_answer %}
                         {% for key, value in ans.items() %}
-                            <span class="markdown" data-content="{{ key | e }}"></span>
-                            <span class="{% if not res.correct %}text-danger{% endif %}"><span class="markdown" data-content="{{ value | e }}"></span></span>
+                            <div class="markdown" data-content="{{ key | e }}"></div>
+                            <span class="{% if not res.correct %}text-danger{% endif %}"><div class="markdown" data-content="{{ value | e }}"></div></span>
                         {% endfor %}
                     {% endfor %}
                     </div>
@@ -89,7 +89,7 @@
                 {% else %}
                     <div class="ms-3 {% if not res.correct %}text-danger{% endif %}">
                         {% if res.user_answer is string %}
-                            <span class="markdown" data-content="{{ res.user_answer | e }}"></span>
+                            <div class="markdown" data-content="{{ res.user_answer | e }}"></div>
                         {% else %}
                             {{ res.user_answer }}
                         {% endif %}
@@ -101,19 +101,19 @@
                     <div class="answer-grid">
                     {% for ans in res.expected %}
                         {% for key, value in ans.items() %}
-                            <span class="markdown" data-content="{{ key | e }}"></span>
-                            <span class="text-success" style="font-weight: bold;"><span class="markdown" data-content="{{ value | e }}"></span></span>
+                            <div class="markdown" data-content="{{ key | e }}"></div>
+                            <span class="text-success" style="font-weight: bold;"><div class="markdown" data-content="{{ value | e }}"></div></span>
                         {% endfor %}
                     {% endfor %}
                     </div>
                 {% elif res.type in ['choice', 'multiple_choice', 'sort'] %}
                     <div class="ms-3 text-success" style="font-weight: bold;">
-                        <span class="markdown" data-content="{{ res.expected | e }}"></span>
+                        <div class="markdown" data-content="{{ res.expected | e }}"></div>
                     </div>
                 {% else %}
                     <div class="ms-3 text-success" style="font-weight: bold;">
                         {% if res.expected is string %}
-                            <span class="markdown" data-content="{{ res.expected | e }}"></span>
+                            <div class="markdown" data-content="{{ res.expected | e }}"></div>
                         {% else %}
                             {{ res.expected }}
                         {% endif %}

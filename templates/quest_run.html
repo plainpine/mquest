@@ -20,7 +20,7 @@
             {% if choice and choice.strip() %}
             <div class="choice-option" data-qname="q{{ q_index }}" data-value="{{ choice | e }}">
               <input type="radio" name="q{{ q_index }}" value="{{ choice | e }}" style="display: none;">
-              <span class="markdown" data-content="{{ choice | e }}"></span>
+              <div class="markdown" data-content="{{ choice | e }}"></div>
             </div>
             {% endif %}
           {% endfor %}
@@ -32,7 +32,7 @@
             {% if choice and choice.strip() %}
             <div class="choice-option multiple-choice" data-qname="q{{ q_index }}">
               <input type="checkbox" name="q{{ q_index }}" value="{{ choice | e }}" style="margin-right: 0.5rem;">
-              <span class="markdown" data-content="{{ choice | e }}"></span>
+              <div class="markdown" data-content="{{ choice | e }}"></div>
             </div>
             {% endif %}
           {% endfor %}
@@ -186,7 +186,7 @@
                   {% if choice %}
                   <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
                     <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
-                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                    <div class="markdown" data-content="{{ choice | e }}"></div>
                   </div>
                   {% endif %}
                 {% endfor %}
@@ -249,7 +249,7 @@
                   {% if choice and choice.strip() %}
                     <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
                       <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
-                      <span class="markdown" data-content="{{ choice | e }}"></span>
+                      <div class="markdown" data-content="{{ choice | e }}"></div>
                     </div>
                   {% endif %}
                 {% endfor %}
@@ -293,12 +293,7 @@
   .choice-option { padding: 1rem; border: 1px solid #ccc; border-radius: 8px; margin: 0.5rem 0; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; display: flex; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
   .choice-option:hover, .choice-option:active { background-color: #f7f7f7; }
   .choice-option.selected { background-color: #d0ebff; border-color: #339af0; }
-  .choice-option .markdown { display: inline-block; white-space: normal; word-break: break-word; margin-left: 0.5rem; flex: 1; }
-  .markdown p { margin: 0; display: inline; }
   .sortable-item { padding: 8px; border: 1px solid #ccc; margin-bottom: 4px; background-color: #f9f9f9; border-radius: 4px; user-select: none; touch-action: none; -webkit-user-drag: element; }
-  .sortable-ghost { opacity: 0.4; }
-  label { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; max-width: 100%; }
-  label .markdown { white-space: normal; word-break: break-word; display: inline; }
   .en-fill-in-the-blank-input { font-size: 1.2rem; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 0.5rem; text-align: center; }
   .keypad { margin-top: 1rem; padding: 10px; border: 1px solid #ccc; border-radius: 8px; display: inline-block; }
   .virtual-keyboard { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }

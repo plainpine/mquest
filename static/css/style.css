@@ -417,6 +417,38 @@ img {
 }
 
 
+/* Markdown General Styles */
+.markdown {
+  display: block;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Choice and Label specific Markdown */
+.choice-option .markdown,
+.choice-block .markdown,
+label .markdown,
+.sub-question-prompt .markdown {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.5rem;
+  flex: 1;
+}
+
+/* Reset p margins inside markdown to prevent vertical misalignment in buttons/lists */
+.markdown p {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+/* Inline behavior for Markdown inside compact containers */
+.choice-option .markdown p,
+label .markdown p,
+.sub-question-prompt .markdown p {
+  display: inline;
+  margin: 0;
+}
+
 /* Markdown Table styles */
 .markdown table,
 .markdown-preview table {

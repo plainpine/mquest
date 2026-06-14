@@ -18,7 +18,7 @@
           {% for choice in question.choices %}
             {% if choice and choice.strip() %}
             <div class="choice-option {{ 'multiple-choice' if question.type == 'multiple_choice' else '' }}" data-qname="q{{ q_index }}">
-              <span class="markdown" data-content="{{ choice | e }}"></span>
+              <div class="markdown" data-content="{{ choice | e }}"></div>
             </div>
             {% endif %}
           {% endfor %}
@@ -171,7 +171,7 @@
                 {% for choice in sub_q.choices %}
                   {% if choice and choice.strip() %}
                   <div class="choice-option">
-                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                    <div class="markdown" data-content="{{ choice | e }}"></div>
                   </div>
                   {% endif %}
                 {% endfor %}
@@ -232,7 +232,7 @@
                 {% for choice in sub_q.choices %}
                   {% if choice and choice.strip() %}
                   <div class="choice-option">
-                    <span class="markdown" data-content="{{ choice | e }}"></span>
+                    <div class="markdown" data-content="{{ choice | e }}"></div>
                   </div>
                   {% endif %}
                 {% endfor %}
