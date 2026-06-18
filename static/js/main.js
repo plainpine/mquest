@@ -34,12 +34,29 @@ window.renderMarkdown = async function(element, text) {
     }
     
     let content = text || '';
+    
     // 改行コードの正規化 (LaTeXの \ne などが破壊されないよう、数式ブロック内は除外して置換)
     content = content.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))|(\\n)/g, (match, math, newline) => {
         if (math) return math;
         return '\n';
     });
-    element.innerHTML = marked.parse(content);
+
+    // 数式を退避させる（markedによる誤変換・エスケープを防ぐ）
+    const mathBlocks = [];
+    const protectedContent = content.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g, (match) => {
+        const placeholder = `@@MATH${mathBlocks.length}@@`;
+        mathBlocks.push(match);
+        return placeholder;
+    });
+
+    let html = marked.parse(protectedContent);
+
+    // 数式を復元
+    mathBlocks.forEach((math, i) => {
+        html = html.replace(`@@MATH${i}@@`, math);
+    });
+    
+    element.innerHTML = html;
 
     // Mermaid の処理
     if (typeof mermaid !== 'undefined') {
@@ -65,7 +82,6 @@ window.renderMarkdown = async function(element, text) {
                 const id = 'mermaid-svg-' + Math.random().toString(36).substr(2, 9);
                 const { svg } = await render(id, code);
                 container.innerHTML = svg;
-                // コンテナのクラスを更新して再描画を防ぐ（オプション）
                 container.classList.add('mermaid-rendered');
             } catch (e) {
                 console.error('Mermaid render error:', e);
