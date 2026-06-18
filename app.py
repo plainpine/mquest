@@ -92,7 +92,7 @@ login_manager.login_view = 'login'
 
 app.register_blueprint(svg_preview_bp) # Register the blueprint
 
-def safe_commit(retries=3, delay=0.5):
+def safe_commit(retries=5, delay=1.0):
     """
     Attempts to commit the current session, with retries for OperationalError (e.g., disk I/O error).
     """
@@ -113,10 +113,9 @@ def safe_commit(retries=3, delay=0.5):
             db.session.rollback()
             raise
     # Final attempt
-    db.session.commit()
-    return True
+    return db.session.commit()
 
-def safe_get(model, ident, retries=3, delay=0.5):
+def safe_get(model, ident, retries=5, delay=1.0):
     """
     Attempts to get a record by ID with retries for OperationalError.
     """
@@ -131,7 +130,7 @@ def safe_get(model, ident, retries=3, delay=0.5):
             raise
     return db.session.get(model, ident)
 
-def safe_query_all(query, retries=3, delay=0.5):
+def safe_query_all(query, retries=5, delay=1.0):
     """
     Attempts to execute a query (all()) with retries for OperationalError.
     """
@@ -146,7 +145,7 @@ def safe_query_all(query, retries=3, delay=0.5):
             raise
     return query.all()
 
-def safe_query_first(query, retries=3, delay=0.5):
+def safe_query_first(query, retries=5, delay=1.0):
     """
     Attempts to execute a query (first()) with retries for OperationalError.
     """
@@ -1282,7 +1281,7 @@ def add_student_with_parent():
         # 新規保護者作成（入力がある場合）
         elif p_username and p_password:
             # 既存の保護者がいないか確認（念のためユーザー名で）
-            parent = User.query.filter_by(username=p_username, role='parent').first()
+            parent = safe_query_first(User.query.filter_by(username=p_username, role='parent'))
             if not parent:
                 parent = User(username=p_username, nickname=p_nickname or p_username, role='parent')
                 parent.set_password(p_password)
@@ -1320,7 +1319,7 @@ def add_admin():
     nickname = request.form.get('nickname')
     password = request.form.get('password')
     
-    if User.query.filter_by(username=username).first():
+    if safe_query_first(User.query.filter_by(username=username)):
         flash("そのユーザー名は既に使用されています。", "danger")
         return redirect(url_for('manage_admins'))
         
@@ -1387,7 +1386,7 @@ def add_teacher():
     nickname = request.form.get('nickname')
     password = request.form.get('password')
     
-    if User.query.filter_by(username=username).first():
+    if safe_query_first(User.query.filter_by(username=username)):
         flash("そのユーザー名は既に使用されています。", "danger")
         return redirect(url_for('manage_teachers'))
         
@@ -1467,7 +1466,7 @@ def handle_quest_action():
         if not export_filename.endswith('.json'):
             export_filename += '.json'
 
-        selected_quests = Quest.query.filter(Quest.id.in_(quest_ids)).order_by(Quest.id).all()
+        selected_quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)).order_by(Quest.id))
         
         export_data = []
         for quest in selected_quests:
@@ -1481,7 +1480,7 @@ def handle_quest_action():
             })
             
             # 2. Output Question records for this quest
-            questions = Question.query.filter_by(quest_id=quest.id).order_by(Question.id).all()
+            questions = safe_query_all(Question.query.filter_by(quest_id=quest.id).order_by(Question.id))
             for q in questions:
                 q_data = {
                     'record_type': 'question',
@@ -1655,12 +1654,12 @@ def edit_quest(quest_id):
         if not quest:
             abort(404)
     # Fetch all unique titles and levels for dropdowns
-    all_titles_raw = db.session.query(Quest.title).distinct().all()
+    all_titles_raw = safe_query_all(db.session.query(Quest.title).distinct())
     all_titles_for_select = sorted([
         (SUBJECT_KEY_TO_JP.get(t[0], t[0]), t[0]) for t in all_titles_raw
     ], key=lambda x: x[0])
 
-    all_levels = sorted(list(set([l[0] for l in db.session.query(Quest.level).distinct().all()])))
+    all_levels = sorted(list(set([l[0] for l in safe_query_all(db.session.query(Quest.level).distinct())])))
 
     quest_display_title = SUBJECT_KEY_TO_JP.get(quest.title, quest.title) if quest and quest.title else ''
 
@@ -1682,25 +1681,13 @@ def save_quest(quest_id):
         flash("エラー: レベルは 'Lvn' (nは数字) の形式で入力してください (例: Lv1)。", "danger")
         return redirect(url_for('edit_quest', quest_id=quest_id, title=title, level=level))
 
-    # Helper for robust query
-    def get_quest_with_retry(qid):
-        for _ in range(3):
-            try:
-                return db.session.get(Quest, qid)
-            except OperationalError as e:
-                if "disk I/O error" in str(e):
-                    time.sleep(0.5)
-                    continue
-                raise
-        return db.session.get(Quest, qid)
-
     try:
         if quest_id == 'new':
             if new_id_str:
                 try:
                     new_id = int(new_id_str)
                     # Check if exists with retry logic
-                    if get_quest_with_retry(new_id):
+                    if safe_get(Quest, new_id):
                         flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
                         return redirect(url_for('edit_quest', quest_id='new', title=title, level=level))
                     new_quest = Quest(id=new_id, title=title, level=level, questname=questname)
@@ -1716,7 +1703,7 @@ def save_quest(quest_id):
             return redirect(url_for('edit_quest', quest_id=new_quest.id, title=title, level=level))
         else:
             old_id = int(quest_id)
-            quest = get_quest_with_retry(old_id)
+            quest = safe_get(Quest, old_id)
             if not quest:
                 flash("エラー: 更新対象のクエストが見つかりません。", "danger")
                 return redirect(url_for('manage_quests'))
@@ -1725,7 +1712,7 @@ def save_quest(quest_id):
             if new_id_str and int(new_id_str) != old_id:
                 try:
                     new_id = int(new_id_str)
-                    if get_quest_with_retry(new_id):
+                    if safe_get(Quest, new_id):
                         flash(f"エラー: ID {new_id} は既に使用されています。", "danger")
                         return redirect(url_for('edit_quest', quest_id=old_id, title=title, level=level))
                     
@@ -1734,7 +1721,7 @@ def save_quest(quest_id):
                     
                     safe_commit()
                     db.session.expire_all()
-                    quest = get_quest_with_retry(new_id)
+                    quest = safe_get(Quest, new_id)
                     quest_id = str(new_id)
                 except ValueError:
                     flash("エラー: IDは数値で入力してください。", "danger")
@@ -1868,7 +1855,9 @@ def edit_question(quest_id, question_id):
     if question_id == 'new':
         return render_template('edit_question.html', quest_id=quest.id, question=None, title=title, level=level)
     else:
-        question = Question.query.get_or_404(int(question_id))
+        question = safe_get(Question, int(question_id))
+        if not question:
+            abort(404)
         choices = None
         answers = None
         if question.type == 'choice' or question.type == 'multiple_choice':
@@ -1940,7 +1929,7 @@ def save_question(quest_id):
         if question_id == 'new':
             # クエストIDに基づいた自動採番 (QuestID * 100 + 連番)
             base_id = quest_id * 100
-            existing_ids = [q.id for q in Question.query.filter(Question.id > base_id, Question.id < base_id + 100).all()]
+            existing_ids = [q.id for q in safe_query_all(Question.query.filter(Question.id > base_id, Question.id < base_id + 100))]
             if existing_ids:
                 new_q_id = max(existing_ids) + 1
             else:
@@ -1948,7 +1937,9 @@ def save_question(quest_id):
             
             question = Question(id=new_q_id, quest_id=quest_id, type=q_type, text=text)
         else:
-            question = Question.query.get_or_404(int(question_id))
+            question = safe_get(Question, int(question_id))
+            if not question:
+                abort(404)
             question.type = q_type
             question.text = text
         question.explanation = request.form.get('explanation', '').strip()
@@ -2264,7 +2255,7 @@ def preview_question():
 def select_title_admin():
     if not (current_user.is_admin() or current_user.is_teacher()):
         return redirect(url_for(f"dashboard_{current_user.role}"))
-    titles = db.session.query(Quest.title).distinct().all()
+    titles = safe_query_all(db.session.query(Quest.title).distinct())
     jp_titles = [SUBJECT_KEY_TO_JP.get(t[0], t[0]) for t in titles]
     return render_template('select_title_admin.html', titles=jp_titles)
 
@@ -2274,7 +2265,7 @@ def select_title_admin():
 @login_required
 def select_level_admin(title):
     title_key = SUBJECT_JP_TO_KEY.get(title, title)
-    levels = db.session.query(Quest.level).filter_by(title=title_key).distinct().all()
+    levels = safe_query_all(db.session.query(Quest.level).filter_by(title=title_key).distinct())
     return render_template('select_level_admin.html', title=title, levels=[l[0] for l in levels])
 
 @app.route('/select_quest_admin/<title>/<level>')
@@ -2293,12 +2284,12 @@ def select_quest_by_title_level_admin(title, level):
 @app.route('/group_learning/<int:quest_id>')
 @login_required
 def quest_run_group(quest_id):
-    quest = db.session.get(Quest, quest_id)
+    quest = safe_get(Quest, quest_id)
     if not quest:
         return "指定されたクエストが存在しません", 404
 
     # すべての同タイトルの問題を取得（1問＝1レコード）
-    quest = Quest.query.filter_by(id=quest_id).first()  # ✅ 1件のQuestオブジェクトになる
+    quest = safe_query_first(Quest.query.filter_by(id=quest_id))  # ✅ 1件의 Questオブジェクトになる
     if not quest:
         return "クエストが見つかりません", 404
 
@@ -2408,11 +2399,11 @@ def parent_students():
         return redirect(url_for("dashboard"))
 
     parent_id = current_user.id
-    children = User.query.filter_by(parent_id=parent_id, role="student").all()
+    children = safe_query_all(User.query.filter_by(parent_id=parent_id, role="student"))
 
     student_data = []
     for child in children:
-        histories = QuestHistory.query.filter_by(user_id=child.id).all()
+        histories = safe_query_all(QuestHistory.query.filter_by(user_id=child.id))
         total_medals = sum(h.attempts for h in histories)
         student_data.append({
             "student": child,
