@@ -249,9 +249,38 @@ def profile():
     except OSError:
         avatars = ['default.svg']
 
+    # レベルのソート用キー関数 (例: 'Lv2' -> 2)
+    def parse_level(level_str):
+        if level_str.startswith('Lv'):
+            try:
+                return int(level_str[2:])
+            except ValueError:
+                pass
+        return level_str
+
     # 利用可能な全レベルを取得
     all_levels_raw = safe_query_all(db.session.query(Quest.level).distinct())
-    all_levels = sorted(list(set([l[0] for l in all_levels_raw])))
+    all_levels = sorted(list(set([l[0] for l in all_levels_raw])), key=parse_level)
+
+    # 各科目（数学、英語、国語）に存在しているレベルを取得
+    math_levels_set = set(l[0] for l in safe_query_all(db.session.query(Quest.level).filter_by(title='math').distinct()))
+    target_math = current_user.target_levels.get('math')
+    if target_math:
+        math_levels_set.add(target_math)
+    math_levels = sorted(list(math_levels_set), key=parse_level)
+
+    english_levels_set = set(l[0] for l in safe_query_all(db.session.query(Quest.level).filter_by(title='english').distinct()))
+    target_english = current_user.target_levels.get('english')
+    if target_english:
+        english_levels_set.add(target_english)
+    english_levels = sorted(list(english_levels_set), key=parse_level)
+
+    japanese_levels_set = set(l[0] for l in safe_query_all(db.session.query(Quest.level).filter_by(title='japanese').distinct()))
+    target_japanese = current_user.target_levels.get('japanese')
+    if target_japanese:
+        japanese_levels_set.add(target_japanese)
+    japanese_levels = sorted(list(japanese_levels_set), key=parse_level)
+
 
     if request.method == 'POST':
         nickname = request.form.get('nickname', '').strip()
@@ -325,7 +354,8 @@ def profile():
         if new_password:
             if new_password != confirm_password:
                 flash('新しいパスワードが一致しません。', 'error')
-                return render_template('profile.html', avatars=avatars, all_levels=all_levels)
+                return render_template('profile.html', avatars=avatars, all_levels=all_levels, 
+                                       math_levels=math_levels, english_levels=english_levels, japanese_levels=japanese_levels)
             
             current_user.set_password(new_password)
             current_user.is_first_login = False
@@ -337,11 +367,13 @@ def profile():
         except Exception as e:
             app.logger.error(f"Profile update error: {e}")
             flash('プロフィールの更新に失敗しました。', 'error')
-            return render_template('profile.html', avatars=avatars, all_levels=all_levels)
+            return render_template('profile.html', avatars=avatars, all_levels=all_levels, 
+                                   math_levels=math_levels, english_levels=english_levels, japanese_levels=japanese_levels)
 
         return redirect(url_for('profile'))
 
-    return render_template('profile.html', avatars=avatars, all_levels=all_levels)
+    return render_template('profile.html', avatars=avatars, all_levels=all_levels, 
+                           math_levels=math_levels, english_levels=english_levels, japanese_levels=japanese_levels)
 
 # 初回のユーザー作成（ロール付き）
 @app.route('/create_user', methods=['GET', 'POST'])

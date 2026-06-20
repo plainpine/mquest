@@ -149,7 +149,7 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label">数学（エウロパ）</label>
                         <select name="target_level_math" class="form-select">
-                            {% for level in all_levels %}
+                            {% for level in math_levels %}
                             <option value="{{ level }}" {{ 'selected' if target_levels.get('math') == level }}>{{ level }}</option>
                             {% endfor %}
                         </select>
@@ -157,7 +157,7 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label">英語（アメリクス）</label>
                         <select name="target_level_english" class="form-select">
-                            {% for level in all_levels %}
+                            {% for level in english_levels %}
                             <option value="{{ level }}" {{ 'selected' if target_levels.get('english') == level }}>{{ level }}</option>
                             {% endfor %}
                         </select>
@@ -165,7 +165,7 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label">国語（ジパング）</label>
                         <select name="target_level_japanese" class="form-select">
-                            {% for level in all_levels %}
+                            {% for level in japanese_levels %}
                             <option value="{{ level }}" {{ 'selected' if target_levels.get('japanese') == level }}>{{ level }}</option>
                             {% endfor %}
                         </select>
