@@ -1429,6 +1429,443 @@ def add_teacher():
     flash(f"教師 {username} を登録しました。", "success")
     return redirect(url_for('manage_teachers'))
 
+
+# ==================================================
+# ユーザー情報のJSONエクスポート・インポート
+# ==================================================
+
+def parse_datetime(dt_str):
+    if not dt_str:
+        return None
+    try:
+        if dt_str.endswith('Z'):
+            dt_str = dt_str[:-1] + '+00:00'
+        return datetime.fromisoformat(dt_str)
+    except Exception:
+        try:
+            return datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return None
+
+def serialize_user(user):
+    return {
+        'username': user.username,
+        'nickname': user.nickname,
+        'password_hash': user.password_hash,
+        'role': user.role,
+        'is_first_login': user.is_first_login,
+        'avatar': user.avatar,
+        'user_level': user.user_level,
+        'medals': user.medals,
+        'user_title': user.user_title,
+        'target_levels_json': user.target_levels_json,
+    }
+
+def export_student_data(student):
+    parent_data = None
+    if student.parent:
+        parent_data = serialize_user(student.parent)
+    
+    # Progress records
+    progress_records = safe_query_all(UserProgress.query.filter_by(user_id=student.id))
+    progress_data = []
+    for p in progress_records:
+        progress_data.append({
+            'quest_id': p.quest_id,
+            'status': p.status,
+            'conquered_at': p.conquered_at.isoformat() if p.conquered_at else None
+        })
+        
+    # Quest history records
+    history_records = safe_query_all(QuestHistory.query.filter_by(user_id=student.id))
+    history_data = []
+    for h in history_records:
+        history_data.append({
+            'quest_id': h.quest_id,
+            'correct': h.correct,
+            'is_cleared': h.is_cleared,
+            'cleared_count': h.cleared_count,
+            'attempts': h.attempts,
+            'last_attempt': h.last_attempt.isoformat() if h.last_attempt else None
+        })
+        
+    # Quest attempt logs
+    attempt_logs = safe_query_all(QuestAttemptLog.query.filter_by(user_id=student.id))
+    attempt_logs_data = []
+    for log in attempt_logs:
+        attempt_logs_data.append({
+            'quest_id': log.quest_id,
+            'correct_answers': log.correct_answers,
+            'total_questions': log.total_questions,
+            'attempted_at': log.attempted_at.isoformat() if log.attempted_at else None
+        })
+        
+    student_record = serialize_user(student)
+    student_record['parent'] = parent_data
+    student_record['progress'] = progress_data
+    student_record['history'] = history_data
+    student_record['attempt_logs'] = attempt_logs_data
+    
+    return student_record
+
+@app.route('/admin/students/export')
+@login_required
+def export_students():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+        
+    students = safe_query_all(User.query.filter_by(role='student'))
+    export_data = [export_student_data(student) for student in students]
+    
+    json_content = json.dumps(export_data, indent=4, ensure_ascii=False)
+    response = Response(
+        json_content,
+        mimetype="application/json",
+        headers={"Content-disposition": "attachment; filename=students_export.json"}
+    )
+    return response
+
+@app.route('/admin/student/export/<int:user_id>')
+@login_required
+def export_single_student(user_id):
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+        
+    student = safe_get(User, user_id)
+    if not student or student.role != 'student':
+        abort(404)
+        
+    export_data = export_student_data(student)
+    
+    json_content = json.dumps(export_data, indent=4, ensure_ascii=False)
+    filename = f"student_{student.username}_export.json"
+    response = Response(
+        json_content,
+        mimetype="application/json",
+        headers={"Content-disposition": f"attachment; filename={filename}"}
+    )
+    return response
+
+@app.route('/admin/students/import', methods=['POST'])
+@login_required
+def import_students():
+    if not current_user.is_admin():
+        abort(403)
+        
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        flash("JSONファイルを選択してください", "danger")
+        return redirect(url_for('manage_students'))
+        
+    try:
+        if not file.filename.lower().endswith('.json'):
+            flash("サポートされていないファイル形式です (.json を使用してください)", "danger")
+            return redirect(url_for('manage_students'))
+            
+        raw_data = json.loads(file.read().decode('utf-8'))
+        if isinstance(raw_data, dict):
+            records = [raw_data]
+        elif isinstance(raw_data, list):
+            records = raw_data
+        else:
+            flash("無効なJSONフォーマットです。", "danger")
+            return redirect(url_for('manage_students'))
+            
+        success_count = 0
+        error_count = 0
+        
+        for record in records:
+            # 1. Create or update parent if present
+            parent_id = None
+            parent_data = record.get('parent')
+            if parent_data:
+                p_username = parent_data.get('username')
+                if p_username:
+                    parent = safe_query_first(User.query.filter_by(username=p_username))
+                    if not parent:
+                        p_pw_hash = parent_data.get('password_hash')
+                        if not p_pw_hash:
+                            p_pw_hash = generate_password_hash("password")
+                        parent = User(
+                            username=p_username,
+                            role='parent',
+                            nickname=parent_data.get('nickname') or p_username,
+                            password_hash=p_pw_hash,
+                            avatar=parent_data.get('avatar'),
+                            is_first_login=parent_data.get('is_first_login', True),
+                        )
+                        db.session.add(parent)
+                        db.session.flush() # get parent.id
+                    else:
+                        if 'nickname' in parent_data:
+                            parent.nickname = parent_data['nickname']
+                        if 'password_hash' in parent_data:
+                            parent.password_hash = parent_data['password_hash']
+                        if 'avatar' in parent_data:
+                            parent.avatar = parent_data['avatar']
+                        if 'is_first_login' in parent_data:
+                            parent.is_first_login = parent_data['is_first_login']
+                    parent_id = parent.id
+
+            # 2. Create or update student
+            s_username = record.get('username')
+            if not s_username:
+                error_count += 1
+                continue
+                
+            student = safe_query_first(User.query.filter_by(username=s_username))
+            if not student:
+                s_pw_hash = record.get('password_hash')
+                if not s_pw_hash:
+                    s_pw_hash = generate_password_hash("password")
+                student = User(
+                    username=s_username,
+                    role='student',
+                    nickname=record.get('nickname') or s_username,
+                    password_hash=s_pw_hash,
+                    avatar=record.get('avatar'),
+                    is_first_login=record.get('is_first_login', True),
+                    user_level=record.get('user_level', 1),
+                    medals=record.get('medals', 0),
+                    user_title=record.get('user_title', '見習い'),
+                    target_levels_json=record.get('target_levels_json', '{"math": "Lv1", "english": "Lv1", "japanese": "Lv1"}'),
+                    parent_id=parent_id
+                )
+                db.session.add(student)
+                db.session.flush() # get student.id
+            else:
+                student.role = 'student'
+                if 'nickname' in record:
+                    student.nickname = record['nickname']
+                if 'password_hash' in record:
+                    student.password_hash = record['password_hash']
+                if 'avatar' in record:
+                    student.avatar = record['avatar']
+                if 'is_first_login' in record:
+                    student.is_first_login = record['is_first_login']
+                if 'user_level' in record:
+                    student.user_level = record['user_level']
+                if 'medals' in record:
+                    student.medals = record['medals']
+                if 'user_title' in record:
+                    student.user_title = record['user_title']
+                if 'target_levels_json' in record:
+                    student.target_levels_json = record['target_levels_json']
+                if parent_id is not None:
+                    student.parent_id = parent_id
+
+            # 3. Import user_progress
+            progress_list = record.get('progress', [])
+            for p_record in progress_list:
+                quest_id = p_record.get('quest_id')
+                if not quest_id:
+                    continue
+                status = p_record.get('status', 'unlocked')
+                conquered_at = parse_datetime(p_record.get('conquered_at'))
+                
+                up = safe_query_first(UserProgress.query.filter_by(user_id=student.id, quest_id=quest_id))
+                if not up:
+                    up = UserProgress(
+                        user_id=student.id,
+                        quest_id=quest_id,
+                        status=status,
+                        conquered_at=conquered_at
+                    )
+                    db.session.add(up)
+                else:
+                    up.status = status
+                    if conquered_at:
+                        up.conquered_at = conquered_at
+
+            # 4. Import quest_history
+            history_list = record.get('history', [])
+            for h_record in history_list:
+                quest_id = h_record.get('quest_id')
+                if not quest_id:
+                    continue
+                correct = h_record.get('correct', False)
+                is_cleared = h_record.get('is_cleared', False)
+                cleared_count = h_record.get('cleared_count', 0)
+                attempts = h_record.get('attempts', 0)
+                last_attempt = parse_datetime(h_record.get('last_attempt'))
+                
+                qh = safe_query_first(QuestHistory.query.filter_by(user_id=student.id, quest_id=quest_id))
+                if not qh:
+                    qh = QuestHistory(
+                        user_id=student.id,
+                        quest_id=quest_id,
+                        correct=correct,
+                        is_cleared=is_cleared,
+                        cleared_count=cleared_count,
+                        attempts=attempts,
+                        last_attempt=last_attempt
+                    )
+                    db.session.add(qh)
+                else:
+                    qh.correct = correct
+                    qh.is_cleared = is_cleared
+                    qh.cleared_count = cleared_count
+                    qh.attempts = attempts
+                    if last_attempt:
+                        qh.last_attempt = last_attempt
+
+            # 5. Import quest_attempt_logs
+            attempt_logs = record.get('attempt_logs', [])
+            for log_record in attempt_logs:
+                quest_id = log_record.get('quest_id')
+                if not quest_id:
+                    continue
+                correct_answers = log_record.get('correct_answers', 0)
+                total_questions = log_record.get('total_questions', 0)
+                attempted_at = parse_datetime(log_record.get('attempted_at'))
+                
+                existing_log = None
+                if attempted_at:
+                    existing_log = safe_query_first(QuestAttemptLog.query.filter_by(
+                        user_id=student.id,
+                        quest_id=quest_id,
+                        attempted_at=attempted_at
+                    ))
+                if not existing_log:
+                    log = QuestAttemptLog(
+                        user_id=student.id,
+                        quest_id=quest_id,
+                        correct_answers=correct_answers,
+                        total_questions=total_questions,
+                        attempted_at=attempted_at or datetime.now(timezone.utc)
+                    )
+                    db.session.add(log)
+            
+            success_count += 1
+            
+        safe_commit()
+        if error_count > 0:
+            flash(f"生徒情報のインポート完了: 成功 {success_count}件, 失敗 {error_count}件", "warning")
+        else:
+            flash(f"{success_count}件の生徒情報を正常にインポートしました", "success")
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f"インポートエラー: {str(e)}", "danger")
+        
+    return redirect(url_for('manage_students'))
+
+@app.route('/admin/teachers/export')
+@login_required
+def export_teachers():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+        
+    teachers = safe_query_all(User.query.filter_by(role='teacher'))
+    export_data = [serialize_user(teacher) for teacher in teachers]
+    
+    json_content = json.dumps(export_data, indent=4, ensure_ascii=False)
+    response = Response(
+        json_content,
+        mimetype="application/json",
+        headers={"Content-disposition": "attachment; filename=teachers_export.json"}
+    )
+    return response
+
+@app.route('/admin/teacher/export/<int:user_id>')
+@login_required
+def export_single_teacher(user_id):
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+        
+    teacher = safe_get(User, user_id)
+    if not teacher or teacher.role != 'teacher':
+        abort(404)
+        
+    export_data = serialize_user(teacher)
+    
+    json_content = json.dumps(export_data, indent=4, ensure_ascii=False)
+    filename = f"teacher_{teacher.username}_export.json"
+    response = Response(
+        json_content,
+        mimetype="application/json",
+        headers={"Content-disposition": f"attachment; filename={filename}"}
+    )
+    return response
+
+@app.route('/admin/teachers/import', methods=['POST'])
+@login_required
+def import_teachers():
+    if not current_user.is_admin():
+        abort(403)
+        
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        flash("JSONファイルを選択してください", "danger")
+        return redirect(url_for('manage_teachers'))
+        
+    try:
+        if not file.filename.lower().endswith('.json'):
+            flash("サポートされていないファイル形式です (.json を使用してください)", "danger")
+            return redirect(url_for('manage_teachers'))
+            
+        raw_data = json.loads(file.read().decode('utf-8'))
+        if isinstance(raw_data, dict):
+            records = [raw_data]
+        elif isinstance(raw_data, list):
+            records = raw_data
+        else:
+            flash("無効なJSONフォーマットです。", "danger")
+            return redirect(url_for('manage_teachers'))
+            
+        success_count = 0
+        error_count = 0
+        
+        for record in records:
+            t_username = record.get('username')
+            if not t_username:
+                error_count += 1
+                continue
+                
+            teacher = safe_query_first(User.query.filter_by(username=t_username))
+            if not teacher:
+                t_pw_hash = record.get('password_hash')
+                if not t_pw_hash:
+                    t_pw_hash = generate_password_hash("password")
+                teacher = User(
+                    username=t_username,
+                    role='teacher',
+                    nickname=record.get('nickname') or t_username,
+                    password_hash=t_pw_hash,
+                    avatar=record.get('avatar'),
+                    is_first_login=record.get('is_first_login', True),
+                    user_level=record.get('user_level', 1),
+                    medals=record.get('medals', 0),
+                    user_title=record.get('user_title', '見習い'),
+                    target_levels_json=record.get('target_levels_json', '{"math": "Lv1", "english": "Lv1", "japanese": "Lv1"}')
+                )
+                db.session.add(teacher)
+            else:
+                teacher.role = 'teacher'
+                if 'nickname' in record:
+                    teacher.nickname = record['nickname']
+                if 'password_hash' in record:
+                    teacher.password_hash = record['password_hash']
+                if 'avatar' in record:
+                    teacher.avatar = record['avatar']
+                if 'is_first_login' in record:
+                    teacher.is_first_login = record['is_first_login']
+                    
+            success_count += 1
+            
+        safe_commit()
+        if error_count > 0:
+            flash(f"教師情報のインポート完了: 成功 {success_count}件, 失敗 {error_count}件", "warning")
+        else:
+            flash(f"{success_count}件の教師情報を正常にインポートしました", "success")
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f"インポートエラー: {str(e)}", "danger")
+        
+    return redirect(url_for('manage_teachers'))
+
+
 # クエストの一覧　追加・削除
 @app.route('/manage_quests')
 @login_required

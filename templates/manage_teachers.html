@@ -24,6 +24,36 @@
     </form>
 </details>
 
+<!-- JSONデータのエクスポート・インポート -->
+<details style="background: #e3f2fd; padding: 1rem; margin-bottom: 2rem; border-radius: 8px; border: 1px solid #bbdefb;">
+    <summary style="cursor: pointer; font-weight: bold; font-size: 1.1rem; color: #1565c0;">
+        <i class="fa-solid fa-file-import" style="margin-right: 5px;"></i> JSONデータのエクスポート・インポート
+    </summary>
+    <div style="margin-top: 1rem; display: flex; gap: 20px; flex-wrap: wrap;">
+        <!-- エクスポート -->
+        <div style="flex: 1; min-width: 250px; background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #d0e3ff;">
+            <h4 style="color: #1565c0; margin-top: 0;"><i class="fa-solid fa-file-export"></i> エクスポート</h4>
+            <p style="font-size: 0.85rem; color: #666; min-height: 40px;">登録されているすべての講師のアカウント情報を1つのJSONファイルとしてダウンロードします。</p>
+            <a href="{{ url_for('export_teachers') }}" class="btn btn-primary" style="background-color: #1976d2; border-color: #1976d2; display: inline-block; padding: 6px 12px; text-decoration: none; color: #fff; border-radius: 4px; font-weight: bold;">
+                全講師データをJSON出力
+            </a>
+        </div>
+        <!-- インポート -->
+        <div style="flex: 1; min-width: 250px; background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #d0e3ff;">
+            <h4 style="color: #1565c0; margin-top: 0;"><i class="fa-solid fa-file-import"></i> インポート</h4>
+            <p style="font-size: 0.85rem; color: #666; min-height: 40px;">エクスポートしたJSONファイルをアップロードし、この環境に講師データをインポートします。既存のユーザーは上書き/更新されます。</p>
+            <form action="{{ url_for('import_teachers') }}" method="POST" enctype="multipart/form-data">
+                <div style="margin-bottom: 10px;">
+                    <input type="file" name="file" accept=".json" required style="font-size: 0.9rem; width: 100%;">
+                </div>
+                <button type="submit" class="btn btn-success" style="background-color: #2e7d32; border-color: #2e7d32; padding: 6px 12px; font-weight: bold;">
+                    JSONからデータを読み込む
+                </button>
+            </form>
+        </div>
+    </div>
+</details>
+
 <h3>講師の一覧</h3>
 <table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse;">
   <thead>
@@ -46,6 +76,7 @@
       <td>{{ teacher.nickname or "未設定" }}</td>
       <td>
         <a href="{{ url_for('edit_user_admin', user_id=teacher.id) }}" class="btn btn-secondary">編集</a>
+        <a href="{{ url_for('export_single_teacher', user_id=teacher.id) }}" class="btn btn-outline-primary" style="text-decoration: none; display: inline-block;">JSON出力</a>
         <form action="{{ url_for('delete_user', user_id=teacher.id) }}" method="POST" onsubmit="return confirm('本当に削除しますか？');" style="display:inline;">
             <button type="submit" class="btn btn-danger">削除</button>
         </form>

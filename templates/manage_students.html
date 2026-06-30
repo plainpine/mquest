@@ -58,6 +58,36 @@
     </div>
 </details>
 
+<!-- JSONデータのエクスポート・インポート -->
+<details style="background: #ede7f6; padding: 1rem; margin-bottom: 2rem; border-radius: 8px; border: 1px solid #d1c4e9;">
+    <summary style="cursor: pointer; font-weight: bold; font-size: 1.1rem; color: #5e35b1;">
+        <i class="fa-solid fa-file-import" style="margin-right: 5px;"></i> JSONデータのエクスポート・インポート
+    </summary>
+    <div style="margin-top: 1rem; display: flex; gap: 20px; flex-wrap: wrap;">
+        <!-- エクスポート -->
+        <div style="flex: 1; min-width: 250px; background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #e0d8f0;">
+            <h4 style="color: #5e35b1; margin-top: 0;"><i class="fa-solid fa-file-export"></i> エクスポート</h4>
+            <p style="font-size: 0.85rem; color: #666; min-height: 40px;">登録されているすべての生徒のアカウント情報、保護者情報、および学習の進捗・履歴データを1つのJSONファイルとしてダウンロードします。</p>
+            <a href="{{ url_for('export_students') }}" class="btn btn-primary" style="background-color: #673ab7; border-color: #673ab7; display: inline-block; padding: 6px 12px; text-decoration: none; color: #fff; border-radius: 4px; font-weight: bold;">
+                全生徒データをJSON出力
+            </a>
+        </div>
+        <!-- インポート -->
+        <div style="flex: 1; min-width: 250px; background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #e0d8f0;">
+            <h4 style="color: #5e35b1; margin-top: 0;"><i class="fa-solid fa-file-import"></i> インポート</h4>
+            <p style="font-size: 0.85rem; color: #666; min-height: 40px;">エクスポートしたJSONファイルをアップロードし、この環境に生徒データをインポートします。既存のユーザーは上書き/更新されます。</p>
+            <form action="{{ url_for('import_students') }}" method="POST" enctype="multipart/form-data">
+                <div style="margin-bottom: 10px;">
+                    <input type="file" name="file" accept=".json" required style="font-size: 0.9rem; width: 100%;">
+                </div>
+                <button type="submit" class="btn btn-success" style="background-color: #2e7d32; border-color: #2e7d32; padding: 6px 12px; font-weight: bold;">
+                    JSONからデータを読み込む
+                </button>
+            </form>
+        </div>
+    </div>
+</details>
+
 <hr>
 
 <!-- 生徒一覧テーブル -->
@@ -116,9 +146,14 @@
             <div style="flex: 1; min-width: 300px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h4>生徒アカウント設定</h4>
-                    <form action="{{ url_for('delete_user', user_id=student.id) }}" method="POST" onsubmit="return confirm('生徒 {{ student.username }} を削除しますか？進捗データもすべて削除されます。');">
-                        <button type="submit" style="background-color: #ff4d4d; padding: 5px 10px; font-size: 0.8rem;">生徒削除</button>
-                    </form>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="{{ url_for('export_single_student', user_id=student.id) }}" class="btn btn-outline-primary" style="padding: 5px 10px; font-size: 0.8rem; text-decoration: none; border: 1px solid #0d6efd; color: #0d6efd; border-radius: 4px; background: white;">
+                            <i class="fa-solid fa-file-export"></i> JSON出力
+                        </a>
+                        <form action="{{ url_for('delete_user', user_id=student.id) }}" method="POST" onsubmit="return confirm('生徒 {{ student.username }} を削除しますか？進捗データもすべて削除されます。');" style="margin: 0;">
+                            <button type="submit" style="background-color: #ff4d4d; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; color: white;">生徒削除</button>
+                        </form>
+                    </div>
                 </div>
                 <form action="{{ url_for('update_user_admin', user_id=student.id) }}" method="POST" style="background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
                     <input type="hidden" name="user_id" value="{{ student.id }}">
