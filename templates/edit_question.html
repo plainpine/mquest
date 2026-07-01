@@ -1036,6 +1036,7 @@
             <div>
                 <label>正答:</label>
                 <input type="text" name="fgc_sub_answer" value="${answer.replace(/"/g, '&quot;')}" placeholder="正答">
+                <div class="markdown-preview fgc-answer-preview" style="margin-top: 5px; min-height: 1.2em; background: #fdfdfd; padding: 8px; border: 1px dashed #eee;"></div>
             </div>
             <button type="button" class="remove-sub-question" style="margin-top: 10px;">削除</button>
         `;
@@ -1052,6 +1053,11 @@
             choiceInput.addEventListener('input', () => renderMarkdown(choicePreview, choiceInput.value));
             renderMarkdown(choicePreview, choiceInput.value);
         });
+
+        const answerInput = div.querySelector('input[name="fgc_sub_answer"]');
+        const answerPreview = div.querySelector('.fgc-answer-preview');
+        answerInput.addEventListener('input', () => renderMarkdown(answerPreview, answerInput.value));
+        renderMarkdown(answerPreview, answerInput.value);
     }
 
     function createSubQuestion(prompt = '', answer = '', id = '') {
@@ -1104,6 +1110,7 @@
             <div>
                 <label>正答:</label>
                 <input type="text" name="figure_choice_sub_answer" value="${answer.replace(/"/g, '&quot;')}" placeholder="正答">
+                <div class="markdown-preview fc-answer-preview" style="margin-top: 5px; min-height: 1.2em; background: #fdfdfd; padding: 8px; border: 1px dashed #eee;"></div>
             </div>
             <button type="button" class="remove-sub-question" style="margin-top: 10px;">削除</button>
         `;
@@ -1120,6 +1127,11 @@
             choiceInput.addEventListener('input', () => renderMarkdown(choicePreview, choiceInput.value));
             renderMarkdown(choicePreview, choiceInput.value);
         });
+
+        const answerInput = div.querySelector('input[name="figure_choice_sub_answer"]');
+        const answerPreview = div.querySelector('.fc-answer-preview');
+        answerInput.addEventListener('input', () => renderMarkdown(answerPreview, answerInput.value));
+        renderMarkdown(answerPreview, answerInput.value);
     }
 
     // Initial State
