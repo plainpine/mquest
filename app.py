@@ -63,6 +63,19 @@ def from_json_filter(s):
     except (json.JSONDecodeError, TypeError):
         return None
 
+@app.context_processor
+def inject_markdown_help():
+    def get_markdown_help():
+        try:
+            filepath = os.path.join(basedir, 'Markdown_help.md')
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            app.logger.error(f"Error reading Markdown_help.md: {e}")
+            return "ヘルプファイルを読み込めませんでした。"
+    return dict(get_markdown_help=get_markdown_help)
+
+
 # データベース設定（例: SQLite）
 # Flask-SQLAlchemyはデフォルトでinstanceフォルダを探すため、パスから 'instance/' を除外するか絶対パスを使用します。
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'mquest_user.db')

@@ -35,25 +35,47 @@ window.renderMarkdown = async function(element, text) {
     
     let content = text || '';
     
-    // 改行コードの正規化 (LaTeXの \ne などが破壊されないよう、数式ブロック内は除外して置換)
-    content = content.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))|(\\n)/g, (match, math, newline) => {
-        if (math) return math;
-        return '\n';
+    const codeBlocks = [];
+    
+    // 1. コードブロック (```lang\ncode\n```) を退避
+    let protectedContent = content.replace(/```(\w*)[\r\n]+([\s\S]*?)```/g, (match, lang, code) => {
+        const placeholder = `@@CODE${codeBlocks.length}@@`;
+        const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const classAttr = lang ? ` class="language-${lang}"` : '';
+        codeBlocks.push(`<pre><code${classAttr}>${escapedCode}</code></pre>`);
+        return placeholder;
     });
 
-    // 数式を退避させる（markedによる誤変換・エスケープを防ぐ）
+    // 2. インラインコード (`code`) を退避
+    protectedContent = protectedContent.replace(/`([^`\n]+)`/g, (match, code) => {
+        const placeholder = `@@CODE${codeBlocks.length}@@`;
+        const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        codeBlocks.push(`<code>${escapedCode}</code>`);
+        return placeholder;
+    });
+
+    // 3. 数式を退避させる（すでにコードは退避されているため安全）
     const mathBlocks = [];
-    const protectedContent = content.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g, (match) => {
+    const mathRegex = /(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g;
+    protectedContent = protectedContent.replace(mathRegex, (match) => {
         const placeholder = `@@MATH${mathBlocks.length}@@`;
         mathBlocks.push(match);
         return placeholder;
     });
 
+    // 4. 改行コードの正規化
+    protectedContent = protectedContent.replace(/\\n/g, '\n');
+
     let html = marked.parse(protectedContent);
 
-    // 数式を復元
+    // 5. 数式を復元
     mathBlocks.forEach((math, i) => {
         html = html.replace(`@@MATH${i}@@`, math);
+    });
+
+    // 6. コードブロック・インラインコードを復元
+    codeBlocks.forEach((code, i) => {
+        html = html.replace(`@@CODE${i}@@`, code);
     });
     
     element.innerHTML = html;
