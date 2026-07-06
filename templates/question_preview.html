@@ -463,8 +463,8 @@
                     const drawInterceptLabels = () => {
                         try {
                             const svg = d3.select(targetId).select('svg');
-                            let container = svg.select('.canvas');
-                            if (container.empty()) container = svg.select('g');
+                            let containerG = svg.select('.canvas');
+                            if (containerG.empty()) containerG = svg.select('g');
 
                             const xScale = instance.meta.xScale;
                             const yScale = instance.meta.yScale;
@@ -473,8 +473,8 @@
                             const y0Pos = yScale(0);
                             const x0Pos = xScale(0);
 
-                            container.selectAll('.custom-intercept-label').remove();
-                            container.selectAll('.custom-function-caption').remove();
+                            containerG.selectAll('.custom-intercept-label').remove();
+                            containerG.selectAll('.custom-function-caption').remove();
 
                             const usedYPositions = [];
 
@@ -482,7 +482,7 @@
                                 if (anno.x !== undefined) {
                                     const xPx = xScale(anno.x);
                                     if (xPx >= 0 && xPx <= plotWidth) {
-                                        container.append('text')
+                                        containerG.append('text')
                                             .attr('class', 'custom-intercept-label')
                                             .attr('x', xPx)
                                             .attr('y', y0Pos - 1)
@@ -497,7 +497,7 @@
                                 } else if (anno.y !== undefined) {
                                     const yPx = yScale(anno.y);
                                     if (yPx >= 0 && yPx <= plotHeight) {
-                                        container.append('text')
+                                        containerG.append('text')
                                             .attr('class', 'custom-intercept-label')
                                             .attr('x', x0Pos + 2)
                                             .attr('y', yPx)
@@ -549,7 +549,7 @@
                                     }
                                     usedYPositions.push(finalY);
 
-                                    container.append('foreignObject')
+                                    containerG.append('foreignObject')
                                         .attr('class', 'custom-function-caption')
                                         .attr('x', xScale(xVal) + 5)
                                         .attr('y', finalY - 15)
