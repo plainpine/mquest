@@ -692,6 +692,27 @@ def quest_run(quest_id):
                 "sub_questions": sub_questions,
                 "explanation": q.explanation
             })
+        elif q.type == 'english_reading':
+            try:
+                word_list_data = json.loads(q.choices) if q.choices else {'word_list': []}
+            except Exception:
+                word_list_data = {'word_list': []}
+
+            try:
+                sub_questions = json.loads(q.answer) if q.answer else []
+                for sub_q in sub_questions:
+                    if 'choices' in sub_q and isinstance(sub_q['choices'], list):
+                        random.shuffle(sub_q['choices'])
+            except Exception:
+                sub_questions = []
+
+            questions.append({
+                "type": q.type,
+                "text": q.text,
+                "word_list": word_list_data.get('word_list', []),
+                "sub_questions": sub_questions,
+                "explanation": q.explanation
+            })
         else:
             questions.append({
                 "type": q.type,  
@@ -901,6 +922,31 @@ def quest_result(quest_id):
                 expected = expected_answers_list
                 expected = expected_answers_list
 
+            elif question_type == 'english_reading':
+                try:
+                    sub_questions = json.loads(q.answer) if q.answer else []
+                except (json.JSONDecodeError, TypeError):
+                    sub_questions = []
+                
+                all_sub_correct = True
+                user_answers_list = []
+                expected_answers_list = []
+                
+                for sub_q_index, sub_q in enumerate(sub_questions):
+                    form_field_name = f"q{i}_{sub_q_index}"
+                    user_val = request.form.get(form_field_name, '').strip()
+                    expected_val = str(sub_q.get('answer', '')).strip()
+                    
+                    user_answers_list.append({sub_q.get('prompt', ''): user_val})
+                    expected_answers_list.append({sub_q.get('prompt', ''): expected_val})
+                    
+                    if user_val != expected_val:
+                        all_sub_correct = False
+                        
+                correct = all_sub_correct
+                user_answer = user_answers_list
+                expected = expected_answers_list
+
             results.append({
                 'question_id': q.id,
                 'user_answer': user_answer,
@@ -1015,6 +1061,16 @@ def quest_result(quest_id):
                 except (json.JSONDecodeError, TypeError):
                     pass
                 question_view_model['svg_content'] = svg_display
+            elif q.type == 'english_reading':
+                try:
+                    word_list_data = json.loads(q.choices) if q.choices else {'word_list': []}
+                except Exception:
+                    word_list_data = {'word_list': []}
+                question_view_model['word_list'] = word_list_data.get('word_list', [])
+                try:
+                    question_view_model['sub_questions'] = json.loads(q.answer) if q.answer else []
+                except Exception:
+                    question_view_model['sub_questions'] = []
             # Explanation is now rendered as Markdown on the client side
             res['question'] = question_view_model
     
@@ -2383,6 +2439,17 @@ def edit_question(quest_id, question_id):
                 answers = json.loads(question.answer) if question.answer else [] # This should be the list of sub-questions
             except json.JSONDecodeError:
                 answers = []
+        elif question.type == 'english_reading':
+            try:
+                word_list_data = json.loads(question.choices) if question.choices else {'word_list': []}
+                choices = word_list_data.get('word_list', [])
+            except Exception:
+                choices = []
+            
+            try:
+                answers = json.loads(question.answer) if question.answer else []
+            except Exception:
+                answers = []
 
 
         # question.answers にセット（テンプレートで読みやすくする）
@@ -2577,6 +2644,42 @@ def save_question(quest_id):
                         'answer': sub_answers[i] if i < len(sub_answers) else ''
                     })
             question.answer = json.dumps(sub_questions)
+        elif q_type == 'english_reading':
+            table_text = request.form.get('reading_words_table', '')
+            word_list = []
+            for line in table_text.splitlines():
+                line = line.strip()
+                if not line.startswith('|') or not line.endswith('|'):
+                    continue
+                parts = [p.strip() for p in line[1:-1].split('|')]
+                if len(parts) < 2:
+                    continue
+                word = parts[0]
+                meaning = parts[1]
+                if word == '単語' or word == 'word' or all(c in '-: ' for c in word) or not word:
+                    continue
+                word_list.append({
+                    'word': word,
+                    'meaning': meaning
+                })
+            question.choices = json.dumps({'word_list': word_list})
+
+            sub_ids = request.form.getlist('reading_sub_id')
+            sub_prompts = request.form.getlist('reading_sub_prompt')
+            sub_answers = request.form.getlist('reading_sub_answer')
+
+            sub_questions = []
+            for i in range(len(sub_prompts)):
+                prompt = sub_prompts[i].strip()
+                if prompt:
+                    choices = [request.form.get(f'reading_sub_choice_{i}_{j}', '') for j in range(4)]
+                    sub_questions.append({
+                        'id': sub_ids[i] if i < len(sub_ids) else f'new_{int(time.time()*1000)}_{i}',
+                        'prompt': prompt,
+                        'choices': choices,
+                        'answer': sub_answers[i] if i < len(sub_answers) else ''
+                    })
+            question.answer = json.dumps(sub_questions)
         if question_id == 'new':
             db.session.add(question)
         
@@ -2727,6 +2830,45 @@ def preview_question():
                 })
         question_data['sub_questions'] = sub_questions_list
         question_data['correct_answer_text'] = None
+
+    elif q_type == 'english_reading':
+        table_text = request.form.get('reading_words_table', '')
+        word_list = []
+        for line in table_text.splitlines():
+            line = line.strip()
+            if not line.startswith('|') or not line.endswith('|'):
+                continue
+            parts = [p.strip() for p in line[1:-1].split('|')]
+            if len(parts) < 2:
+                continue
+            word = parts[0]
+            meaning = parts[1]
+            if word == '単語' or word == 'word' or all(c in '-: ' for c in word) or not word:
+                continue
+            word_list.append({
+                'word': word,
+                'meaning': meaning
+            })
+        question_data['word_list'] = word_list
+        question_data['choices'] = json.dumps({'word_list': word_list})
+
+        sub_ids = request.form.getlist('reading_sub_id')
+        sub_prompts = request.form.getlist('reading_sub_prompt')
+        sub_answers = request.form.getlist('reading_sub_answer')
+
+        sub_questions = []
+        for i in range(len(sub_prompts)):
+            prompt = sub_prompts[i].strip()
+            if prompt:
+                choices = [request.form.get(f'reading_sub_choice_{i}_{j}', '') for j in range(4)]
+                sub_questions.append({
+                    'id': sub_ids[i] if i < len(sub_ids) else f'new{i}',
+                    'prompt': prompt,
+                    'choices': choices,
+                    'answer': sub_answers[i] if i < len(sub_answers) else ''
+                })
+        question_data['sub_questions'] = sub_questions
+        question_data['answer'] = json.dumps(sub_questions)
 
     return render_template('question_preview.html', question=question_data)
 

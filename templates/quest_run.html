@@ -11,6 +11,21 @@
     <div class="question-block" style="margin-bottom: 2rem;">
       <div><strong>Q{{ loop.index }}:</strong></div>
       <div class="markdown" data-content="{{ question.text | e }}"></div>
+      {% if question.type == 'english_reading' and question.word_list %}
+        <details class="word-hints-details" style="margin-top: 1.5rem; border: 1px solid #ddd; background-color: #fcfcfc; border-radius: 8px; overflow: hidden;">
+          <summary style="font-weight: bold; color: #3f51b5; padding: 0.8rem 1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.4rem; background-color: #f1f3f9; user-select: none;">
+            <i class="fas fa-book"></i> 単語ヒントを表示する (クリックで展開)
+          </summary>
+          <div style="padding: 1rem; border-top: 1px solid #ddd; display: flex; flex-wrap: wrap; gap: 0.8rem 1.5rem;">
+            {% for item in question.word_list %}
+              <div style="font-size: 0.95rem; line-height: 1.4;">
+                <strong style="color: #333;">{{ item.word }}</strong>
+                <span style="color: #666; margin-left: 0.3rem;">{{ item.meaning }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </details>
+      {% endif %}
       {% set q_index = loop.index0 %}
 
       {% if question.type == 'choice' %}
@@ -257,6 +272,27 @@
             </div>
           {% endfor %}
         </div>
+      {% elif question.type == 'english_reading' %}
+        <div class="english-reading-layout" style="margin-top: 1rem;">
+          <div class="reading-questions-pane" style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for sub_q in question.sub_questions %}
+              {% set outer_loop_index = loop.index0 %}
+              <div class="sub-question" style="border: 1px solid #e2e8f0; padding: 1.2rem; border-radius: 12px; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div class="markdown" data-content="**問{{ loop.index }}: {{ sub_q.prompt | e }}**" style="margin-bottom: 1rem; font-size: 1.05rem;"></div>
+                <div class="choice-block">
+                  {% for choice in sub_q.choices %}
+                    {% if choice and choice.strip() %}
+                      <div class="choice-option" data-qname="q{{ q_index }}_{{ outer_loop_index }}" data-value="{{ choice | e }}">
+                        <input type="radio" name="q{{ q_index }}_{{ outer_loop_index }}" value="{{ choice | e }}" style="display: none;">
+                        <div class="markdown" data-content="{{ choice | e }}"></div>
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
       {% endif %}
     </div>
   {% endfor %}
@@ -330,6 +366,13 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
+  function toggleWordsPopup(index) {
+    const popup = document.getElementById(`words-popup-${index}`);
+    if (popup) {
+      popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+    }
+  }
+
   async function renderMarkdownAndMath(root = document) {
     const markdownElements = root.querySelectorAll('.markdown[data-content]');
     for (let div of markdownElements) {

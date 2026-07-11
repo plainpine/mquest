@@ -75,7 +75,7 @@
             </div>
             <div class="mt-3">
                 <p class="mb-1">あなたの解答:</p>
-                {% if res.type in ['numeric', 'svg_interactive', 'function_graph_choice', 'function_graph', 'figure_choice'] and res.user_answer is iterable and res.user_answer is not string %}
+                {% if res.type in ['numeric', 'svg_interactive', 'function_graph_choice', 'function_graph', 'figure_choice', 'english_reading'] and res.user_answer is iterable and res.user_answer is not string %}
                     <div class="answer-grid">
                     {% for ans in res.user_answer %}
                         {% for key, value in ans.items() %}
@@ -97,7 +97,7 @@
                 {% endif %}
 
                 <p class="mb-1 mt-2">正解:</p>
-                {% if res.type in ['numeric', 'svg_interactive', 'function_graph_choice', 'function_graph', 'figure_choice'] and res.expected is iterable and res.expected is not string %}
+                {% if res.type in ['numeric', 'svg_interactive', 'function_graph_choice', 'function_graph', 'figure_choice', 'english_reading'] and res.expected is iterable and res.expected is not string %}
                     <div class="answer-grid">
                     {% for ans in res.expected %}
                         {% for key, value in ans.items() %}
