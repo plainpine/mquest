@@ -303,7 +303,7 @@
         </div>
         <div class="word-actions">
           <button type="button" class="icon-btn speak-btn" data-number="${w.number}" title="発音">🔊</button>
-          <button type="button" class="icon-btn bookmark-btn" data-number="${w.number}" title="マーク">${bookmarks.includes(Number(w.number)) ? '★' : '☆'}</button>
+          <button type="button" class="icon-btn bookmark-btn" data-number="${w.number}" title="マーク">${bookmarks.includes(Number(w.number)) ? '♥' : '♡'}</button>
         </div>
       </div>
     `).join('');
@@ -335,7 +335,7 @@
         </div>
         <div class="word-actions">
           <button type="button" class="icon-btn speak-btn" data-number="${w.number}" title="発音">🔊</button>
-          <button type="button" class="icon-btn remove-bookmark-btn" data-number="${w.number}" title="マーク解除">★</button>
+          <button type="button" class="icon-btn remove-bookmark-btn" data-number="${w.number}" title="マーク解除">♥</button>
         </div>
       </div>
     `).join('');
@@ -477,7 +477,7 @@
         <div class="question-word">${escapeHtml(question)}</div>
         <div class="study-controls">
           <button type="button" class="btn btn-light" id="studySpeakBtn">🔊 発音</button>
-          <button type="button" class="btn btn-light" id="bookmarkToggleBtn">${bookmarked ? '★ マーク解除' : '☆ マーク'}</button>
+          <button type="button" class="btn btn-light" id="bookmarkToggleBtn">${bookmarked ? '♥ マーク解除' : '♡ マーク'}</button>
         </div>
         <div class="meaning-reveal" id="meaningReveal"><span>クリックして英語⇔日本語を表示</span></div>
         <div class="study-controls">
@@ -537,7 +537,7 @@
       <div class="question-word">${escapeHtml(prompt)}</div>
       <div class="study-controls">
         <button type="button" class="btn btn-light" id="testSpeakBtn">🔊 発音</button>
-        <button type="button" class="btn btn-light" id="testBookmarkBtn">${bookmarks.includes(Number(item.number)) ? '★ マーク解除' : '☆ マーク'}</button>
+        <button type="button" class="btn btn-light" id="testBookmarkBtn">${bookmarks.includes(Number(item.number)) ? '♥ マーク解除' : '♡ マーク'}</button>
       </div>
       <div class="choices">${options.map(option => `
         <button type="button" class="choice" data-number="${option.number}">${escapeHtml(studyDirection === 'en-ja' ? option.meaning : option.word)}</button>
