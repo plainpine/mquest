@@ -172,3 +172,49 @@ class QuestAttemptLog(db.Model):
                             primaryjoin="remote(Quest.id) == foreign(QuestAttemptLog.quest_id)",
                             back_populates='attempt_logs',
                             sync_backref=False)
+
+
+class HabatanBookmark(db.Model):
+    __tablename__ = 'habatan_bookmarks'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    number = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'number', name='unique_habatan_bookmark_per_user'),
+    )
+
+    user = db.relationship('User', backref=db.backref('habatan_bookmarks', cascade='all, delete-orphan'))
+
+
+class HabatanStudyStats(db.Model):
+    __tablename__ = 'habatan_study_stats'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    total = db.Column(db.Integer, default=0, nullable=False)
+    correct = db.Column(db.Integer, default=0, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    __table_args__ = (
+        UniqueConstraint('user_id', name='unique_habatan_stats_per_user'),
+    )
+
+    user = db.relationship('User', backref=db.backref('habatan_study_stats', cascade='all, delete-orphan'))
+
+
+class HabatanDailyHistory(db.Model):
+    __tablename__ = 'habatan_daily_history'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    date_key = db.Column(db.String(20), nullable=False)
+    studied = db.Column(db.Integer, default=0, nullable=False)
+    answered = db.Column(db.Integer, default=0, nullable=False)
+    correct = db.Column(db.Integer, default=0, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'date_key', name='unique_habatan_daily_history_per_user'),
+    )
+
+    user = db.relationship('User', backref=db.backref('habatan_daily_history', cascade='all, delete-orphan'))

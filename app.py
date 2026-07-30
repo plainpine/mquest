@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_file, Response, get_flashed_messages
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_file, Response, get_flashed_messages, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, case
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -14,9 +14,8 @@ import random
 import time
 import atexit
 import csv
-import io
 from utils.svg_preview_bp import bp as svg_preview_bp # Import the blueprint
-
+from copy import deepcopy
 # ... (rest of imports/mappings)
 
 def cleanup_database():
@@ -50,7 +49,7 @@ SUBJECT_KEY_TO_JP = {
 # 日本語名から英語キーへの逆引きマップ
 SUBJECT_JP_TO_KEY = {v: k for k, v in SUBJECT_KEY_TO_JP.items()}
 
-from models import db, User, Quest, UserProgress
+from models import db, User, Quest, UserProgress, HabatanBookmark, HabatanStudyStats, HabatanDailyHistory
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__, template_folder=os.path.join(basedir, 'templates'))
@@ -297,10 +296,11 @@ def profile():
 
     if request.method == 'POST':
         nickname = request.form.get('nickname', '').strip()
+
         avatar_choice = request.form.get('avatar', '').strip()
         new_password = request.form.get('new_password', '').strip()
         confirm_password = request.form.get('confirm_password', '').strip()
-        
+
         # 目標レベルの更新
         target_math = request.form.get('target_level_math')
         target_english = request.form.get('target_level_english')
@@ -387,6 +387,148 @@ def profile():
 
     return render_template('profile.html', avatars=avatars, all_levels=all_levels, 
                            math_levels=math_levels, english_levels=english_levels, japanese_levels=japanese_levels)
+
+HABATAN_DATA_FILE = os.path.join(basedir, 'data', 'words.json')
+HABATAN_STATE_STORE = {}
+
+def get_habatan_user_key(user=None):
+    user = user or current_user
+    if user and getattr(user, 'is_authenticated', False) and getattr(user, 'id', None):
+        return f"user:{user.id}"
+    return get_habatan_session_id()
+
+def load_habatan_words():
+    if os.path.exists(HABATAN_DATA_FILE):
+        with open(HABATAN_DATA_FILE, 'r', encoding='utf-8') as fh:
+            return json.load(fh)
+    return []
+
+def get_habatan_session_id():
+    return request.headers.get('X-Session-Id') or request.args.get('session_id') or request.cookies.get('session_id') or 'default'
+
+def get_habatan_state(session_id=None):
+    user_key = get_habatan_user_key()
+    file_words = load_habatan_words()
+    state = HABATAN_STATE_STORE.get(user_key)
+    default_state = {
+        'words': file_words,
+        'stats': {'total': 0, 'correct': 0},
+        'bookmarks': [],
+        'studyDirection': 'en-ja',
+        'dailyHistory': {},
+        'wordOrder': 'number',
+    }
+
+    if current_user.is_authenticated and getattr(current_user, 'id', None):
+        user_id = current_user.id
+        stats_row = HabatanStudyStats.query.filter_by(user_id=user_id).first()
+        bookmarks = [row.number for row in HabatanBookmark.query.filter_by(user_id=user_id).order_by(HabatanBookmark.number).all()]
+        history_rows = HabatanDailyHistory.query.filter_by(user_id=user_id).all()
+        daily_history = {row.date_key: {'studied': row.studied, 'answered': row.answered, 'correct': row.correct} for row in history_rows}
+        default_state['stats'] = {'total': stats_row.total if stats_row else 0, 'correct': stats_row.correct if stats_row else 0}
+        default_state['bookmarks'] = bookmarks
+        default_state['dailyHistory'] = daily_history
+
+    if state is None:
+        HABATAN_STATE_STORE[user_key] = deepcopy(default_state)
+        return deepcopy(default_state)
+
+    merged_state = deepcopy(default_state)
+    if current_user.is_authenticated and getattr(current_user, 'id', None):
+        merged_state['studyDirection'] = state.get('studyDirection', default_state['studyDirection'])
+        merged_state['wordOrder'] = state.get('wordOrder', default_state['wordOrder'])
+    else:
+        merged_state['stats'] = state.get('stats', default_state['stats'])
+        merged_state['bookmarks'] = state.get('bookmarks', default_state['bookmarks'])
+        merged_state['studyDirection'] = state.get('studyDirection', default_state['studyDirection'])
+        merged_state['dailyHistory'] = state.get('dailyHistory', default_state['dailyHistory'])
+        merged_state['wordOrder'] = state.get('wordOrder', default_state['wordOrder'])
+    HABATAN_STATE_STORE[user_key] = deepcopy(merged_state)
+    return deepcopy(merged_state)
+
+def save_habatan_state(payload, session_id=None):
+    user_key = get_habatan_user_key()
+    current_state = get_habatan_state()
+    if current_user.is_authenticated and getattr(current_user, 'id', None):
+        user_id = current_user.id
+        stats_payload = payload.get('stats', current_state.get('stats', {'total': 0, 'correct': 0}))
+        bookmarks_payload = payload.get('bookmarks', current_state.get('bookmarks', []))
+        daily_history_payload = payload.get('dailyHistory', current_state.get('dailyHistory', {}))
+
+        stats_row = HabatanStudyStats.query.filter_by(user_id=user_id).first()
+        if stats_row is None:
+            stats_row = HabatanStudyStats(user_id=user_id)
+            db.session.add(stats_row)
+        stats_row.total = int(stats_payload.get('total', 0))
+        stats_row.correct = int(stats_payload.get('correct', 0))
+        stats_row.updated_at = datetime.now(timezone.utc)
+
+        HabatanBookmark.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+
+        seen_bookmarks = set()
+        for number in bookmarks_payload:
+            try:
+                num = int(number)
+            except (TypeError, ValueError):
+                continue
+            if num in seen_bookmarks:
+                continue
+            seen_bookmarks.add(num)
+            db.session.add(HabatanBookmark(user_id=user_id, number=num))
+
+        with db.session.no_autoflush:
+            for date_key, values in daily_history_payload.items():
+                existing = HabatanDailyHistory.query.filter_by(user_id=user_id, date_key=date_key).first()
+                if existing:
+                    existing.studied = int(values.get('studied', 0))
+                    existing.answered = int(values.get('answered', 0))
+                    existing.correct = int(values.get('correct', 0))
+                    existing.updated_at = datetime.now(timezone.utc)
+                else:
+                    db.session.add(HabatanDailyHistory(
+                        user_id=user_id,
+                        date_key=date_key,
+                        studied=int(values.get('studied', 0)),
+                        answered=int(values.get('answered', 0)),
+                        correct=int(values.get('correct', 0)),
+                    ))
+
+        safe_commit()
+
+    current_state.update({
+        'stats': payload.get('stats', current_state.get('stats', {'total': 0, 'correct': 0})),
+        'bookmarks': payload.get('bookmarks', current_state.get('bookmarks', [])),
+        'studyDirection': payload.get('studyDirection', current_state.get('studyDirection', 'en-ja')),
+        'dailyHistory': payload.get('dailyHistory', current_state.get('dailyHistory', {})),
+        'wordOrder': payload.get('wordOrder', current_state.get('wordOrder', 'number')),
+        'words': load_habatan_words(),
+    })
+    HABATAN_STATE_STORE[user_key] = deepcopy(current_state)
+    return deepcopy(current_state)
+
+@app.route('/habatan')
+@app.route('/habatan/')
+@login_required
+def habatan_index():
+    return render_template('habatan.html')
+
+@app.route('/habatan/study')
+@login_required
+def habatan_study():
+    return render_template('habatan.html')
+
+@app.route('/habatan/static/<path:filename>')
+def habatan_static(filename):
+    return send_from_directory(os.path.join(basedir, 'static'), filename)
+
+@app.route('/habatan/api/state', methods=['GET', 'POST'])
+@login_required
+def habatan_state_api():
+    session_id = get_habatan_session_id()
+    if request.method == 'POST':
+        payload = request.get_json(silent=True) or {}
+        save_habatan_state(payload, session_id)
+    return jsonify(get_habatan_state(session_id))
 
 # 初回のユーザー作成（ロール付き）
 @app.route('/create_user', methods=['GET', 'POST'])
