@@ -909,7 +909,12 @@ def quest_result(quest_id):
                     correct_answer = json.loads(q.answer)
                 except (json.JSONDecodeError, TypeError):
                     correct_answer = q.answer
-                
+
+                if isinstance(correct_answer, (int, float, bool)):
+                    correct_answer = str(correct_answer)
+                if isinstance(correct_answer, str):
+                    correct_answer = correct_answer.strip()
+
                 correct = user_answer == correct_answer
                 expected = correct_answer
 
