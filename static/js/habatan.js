@@ -404,7 +404,7 @@
       return { error: '開始番号と単語数を、1〜2500の範囲で正しく入力してください。' };
     }
     if(wordOrder === 'frequency'){
-      const filtered = words.filter(w => Number(w.number) >= start);
+      const filtered = words.filter(w => Number(w.frequency) >= start);
       const items = sortWords(filtered, 'frequency').slice(0, count);
       return items.length ? { start, count, items } : { error: '指定された範囲に単語がありません。' };
     }
@@ -436,9 +436,8 @@
       summary.classList.add('range-error');
       return;
     }
-    const end = Math.min(2500, start + count - 1);
     if(wordOrder === 'frequency'){
-      summary.textContent = `頻度順の番号 ${start} から頻度順に ${count}語`;
+      summary.textContent = `頻度 ${start} 以上の単語を頻度順に ${count}語`;
     } else {
       summary.textContent = `abc順の番号 ${start} からabc順に ${count}語`;
     }
