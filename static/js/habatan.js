@@ -367,7 +367,7 @@
     $('#studyModeBtn')?.classList.toggle('active', mode === 'study');
     $('#testModeBtn')?.classList.toggle('active', mode === 'test');
     $('#choiceSetting') && ($('#choiceSetting').style.display = mode === 'test' ? 'block' : 'none');
-    $('#startModeBtn') && ($('#startModeBtn').textContent = mode === 'study' ? '単語学習を始める' : '単語確認を始める');
+    $('#startModeBtn') && ($('#startModeBtn').textContent = mode === 'study' ? '学習開始' : '確認開始');
   }
 
   function setStudyDirection(direction){
@@ -448,6 +448,9 @@
     const range = getSelectedRange();
     const activityCard = $('#activityCard');
     if(activityCard) activityCard.style.display = 'block';
+    // Show pronunciation note when starting study/test activity
+    const pronounceNote = $('#pronunciation-note');
+    if(pronounceNote) pronounceNote.classList.add('visible');
     const activityArea = $('#activityArea');
     if(range.error){
       if(activityArea) activityArea.innerHTML = `<div class="card"><p class="note range-error">${escapeHtml(range.error)}</p></div>`;
@@ -469,16 +472,17 @@
     const item = activity.items[activity.index];
     const question = studyDirection === 'en-ja' ? item.word : item.meaning;
     const answer = studyDirection === 'en-ja' ? item.meaning : item.word;
+    const meaningRevealText = studyDirection === 'en-ja' ? '日本語・用法を表示' : '英語を表示';
     const bookmarked = bookmarks.includes(Number(item.number));
     area.innerHTML = `
-      <div class="quiz-top"><span>問題 ${activity.index+1}/${activity.items.length}</span><span>${studyDirection === 'en-ja' ? '英語 → 日本語' : '日本語 → 英語'}</span></div>
+      <div class="quiz-top"><span>問題 ${activity.index+1}/${activity.items.length}</span><span>${studyDirection === 'en-ja' ? '英語⇒日本語' : '日本語⇒英語'}</span></div>
       <div class="study-card">
         <div class="question-word">${escapeHtml(question)}</div>
         <div class="study-controls">
           <button type="button" class="btn btn-light" id="studySpeakBtn">🔊 発音</button>
           <button type="button" class="btn btn-light" id="bookmarkToggleBtn">${bookmarked ? '♥ マーク解除' : '♡ マーク'}</button>
         </div>
-        <div class="meaning-reveal" id="meaningReveal"><span>クリックして英語⇔日本語を表示</span></div>
+        <div class="meaning-reveal" id="meaningReveal"><span>${meaningRevealText}</span></div>
         <div class="study-controls">
           <button type="button" class="btn btn-light" id="prevStudyBtn" ${activity.index === 0 ? 'disabled' : ''}>← 前の単語</button>
           <button type="button" class="btn btn-primary" id="nextStudyBtn">${activity.index === activity.items.length-1 ? '学習を終了' : '次の単語 →'}</button>
@@ -598,6 +602,17 @@
       if(target === 'wordlist') renderAllWords();
       if(target === 'bookmarks') renderBookmarks();
       if(target === 'stats') renderStats();
+      // Show pronunciation note only when speaking buttons are visible
+      const pronounceNote = $('#pronunciation-note');
+      const activityCard = $('#activityCard');
+      if(pronounceNote){
+        // Show if wordlist/bookmarks or if activity is in progress (home tab with activity shown)
+        if(target === 'wordlist' || target === 'bookmarks' || (target === 'home' && activityCard?.style.display !== 'none')){
+          pronounceNote.classList.add('visible');
+        } else {
+          pronounceNote.classList.remove('visible');
+        }
+      }
     }));
     $('#studyModeBtn')?.addEventListener('click', () => setMode('study'));
     $('#testModeBtn')?.addEventListener('click', () => setMode('test'));
