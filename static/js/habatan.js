@@ -186,7 +186,7 @@
   }
 
   function drawStudyChart(records){
-    const canvas = $('#studyChart');
+    const canvas = $('#hbt-studyChart');
     if(!canvas || typeof Chart === 'undefined') return;
     const labels = records.map(r => r.key.replace(/^\d{4}-/, ''));
     const studied = [];
@@ -197,7 +197,6 @@
     let cumulativeCorrect = 0;
     const accuracies = [];
     records.forEach(r => {
-      cumulativeStudied += r.studied || 0;
       cumulativeAnswered += r.answered || 0;
       cumulativeCorrect += r.correct || 0;
       studied.push(cumulativeStudied);
@@ -247,72 +246,72 @@
   }
 
   function renderStats(){
-    const days = Number($('#historyDays')?.value || 30);
+    const days = Number($('#hbt-historyDays')?.value || 30);
     const keys = getDateKeys(days);
     const records = keys.map(key => ({ key, ...(dailyHistory[key] || { studied: 0, answered: 0, correct: 0 }) }));
     const totalStudied = records.reduce((sum, r) => sum + (r.studied || 0), 0);
     const totalAnswered = records.reduce((sum, r) => sum + (r.answered || 0), 0);
     const totalCorrect = records.reduce((sum, r) => sum + (r.correct || 0), 0);
     const activeDays = records.filter(r => r.studied || r.answered).length;
-    $('#studyDays') && ($('#studyDays').textContent = activeDays);
-    $('#studiedWords') && ($('#studiedWords').textContent = totalStudied);
-    $('#totalAnswers') && ($('#totalAnswers').textContent = totalAnswered);
-    $('#correctAnswers') && ($('#correctAnswers').textContent = totalCorrect);
-    $('#accuracy') && ($('#accuracy').textContent = totalAnswered ? `${Math.round(totalCorrect / totalAnswered * 100)}%` : '0%');
-    $('#bookmarkTotal') && ($('#bookmarkTotal').textContent = bookmarks.length);
+    $('#hbt-studyDays') && ($('#hbt-studyDays').textContent = activeDays);
+    $('#hbt-studiedWords') && ($('#hbt-studiedWords').textContent = totalStudied);
+    $('#hbt-totalAnswers') && ($('#hbt-totalAnswers').textContent = totalAnswered);
+    $('#hbt-correctAnswers') && ($('#hbt-correctAnswers').textContent = totalCorrect);
+    $('#hbt-accuracy') && ($('#hbt-accuracy').textContent = totalAnswered ? `${Math.round(totalCorrect / totalAnswered * 100)}%` : '0%');
+    $('#hbt-bookmarkTotal') && ($('#hbt-bookmarkTotal').textContent = bookmarks.length);
     drawStudyChart(records);
   }
 
   function renderAllWords(){
-    const box = $('#allWordList');
+    const box = $('#hbt-allWordList');
     if(!box) return;
-    const query = ($('#wordSearch')?.value || '').trim().toLowerCase();
+    const query = ($('#hbt-wordSearch')?.value || '').trim().toLowerCase();
     const filtered = sortWords(words.filter(w => {
       if(!query) return true;
       return String(w.word).toLowerCase().includes(query)
         || String(w.meaning || '').toLowerCase().includes(query);
     }), listOrder);
-    $('#wordListCount') && ($('#wordListCount').textContent = `（${filtered.length}語）`);
+    $('#hbt-wordListCount') && ($('#hbt-wordListCount').textContent = `（${filtered.length}語）`);
     if(!filtered.length){
-      box.innerHTML = '<div class="empty">該当する単語がありません。</div>';
+      box.innerHTML = '<div class="hbt-empty">該当する単語がありません。</div>';
       return;
     }
     const headerHtml = `
-      <div class="word-row word-list-header">
-        <div class="word-main">
-          <div class="word-line">
-            <span class="word-id"><span class="word-number">abc順番号</span><span class="word-frequency">頻度順番号</span></span>
-            <span class="word-text">英単語</span>
+      <div class="hbt-word-row hbt-word-list-header">
+        <div class="hbt-word-main">
+          <div class="hbt-word-line">
+            <span class="hbt-word-id"><span class="hbt-word-number">abc順番号</span><span class="hbt-word-frequency">頻度順番号</span></span>
+            <span class="hbt-word-text">英単語</span>
           </div>
-          <div class="meaning">日本語・用法</div>
+          <div class="hbt-meaning">日本語・用法</div>
         </div>
-        <div class="word-actions">
-          <span class="header-action-label">発音</span>
-          <span class="header-action-label">マーク</span>
+        <div class="hbt-word-actions">
+          <span class="hbt-header-action-label">発音</span>
+          <span class="hbt-header-action-label">マーク</span>
         </div>
       </div>
     `;
     box.innerHTML = headerHtml + filtered.map(w => `
-      <div class="word-row">
-        <div class="word-main">
-          <div class="word-line">
-            <span class="word-id"><span class="word-number">${w.number}</span><span class="word-frequency">${Number.isFinite(Number(w.frequency)) ? Number(w.frequency) : '-'}</span></span>
-            <span class="word-text">${escapeHtml(w.word)}</span>
+      <div class="hbt-word-row">
+        <div class="hbt-word-main">
+          <div class="hbt-word-line">
+            <span class="hbt-word-id"><span class="hbt-word-number">${w.number}</span><span class="hbt-word-frequency">${Number.isFinite(Number(w.frequency)) ? Number(w.frequency) : '-'}</span></span>
+            <span class="hbt-word-text">${escapeHtml(w.word)}</span>
           </div>
-          <div class="meaning">${escapeHtml(w.meaning || '')}</div>
+          <div class="hbt-meaning">${escapeHtml(w.meaning || '')}</div>
         </div>
-        <div class="word-actions">
-          <button type="button" class="icon-btn speak-btn" data-number="${w.number}" title="発音">🔊</button>
-          <button type="button" class="icon-btn bookmark-btn" data-number="${w.number}" title="マーク">${bookmarks.includes(Number(w.number)) ? '♥' : '♡'}</button>
+        <div class="hbt-word-actions">
+          <button type="button" class="hbt-icon-btn hbt-speak-btn" data-number="${w.number}" title="発音">🔊</button>
+          <button type="button" class="hbt-icon-btn hbt-bookmark-btn" data-number="${w.number}" title="マーク">${bookmarks.includes(Number(w.number)) ? '♥' : '♡'}</button>
         </div>
       </div>
     `).join('');
-    $$('.speak-btn').forEach(button => button.addEventListener('click', () => {
+    $$('.hbt-speak-btn').forEach(button => button.addEventListener('click', () => {
       const number = Number(button.dataset.number);
       const item = words.find(w => Number(w.number) === number);
       if(item) speak(item.word, item.lang || 'en-US');
     }));
-    $$('.bookmark-btn').forEach(button => button.addEventListener('click', () => {
+    $$('.hbt-bookmark-btn').forEach(button => button.addEventListener('click', () => {
       toggleBookmark(Number(button.dataset.number));
       renderAllWords();
       renderBookmarks();
@@ -320,31 +319,31 @@
   }
 
   function renderBookmarks(){
-    const box = $('#bookmarkList');
+    const box = $('#hbt-bookmarkList');
     if(!box) return;
     const marked = sortWords(words.filter(w => bookmarks.includes(Number(w.number))), listOrder);
     if(!marked.length){
-      box.innerHTML = '<div class="empty">マークした単語はまだありません。</div>';
+      box.innerHTML = '<div class="hbt-empty">マークした単語はまだありません。</div>';
       return;
     }
     box.innerHTML = marked.map(w => `
-      <div class="word-row">
-        <div class="word-main">
-          <div class="word-line"><span class="word-number">${w.number}</span><span class="word-text">${escapeHtml(w.word)}</span></div>
-          <div class="meaning">${escapeHtml(w.meaning || '')}</div>
+      <div class="hbt-word-row">
+        <div class="hbt-word-main">
+          <div class="hbt-word-line"><span class="hbt-word-number">${w.number}</span><span class="hbt-word-text">${escapeHtml(w.word)}</span></div>
+          <div class="hbt-meaning">${escapeHtml(w.meaning || '')}</div>
         </div>
-        <div class="word-actions">
-          <button type="button" class="icon-btn speak-btn" data-number="${w.number}" title="発音">🔊</button>
-          <button type="button" class="icon-btn remove-bookmark-btn" data-number="${w.number}" title="マーク解除">♥</button>
+        <div class="hbt-word-actions">
+          <button type="button" class="hbt-icon-btn hbt-speak-btn" data-number="${w.number}" title="発音">🔊</button>
+          <button type="button" class="hbt-icon-btn hbt-remove-bookmark-btn" data-number="${w.number}" title="マーク解除">♥</button>
         </div>
       </div>
     `).join('');
-    $$('.speak-btn').forEach(button => button.addEventListener('click', () => {
+    $$('.hbt-speak-btn').forEach(button => button.addEventListener('click', () => {
       const number = Number(button.dataset.number);
       const item = words.find(w => Number(w.number) === number);
       if(item) speak(item.word, item.lang || 'en-US');
     }));
-    $$('.remove-bookmark-btn').forEach(button => button.addEventListener('click', () => {
+    $$('.hbt-remove-bookmark-btn').forEach(button => button.addEventListener('click', () => {
       toggleBookmark(Number(button.dataset.number));
       renderBookmarks();
       renderAllWords();
@@ -364,42 +363,42 @@
 
   function setMode(mode){
     selectedMode = mode;
-    $('#studyModeBtn')?.classList.toggle('active', mode === 'study');
-    $('#testModeBtn')?.classList.toggle('active', mode === 'test');
-    $('#choiceSetting') && ($('#choiceSetting').style.display = mode === 'test' ? 'block' : 'none');
-    $('#startModeBtn') && ($('#startModeBtn').textContent = mode === 'study' ? '学習開始' : '確認開始');
+    $('#hbt-studyModeBtn')?.classList.toggle('hbt-active', mode === 'study');
+    $('#hbt-testModeBtn')?.classList.toggle('hbt-active', mode === 'test');
+    $('#hbt-choiceSetting') && ($('#hbt-choiceSetting').style.display = mode === 'test' ? 'block' : 'none');
+    $('#hbt-startModeBtn') && ($('#hbt-startModeBtn').textContent = mode === 'study' ? '学習開始' : '確認開始');
   }
 
   function setStudyDirection(direction){
     studyDirection = direction;
     persistState();
-    $('#englishToJapaneseBtn')?.classList.toggle('active', direction === 'en-ja');
-    $('#japaneseToEnglishBtn')?.classList.toggle('active', direction === 'ja-en');
+    $('#hbt-englishToJapaneseBtn')?.classList.toggle('hbt-active', direction === 'en-ja');
+    $('#hbt-japaneseToEnglishBtn')?.classList.toggle('hbt-active', direction === 'ja-en');
   }
 
   function setWordOrder(order){
     wordOrder = normalizeOrder(order);
     persistState();
-    $('#wordOrder') && ($('#wordOrder').value = wordOrder);
+    $('#hbt-wordOrder') && ($('#hbt-wordOrder').value = wordOrder);
     updateRangeSummary();
   }
 
   function setWordListOrder(order){
     listOrder = normalizeOrder(order);
     persistState();
-    $('#wordListOrder') && ($('#wordListOrder').value = listOrder);
+    $('#hbt-wordListOrder') && ($('#hbt-wordListOrder').value = listOrder);
     renderAllWords();
     renderBookmarks();
   }
 
   function getSelectedRange(){
-    const markedOnly = $('#markedOnly')?.checked;
+    const markedOnly = $('#hbt-markedOnly')?.checked;
     if(markedOnly){
       const items = sortWords(words.filter(w => bookmarks.includes(Number(w.number))), wordOrder);
       return items.length ? { items } : { error: 'マークした単語がありません。' };
     }
-    const start = Number($('#startNumber')?.value || 1);
-    const count = Number($('#rangeQuestionCount')?.value || 50);
+    const start = Number($('#hbt-startNumber')?.value || 1);
+    const count = Number($('#hbt-rangeQuestionCount')?.value || 50);
     if(!Number.isInteger(start) || !Number.isInteger(count) || start < 1 || count < 1 || start > 2500){
       return { error: '開始番号と単語数を、1〜2500の範囲で正しく入力してください。' };
     }
@@ -417,23 +416,23 @@
   }
 
   function updateRangeSummary(){
-    const markedOnly = $('#markedOnly')?.checked;
-    const start = Number($('#startNumber')?.value || 1);
-    const count = Number($('#rangeQuestionCount')?.value || 50);
-    const summary = $('#rangeSummary');
+    const markedOnly = $('#hbt-markedOnly')?.checked;
+    const start = Number($('#hbt-startNumber')?.value || 1);
+    const count = Number($('#hbt-rangeQuestionCount')?.value || 50);
+    const summary = $('#hbt-rangeSummary');
     if(!summary) return;
     if(markedOnly){
-      $('#startNumber')?.setAttribute('disabled', 'disabled');
-      $('#rangeQuestionCount')?.setAttribute('disabled', 'disabled');
+      $('#hbt-startNumber')?.setAttribute('disabled', 'disabled');
+      $('#hbt-rangeQuestionCount')?.setAttribute('disabled', 'disabled');
       summary.textContent = 'マークした単語のみを学習・確認します。';
-      summary.classList.remove('range-error');
+      summary.classList.remove('hbt-range-error');
       return;
     }
-    $('#startNumber')?.removeAttribute('disabled');
-    $('#rangeQuestionCount')?.removeAttribute('disabled');
+    $('#hbt-startNumber')?.removeAttribute('disabled');
+    $('#hbt-rangeQuestionCount')?.removeAttribute('disabled');
     if(!Number.isInteger(start) || !Number.isInteger(count) || start < 1 || count < 1 || start > 2500){
       summary.textContent = '開始番号と単語数を正しく入力してください。';
-      summary.classList.add('range-error');
+      summary.classList.add('hbt-range-error');
       return;
     }
     if(wordOrder === 'frequency'){
@@ -441,19 +440,19 @@
     } else {
       summary.textContent = `abc順の番号 ${start} からabc順に ${count}語`;
     }
-    summary.classList.remove('range-error');
+    summary.classList.remove('hbt-range-error');
   }
 
   function startActivity(){
     const range = getSelectedRange();
-    const activityCard = $('#activityCard');
+    const activityCard = $('#hbt-activityCard');
     if(activityCard) activityCard.style.display = 'block';
     // Show pronunciation note when starting study/test activity
-    const pronounceNote = $('#pronunciation-note');
-    if(pronounceNote) pronounceNote.classList.add('visible');
-    const activityArea = $('#activityArea');
+    const pronounceNote = $('#hbt-pronunciation-note');
+    if(pronounceNote) pronounceNote.classList.add('hbt-visible');
+    const activityArea = $('#hbt-activityArea');
     if(range.error){
-      if(activityArea) activityArea.innerHTML = `<div class="card"><p class="note range-error">${escapeHtml(range.error)}</p></div>`;
+      if(activityArea) activityArea.innerHTML = `<div class="hbt-card"><p class="hbt-note hbt-range-error">${escapeHtml(range.error)}</p></div>`;
       return;
     }
     activity = { items: range.items, index: 0, correct: 0, locked: false };
@@ -462,11 +461,11 @@
   }
 
   function showStudyWord(){
-    const area = $('#activityArea');
+    const area = $('#hbt-activityArea');
     if(!area) return;
     if(activity.index >= activity.items.length){
-      area.innerHTML = `<div class="card"><h2>学習完了！</h2><p class="note">${activity.items.length}語の学習を終えました。</p><button class="btn btn-primary" id="restartBtn">もう一度学習する</button></div>`;
-      $('#restartBtn')?.addEventListener('click', startActivity);
+      area.innerHTML = `<div class="hbt-card"><h2>学習完了！</h2><p class="hbt-note">${activity.items.length}語の学習を終えました。</p><button class="btn btn-primary" id="hbt-restartBtn">もう一度学習する</button></div>`;
+      $('#hbt-restartBtn')?.addEventListener('click', startActivity);
       return;
     }
     const item = activity.items[activity.index];
@@ -475,34 +474,34 @@
     const meaningRevealText = studyDirection === 'en-ja' ? '日本語・用法を表示' : '英語を表示';
     const bookmarked = bookmarks.includes(Number(item.number));
     area.innerHTML = `
-      <div class="quiz-top"><span>問題 ${activity.index+1}/${activity.items.length}</span><span>${studyDirection === 'en-ja' ? '英語⇒日本語' : '日本語⇒英語'}</span></div>
-      <div class="study-card">
-        <div class="question-word">${escapeHtml(question)}</div>
-        <div class="study-controls">
-          <button type="button" class="btn btn-light" id="studySpeakBtn">🔊 発音</button>
-          <button type="button" class="btn btn-light" id="bookmarkToggleBtn">${bookmarked ? '♥ マーク解除' : '♡ マーク'}</button>
+      <div class="hbt-quiz-top"><span>問題 ${activity.index+1}/${activity.items.length}</span><span>${studyDirection === 'en-ja' ? '英語⇒日本語' : '日本語⇒英語'}</span></div>
+      <div class="hbt-study-card">
+        <div class="hbt-question-word">${escapeHtml(question)}</div>
+        <div class="hbt-study-controls">
+          <button type="button" class="btn btn-light" id="hbt-studySpeakBtn">🔊 発音</button>
+          <button type="button" class="btn btn-light" id="hbt-bookmarkToggleBtn">${bookmarked ? '♥ マーク解除' : '♡ マーク'}</button>
         </div>
-        <div class="meaning-reveal" id="meaningReveal"><span>${meaningRevealText}</span></div>
-        <div class="study-controls">
-          <button type="button" class="btn btn-light" id="prevStudyBtn" ${activity.index === 0 ? 'disabled' : ''}>← 前の単語</button>
-          <button type="button" class="btn btn-primary" id="nextStudyBtn">${activity.index === activity.items.length-1 ? '学習を終了' : '次の単語 →'}</button>
+        <div class="hbt-meaning-reveal" id="hbt-meaningReveal"><span>${meaningRevealText}</span></div>
+        <div class="hbt-study-controls">
+          <button type="button" class="btn btn-light" id="hbt-prevStudyBtn" ${activity.index === 0 ? 'disabled' : ''}>← 前の単語</button>
+          <button type="button" class="btn btn-primary" id="hbt-nextStudyBtn">${activity.index === activity.items.length-1 ? '学習を終了' : '次の単語 →'}</button>
         </div>
       </div>
     `;
-    $('#studySpeakBtn')?.addEventListener('click', () => speak(item.word, item.lang || 'en-US'));
-    $('#bookmarkToggleBtn')?.addEventListener('click', () => {
+    $('#hbt-studySpeakBtn')?.addEventListener('click', () => speak(item.word, item.lang || 'en-US'));
+    $('#hbt-bookmarkToggleBtn')?.addEventListener('click', () => {
       toggleBookmark(item.number);
       renderAllWords();
       renderBookmarks();
       showStudyWord();
     });
-    $('#meaningReveal')?.addEventListener('click', () => {
-      $('#meaningReveal').innerHTML = `<span class="meaning-text">${escapeHtml(answer)}</span>`;
+    $('#hbt-meaningReveal')?.addEventListener('click', () => {
+      $('#hbt-meaningReveal').innerHTML = `<span class="hbt-meaning-text">${escapeHtml(answer)}</span>`;
     });
-    $('#prevStudyBtn')?.addEventListener('click', () => {
+    $('#hbt-prevStudyBtn')?.addEventListener('click', () => {
       if(activity.index > 0){ activity.index -= 1; showStudyWord(); }
     });
-    $('#nextStudyBtn')?.addEventListener('click', () => {
+    $('#hbt-nextStudyBtn')?.addEventListener('click', () => {
       recordStudyWord();
       activity.index += 1;
       showStudyWord();
@@ -519,58 +518,57 @@
   }
 
   function showTestQuestion(){
-    const area = $('#activityArea');
+    const area = $('#hbt-activityArea');
     if(!area) return;
     if(activity.index >= activity.items.length){
-      area.innerHTML = `<div class="card"><h2>確認終了！</h2><p class="note">${activity.items.length}問中 ${activity.correct}問正解でした。</p><button class="btn btn-primary" id="restartBtn">もう一度確認する</button></div>`;
-      $('#restartBtn')?.addEventListener('click', startActivity);
+      area.innerHTML = `<div class="hbt-card"><h2>確認終了！</h2><p class="hbt-note">${activity.items.length}問中 ${activity.correct}問正解でした。</p><button class="btn btn-primary" id="hbt-restartBtn">もう一度確認する</button></div>`;
+      $('#hbt-restartBtn')?.addEventListener('click', startActivity);
       return;
     }
     activity.locked = false;
     const item = activity.items[activity.index];
     const prompt = studyDirection === 'en-ja' ? item.word : item.meaning;
     const correctAnswer = studyDirection === 'en-ja' ? item.meaning : item.word;
-    // const choiceCount = Number($('#choiceCount')?.value || 4);
     const choiceCount = 4;
     const pool = words.filter(w => Number(w.number) !== Number(item.number));
     const options = shuffle([item, ...shuffle(pool).slice(0, Math.max(0, choiceCount - 1))]).slice(0, choiceCount);
     area.innerHTML = `
-      <div class="quiz-top"><span>問題 ${activity.index+1}/${activity.items.length}</span><span>正解 ${activity.correct}</span></div>
-      <div class="question-number">${item.number}</div>
-      <div class="question-word">${escapeHtml(prompt)}</div>
-      <div class="study-controls">
-        <button type="button" class="btn btn-light" id="testSpeakBtn">🔊 発音</button>
-        <button type="button" class="btn btn-light" id="testBookmarkBtn">${bookmarks.includes(Number(item.number)) ? '♥ マーク解除' : '♡ マーク'}</button>
+      <div class="hbt-quiz-top"><span>問題 ${activity.index+1}/${activity.items.length}</span><span>正解 ${activity.correct}</span></div>
+      <div class="hbt-question-number">${item.number}</div>
+      <div class="hbt-question-word">${escapeHtml(prompt)}</div>
+      <div class="hbt-study-controls">
+        <button type="button" class="btn btn-light" id="hbt-testSpeakBtn">🔊 発音</button>
+        <button type="button" class="btn btn-light" id="hbt-testBookmarkBtn">${bookmarks.includes(Number(item.number)) ? '♥ マーク解除' : '♡ マーク'}</button>
       </div>
-      <div class="choices">${options.map(option => `
-        <button type="button" class="choice" data-number="${option.number}">${escapeHtml(studyDirection === 'en-ja' ? option.meaning : option.word)}</button>
+      <div class="hbt-choices">${options.map(option => `
+        <button type="button" class="hbt-choice" data-number="${option.number}">${escapeHtml(studyDirection === 'en-ja' ? option.meaning : option.word)}</button>
       `).join('')}</div>
-      <div class="feedback" id="feedback"></div>
-      <div class="actions"><button type="button" class="btn btn-primary" id="nextTestBtn" style="display:none">次の問題</button></div>
+      <div class="hbt-feedback" id="hbt-feedback"></div>
+      <div class="hbt-actions"><button type="button" class="btn btn-primary" id="hbt-nextTestBtn" style="display:none">次の問題</button></div>
     `;
-    $('#testSpeakBtn')?.addEventListener('click', () => speak(item.word, item.lang || 'en-US'));
-    $('#testBookmarkBtn')?.addEventListener('click', () => {
+    $('#hbt-testSpeakBtn')?.addEventListener('click', () => speak(item.word, item.lang || 'en-US'));
+    $('#hbt-testBookmarkBtn')?.addEventListener('click', () => {
       toggleBookmark(item.number);
       renderAllWords();
       renderBookmarks();
       showTestQuestion();
     });
-    $$('.choice').forEach(button => button.addEventListener('click', () => {
+    $$('.hbt-choice').forEach(button => button.addEventListener('click', () => {
       if(activity.locked) return;
       activity.locked = true;
       const selectedNumber = Number(button.dataset.number);
       const isCorrect = selectedNumber === Number(item.number);
-      button.classList.add(isCorrect ? 'correct' : 'wrong');
+      button.classList.add(isCorrect ? 'hbt-correct' : 'hbt-wrong');
       if(!isCorrect){
-        $$('.choice').find(b => Number(b.dataset.number) === Number(item.number))?.classList.add('correct');
+        $$('.hbt-choice').find(b => Number(b.dataset.number) === Number(item.number))?.classList.add('hbt-correct');
       }
-      $('#feedback').textContent = isCorrect ? '正解です！' : `不正解。正解：${escapeHtml(correctAnswer)}`;
+      $('#hbt-feedback').textContent = isCorrect ? '正解です！' : `不正解。正解：${escapeHtml(correctAnswer)}`;
       if(isCorrect){ activity.correct += 1; }
       recordTestAnswer(isCorrect);
-      const nextTestBtn = $('#nextTestBtn');
+      const nextTestBtn = $('#hbt-nextTestBtn');
       if(nextTestBtn){ nextTestBtn.style.display = 'inline-block'; }
     }));
-    $('#nextTestBtn')?.addEventListener('click', () => {
+    $('#hbt-nextTestBtn')?.addEventListener('click', () => {
       activity.index += 1;
       showTestQuestion();
     });
@@ -588,45 +586,45 @@
 
     setMode(selectedMode);
     setStudyDirection(studyDirection);
-    $('#wordOrder') && ($('#wordOrder').value = wordOrder);
-    $('#wordListOrder') && ($('#wordListOrder').value = listOrder);
+    $('#hbt-wordOrder') && ($('#hbt-wordOrder').value = wordOrder);
+    $('#hbt-wordListOrder') && ($('#hbt-wordListOrder').value = listOrder);
     renderAllWords();
     renderBookmarks();
     renderStats();
     updateRangeSummary();
 
-    $$('.tab').forEach(tab => tab.addEventListener('click', () => {
+    $$('.hbt-tab').forEach(tab => tab.addEventListener('click', () => {
       const target = tab.dataset.tab;
-      $$('.tab').forEach(t => t.classList.toggle('active', t === tab));
-      $$('.panel').forEach(p => p.classList.toggle('active', p.id === target));
-      if(target === 'wordlist') renderAllWords();
-      if(target === 'bookmarks') renderBookmarks();
-      if(target === 'stats') renderStats();
+      $$('.hbt-tab').forEach(t => t.classList.toggle('hbt-active', t === tab));
+      $$('.hbt-panel').forEach(p => p.classList.toggle('hbt-active', p.id === target));
+      if(target === 'hbt-wordlist') renderAllWords();
+      if(target === 'hbt-bookmarks') renderBookmarks();
+      if(target === 'hbt-stats') renderStats();
       // Show pronunciation note only when speaking buttons are visible
-      const pronounceNote = $('#pronunciation-note');
-      const activityCard = $('#activityCard');
+      const pronounceNote = $('#hbt-pronunciation-note');
+      const activityCard = $('#hbt-activityCard');
       if(pronounceNote){
         // Show if wordlist/bookmarks or if activity is in progress (home tab with activity shown)
-        if(target === 'wordlist' || target === 'bookmarks' || (target === 'home' && activityCard?.style.display !== 'none')){
-          pronounceNote.classList.add('visible');
+        if(target === 'hbt-wordlist' || target === 'hbt-bookmarks' || (target === 'hbt-home' && activityCard?.style.display !== 'none')){
+          pronounceNote.classList.add('hbt-visible');
         } else {
-          pronounceNote.classList.remove('visible');
+          pronounceNote.classList.remove('hbt-visible');
         }
       }
     }));
-    $('#studyModeBtn')?.addEventListener('click', () => setMode('study'));
-    $('#testModeBtn')?.addEventListener('click', () => setMode('test'));
-    $('#englishToJapaneseBtn')?.addEventListener('click', () => setStudyDirection('en-ja'));
-    $('#japaneseToEnglishBtn')?.addEventListener('click', () => setStudyDirection('ja-en'));
-    $('#startModeBtn')?.addEventListener('click', startActivity);
-    $('#wordOrder')?.addEventListener('change', event => setWordOrder(event.target.value));
-    $('#wordListOrder')?.addEventListener('change', event => setWordListOrder(event.target.value));
-    $('#wordSearch')?.addEventListener('input', renderAllWords);
-    $('#historyDays')?.addEventListener('change', renderStats);
-    $('#startNumber')?.addEventListener('input', updateRangeSummary);
-    $('#rangeQuestionCount')?.addEventListener('input', updateRangeSummary);
-    $('#markedOnly')?.addEventListener('change', updateRangeSummary);
-    $('#resetStats')?.addEventListener('click', () => {
+    $('#hbt-studyModeBtn')?.addEventListener('click', () => setMode('study'));
+    $('#hbt-testModeBtn')?.addEventListener('click', () => setMode('test'));
+    $('#hbt-englishToJapaneseBtn')?.addEventListener('click', () => setStudyDirection('en-ja'));
+    $('#hbt-japaneseToEnglishBtn')?.addEventListener('click', () => setStudyDirection('ja-en'));
+    $('#hbt-startModeBtn')?.addEventListener('click', startActivity);
+    $('#hbt-wordOrder')?.addEventListener('change', event => setWordOrder(event.target.value));
+    $('#hbt-wordListOrder')?.addEventListener('change', event => setWordListOrder(event.target.value));
+    $('#hbt-wordSearch')?.addEventListener('input', renderAllWords);
+    $('#hbt-historyDays')?.addEventListener('change', renderStats);
+    $('#hbt-startNumber')?.addEventListener('input', updateRangeSummary);
+    $('#hbt-rangeQuestionCount')?.addEventListener('input', updateRangeSummary);
+    $('#hbt-markedOnly')?.addEventListener('change', updateRangeSummary);
+    $('#hbt-resetStats')?.addEventListener('click', () => {
       if(confirm('すべての学習記録をリセットしますか？')){
         stats = { total:0, correct:0 };
         dailyHistory = {};

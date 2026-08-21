@@ -26,13 +26,13 @@
     }
     
     /* habatan 固有のスタイリッシュなデザイン */
-    .habatan-container {
+    .hbt-container {
       padding: 20px 0;
       max-width: 1200px;
       margin: 0 auto;
     }
     
-    .tabs{
+    .hbt-tabs{
       display:flex;
       gap:0;
       flex-wrap:wrap;
@@ -43,7 +43,7 @@
       box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.05);
       border-bottom: 2px solid #e0e0e0;
     }
-    .tab{
+    .hbt-tab{
       border:none;
       background: linear-gradient(180deg, #e8e8e8, #f0f0f0);
       color: var(--text);
@@ -57,19 +57,19 @@
       border: 2px solid transparent;
       border-bottom: 2px solid #e0e0e0;
     }
-    .tab:hover{
+    .hbt-tab:hover{
       background: linear-gradient(180deg, #f0f0f0, #f8f8f8);
     }
-    .tab.active{
+    .hbt-tab.hbt-active{
       background: var(--panel);
       color: var(--primary);
       border: 2px solid #e0e0e0;
       border-bottom: 2px solid var(--panel);
       box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
     }
-    .panel{display:none}
-    .panel.active{display:block}
-    .card{
+    .hbt-panel{display:none}
+    .hbt-panel.hbt-active{display:block}
+    .hbt-card{
       background: var(--panel);
       border: 2px solid #e0e0e0;
       border-radius: 0 0 28px 28px;
@@ -78,7 +78,7 @@
       margin-bottom: 28px;
     }
     
-    .card h2 {
+    .hbt-card h2 {
       font-size: 32px;
       font-weight: 900;
       margin-bottom: 16px;
@@ -86,13 +86,13 @@
     }
     
     /* hero-card グラデーション背景版 */
-    .hero-card{
+    .hbt-hero-card{
       background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%);
       border: 2px solid #e0e0e0;
       color: var(--text);
       border-radius: 0 0 28px 28px;
     }
-    .hero-card h2,.hero-card .note{color: var(--text)}
+    .hbt-hero-card h2,.hbt-hero-card .hbt-note{color: var(--text)}
     
     label{
       display:block;
@@ -118,7 +118,7 @@
       box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
     }
     
-    .btn-habatan{
+    .hbt-btn{
       border:0;
       border-radius: 16px;
       padding: 16px 32px;
@@ -132,23 +132,23 @@
       transition:all .3s ease;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
-    .btn-habatan:hover{transform:translateY(-3px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);}
-    .btn-primary-habatan{
+    .hbt-btn:hover{transform:translateY(-3px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);}
+    .hbt-btn-primary{
       background: linear-gradient(135deg, #667eea, #764ba2);
       color:#fff;
     }
-    .btn-primary-habatan:hover{
+    .hbt-btn-primary:hover{
       background: linear-gradient(135deg, #5a67d8, #6b3aa0);
     }
-    .btn-light-habatan{background: rgba(102, 126, 234, 0.1);color: var(--primary)}
-    .btn-light-habatan:hover{background: rgba(102, 126, 234, 0.2)}
-    .btn-danger-habatan{background: rgba(245, 101, 101, 0.1);color: var(--danger)}
+    .hbt-btn-light{background: rgba(102, 126, 234, 0.1);color: var(--primary)}
+    .hbt-btn-light:hover{background: rgba(102, 126, 234, 0.2)}
+    .hbt-btn-danger{background: rgba(245, 101, 101, 0.1);color: var(--danger)}
     
-    .actions{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
-    .note{font-size: 16px;color: var(--muted); line-height: 1.6;}
+    .hbt-actions{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
+    .hbt-note{font-size: 16px;color: var(--muted); line-height: 1.6;}
     
-    .word-list{display:grid;gap:16px}
-    .word-row{
+    .hbt-word-list{display:grid;gap:16px}
+    .hbt-word-row{
       display:grid;
       grid-template-columns:minmax(0,1fr) auto;
       gap:16px;
@@ -159,32 +159,32 @@
       background: #fff;
       transition: all 0.3s ease;
     }
-    .word-row:hover{
+    .hbt-word-row:hover{
       border-color: var(--primary);
       box-shadow: 0 12px 30px rgba(102, 126, 234, 0.2);
       transform: translateY(-2px);
     }
-    .word-list-header{
+    .hbt-word-list-header{
       background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(240, 147, 251, 0.1));
       border-color: rgba(102, 126, 234, 0.3);
     }
-    .word-list-header:hover{box-shadow:none}
-    .word-list-header .word-number,
-    .word-list-header .word-frequency,
-    .word-list-header .word-text,
-    .word-list-header .meaning{color:var(--muted);font-weight:800}
-    .word-list-header .word-frequency{color: #ed8936}
-    .word-list-header .word-actions{display:flex;align-items:center;gap:8px;justify-content:flex-end}
-    .word-list-header .header-action-label{color:var(--muted);font-size:14px;font-weight:800;white-space:nowrap}
-    .word-main{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0}
-    .word-line{display:flex;align-items:center;flex-wrap:wrap;gap:12px;font-size:18px;font-weight:900;min-width:0}
-    .word-id{display:inline-flex;align-items:center;gap:12px;margin-right:2px}
-    .word-number{display:inline-block;min-width:72px;color: var(--primary);font-size:14px;font-weight:700;vertical-align:middle}
-    .word-frequency{display:inline-block;min-width:48px;color: #ed8936;font-size:14px;font-weight:700;vertical-align:middle}
-    .word-text{display:inline-block;word-break:break-word;margin-left:8px; color: #2d3748;}
-    .question-number{text-align:center;color: var(--primary);font-weight:900;font-size:20px;margin-top:28px}
-    .meaning{color: #4a5568;margin-top:4px;padding-left:0; font-size: 16px;}
-    .icon-btn{
+    .hbt-word-list-header:hover{box-shadow:none}
+    .hbt-word-list-header .hbt-word-number,
+    .hbt-word-list-header .hbt-word-frequency,
+    .hbt-word-list-header .hbt-word-text,
+    .hbt-word-list-header .hbt-meaning{color:var(--muted);font-weight:800}
+    .hbt-word-list-header .hbt-word-frequency{color: #ed8936}
+    .hbt-word-list-header .hbt-word-actions{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+    .hbt-word-list-header .hbt-header-action-label{color:var(--muted);font-size:14px;font-weight:800;white-space:nowrap}
+    .hbt-word-main{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0}
+    .hbt-word-line{display:flex;align-items:center;flex-wrap:wrap;gap:12px;font-size:18px;font-weight:900;min-width:0}
+    .hbt-word-id{display:inline-flex;align-items:center;gap:12px;margin-right:2px}
+    .hbt-word-number{display:inline-block;min-width:72px;color: var(--primary);font-size:14px;font-weight:700;vertical-align:middle}
+    .hbt-word-frequency{display:inline-block;min-width:48px;color: #ed8936;font-size:14px;font-weight:700;vertical-align:middle}
+    .hbt-word-text{display:inline-block;word-break:break-word;margin-left:8px; color: #2d3748;}
+    .hbt-question-number{text-align:center;color: var(--primary);font-weight:900;font-size:20px;margin-top:28px}
+    .hbt-meaning{color: #4a5568;margin-top:4px;padding-left:0; font-size: 16px;}
+    .hbt-icon-btn{
       border: 2px solid var(--border);
       background:#fff;
       border-radius: 12px;
@@ -193,10 +193,10 @@
       font-size: 18px;
       transition: all 0.3s;
     }
-    .icon-btn:hover{border-color: var(--primary); color: var(--primary); background: rgba(102, 126, 234, 0.05);}
+    .hbt-icon-btn:hover{border-color: var(--primary); color: var(--primary); background: rgba(102, 126, 234, 0.05);}
     
-    .quiz-top{display:flex;justify-content:space-between;gap:16px;color:var(--muted)}
-    .question-word{
+    .hbt-quiz-top{display:flex;justify-content:space-between;gap:16px;color:var(--muted)}
+    .hbt-question-word{
       text-align:center;
       font-weight:900;
       font-size:clamp(40px,10vw,72px);
@@ -204,7 +204,7 @@
       word-break:break-word;
       color: var(--primary);
     }
-    .study-card{
+    .hbt-study-card{
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -215,7 +215,7 @@
       background: var(--panel);
       box-shadow: var(--shadow-lg);
     }
-    .study-word{
+    .hbt-study-word{
       text-align:center;
       font-weight:900;
       font-size:clamp(40px,10vw,72px);
@@ -225,7 +225,7 @@
       color: var(--primary);
     }
     
-    .meaning-reveal{
+    .hbt-meaning-reveal{
       width:100%;
       min-height: 120px;
       padding: 24px 28px;
@@ -242,19 +242,19 @@
       cursor:pointer;
       transition:all .3s ease;
     }
-    .meaning-reveal:hover{
+    .hbt-meaning-reveal:hover{
       border-color: var(--primary);
       background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(240, 147, 251, 0.15));
       box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
     }
-    .meaning-placeholder{font-size:22px;font-weight:800;color: var(--muted)}
+    .hbt-meaning-placeholder{font-size:22px;font-weight:800;color: var(--muted)}
     
-    .choices{
+    .hbt-choices{
       display:grid;
       grid-template-columns:1fr 1fr;
       gap: 16px;
     }
-    .choice{
+    .hbt-choice{
       min-height: 100px;
       border: 3px solid var(--border);
       background:#fff;
@@ -266,58 +266,56 @@
       text-align:left;
       transition: all 0.3s ease;
     }
-    .choice:hover{
+    .hbt-choice:hover{
       border-color: var(--primary);
       background: rgba(102, 126, 234, 0.05);
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
     }
-    .choice.correct{
+    .hbt-choice.hbt-correct{
       border-color: var(--success);
       background: rgba(72, 187, 120, 0.1);
       color: var(--success);
     }
-    .choice.wrong{
+    .hbt-choice.hbt-wrong{
       border-color: var(--danger);
       background: rgba(245, 101, 101, 0.1);
       color: var(--danger);
     }
     
-    .feedback{text-align:center;font-size: 24px;font-weight:900;min-height:32px;margin: 24px 0 8px}
-    .stats{
+    .hbt-feedback{text-align:center;font-size: 24px;font-weight:900;min-height:32px;margin: 24px 0 8px}
+    .hbt-stats{
       display:grid;
       grid-template-columns:repeat(3,1fr);
       gap: 18px;
     }
-    .stat{
+    .hbt-stat{
       text-align:center;
       background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(240, 147, 251, 0.1));
       border-radius: 20px;
       padding: 28px 20px;
       border: 2px solid rgba(102, 126, 234, 0.3);
       transition: all 0.3s ease;
-    }
-    .stat:hover{
-      transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.15);
-    }
-    .stat strong{
-      display:block;
-      font-size: 36px;
-      color: var(--primary);
-      font-weight: 900;
-    }
-    .stat {
       color: #4a5568;
       font-size: 15px;
       font-weight: 700;
       margin-top: 8px;
     }
-    .empty{text-align:center;color: var(--muted);padding: 40px 16px; font-size: 18px;}
-    .footer-note{color: var(--muted);font-size: 14px;text-align:center;margin: 32px 0; display: none;}
-    .footer-note.visible{display: block;}
+    .hbt-stat:hover{
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.15);
+    }
+    .hbt-stat strong{
+      display:block;
+      font-size: 36px;
+      color: var(--primary);
+      font-weight: 900;
+    }
+    .hbt-empty{text-align:center;color: var(--muted);padding: 40px 16px; font-size: 18px;}
+    .hbt-footer-note{color: var(--muted);font-size: 14px;text-align:center;margin: 32px 0; display: none;}
+    .hbt-footer-note.hbt-visible{display: block;}
     
-    .mode-grid{
+    .hbt-mode-grid{
       display:flex;
       gap:0;
       flex-wrap:wrap;
@@ -327,7 +325,7 @@
       border-radius: 12px;
       border: 2px solid #e0e0e0;
     }
-    .mode-card{
+    .hbt-mode-card{
       flex:1;
       border:none;
       background: #f0f0f0;
@@ -339,45 +337,45 @@
       transition:all .3s ease;
       border-right: 2px solid #e0e0e0;
     }
-    .mode-card:last-child{
+    .hbt-mode-card:last-child{
       border-right: none;
     }
-    .mode-card strong{
+    .hbt-mode-card strong{
       display: block;
       font-size: 16px;
       color: var(--text);
       font-weight: 800;
     }
-    .mode-card small{
+    .hbt-mode-card small{
       display: none;
     }
-    .mode-card:hover{
+    .hbt-mode-card:hover{
       background: linear-gradient(180deg, #f8f8f8, #f0f0f0);
     }
-    .mode-card.active{
+    .hbt-mode-card.hbt-active{
       background: linear-gradient(135deg, #667eea, #764ba2);
       color:#fff;
     }
-    .mode-card.active strong{
+    .hbt-mode-card.hbt-active strong{
       color: #fff;
     }
     
-    .direction-setting{margin: 28px 0}
-    .direction-setting>label{margin-bottom: 14px; font-size: 18px;}
-    .range-section{margin-top: 28px}
-    .section-heading{
+    .hbt-direction-setting{margin: 28px 0}
+    .hbt-direction-setting>label{margin-bottom: 14px; font-size: 18px;}
+    .hbt-range-section{margin-top: 28px}
+    .hbt-section-heading{
       display:block;
       margin: 0 0 14px;
       font-size: 18px;
       color: var(--text);
       font-weight:900;
     }
-    .direction-buttons{
+    .hbt-direction-buttons{
       display:grid;
       grid-template-columns:1fr 1fr;
       gap: 14px;
     }
-    .direction-btn{
+    .hbt-direction-btn{
       border: 3px solid var(--border);
       background:#fff;
       color: var(--text);
@@ -388,26 +386,26 @@
       font-size: 15px;
       transition: all 0.3s ease;
     }
-    .direction-btn:hover{
+    .hbt-direction-btn:hover{
       border-color: var(--primary);
       background: rgba(102, 126, 234, 0.05);
       transform: scale(1.02);
     }
-    .direction-btn.active{
+    .hbt-direction-btn.hbt-active{
       border-color: var(--primary);
       background: linear-gradient(135deg, #667eea, #764ba2);
       color: #fff;
     }
     
-    .range-box{
+    .hbt-range-box{
       display:grid;
       grid-template-columns:repeat(4, 1fr);
       gap: 20px;
       align-items:start;
     }
-    .range-box > div{min-width:0}
+    .hbt-range-box > div{min-width:0}
     
-    .range-box > div > label{
+    .hbt-range-box > div > label{
       display:block;
       margin: 0 0 10px;
       height: 24px;
@@ -416,61 +414,61 @@
       color: #2d3748;
       font-weight:900;
     }
-    .range-box > div > input, .range-box > div > select{
+    .hbt-range-box > div > input, .hbt-range-box > div > select{
       height: 64px;
       margin:0;
       border-radius: 16px;
       padding: 16px 18px;
       font-size: 16px;
     }
-    .range-box > div > input[type="checkbox"]{
+    .hbt-range-box > div > input[type="checkbox"]{
       width:auto;
       height:auto;
       margin: 14px 0 0;
       transform:scale(1.4);
       cursor: pointer;
     }
-    .range-box > div > input:disabled, .range-box > div > select:disabled{
+    .hbt-range-box > div > input:disabled, .hbt-range-box > div > select:disabled{
       background: #f7fafc;
       color: #a0aec0;
       border-color: #cbd5e0;
       cursor:not-allowed;
     }
-    .stats-header{
+    .hbt-stats-header{
       display:flex;
       justify-content:space-between;
       align-items:center;
       gap: 20px;
       flex-wrap:wrap;
     }
-    .chart-wrap { margin-top: 24px; }
+    .hbt-chart-wrap { margin-top: 24px; }
     
     @media (max-width:900px){
-      .card{
+      .hbt-card{
         padding: 28px;
         border-radius: 0 0 24px 24px;
       }
-      .tabs{border-radius: 16px 16px 0 0;}
-      .tab{border-radius: 10px 10px 0 0; padding: 14px 18px; font-size: 13px;}
-      .mode-grid{gap: 0; border-radius: 10px; margin: 20px 0 24px;}
-      .mode-card{padding: 14px 16px; font-size: 14px;}
-      .range-box{grid-template-columns:repeat(2,minmax(0,1fr));gap: 18px}
-      .stats{grid-template-columns:1fr 1fr}
-      .choices{grid-template-columns: 1fr;}
+      .hbt-tabs{border-radius: 16px 16px 0 0;}
+      .hbt-tab{border-radius: 10px 10px 0 0; padding: 14px 18px; font-size: 13px;}
+      .hbt-mode-grid{gap: 0; border-radius: 10px; margin: 20px 0 24px;}
+      .hbt-mode-card{padding: 14px 16px; font-size: 14px;}
+      .hbt-range-box{grid-template-columns:repeat(2,minmax(0,1fr));gap: 18px}
+      .hbt-stats{grid-template-columns:1fr 1fr}
+      .hbt-choices{grid-template-columns: 1fr;}
     }
     
     @media (max-width:640px){
-      .habatan-container {
+      .hbt-container {
         padding: 12px;
       }
-      .card{
+      .hbt-card{
         padding: 20px;
         border-radius: 0 0 20px 20px;
         margin-bottom: 20px;
       }
-      .tabs{gap: 0; padding: 0; border-radius: 16px 16px 0 0; margin: 20px 0 0;}
-      .tab{padding: 12px 14px; font-size: 12px; border-radius: 8px 8px 0 0;}
-      .card h2{
+      .hbt-tabs{gap: 0; padding: 0; border-radius: 16px 16px 0 0; margin: 20px 0 0;}
+      .hbt-tab{padding: 12px 14px; font-size: 12px; border-radius: 8px 8px 0 0;}
+      .hbt-card h2{
         font-size: 24px;
         margin-bottom: 12px;
       }
@@ -480,47 +478,47 @@
         font-size: 14px;
         border-radius: 12px;
       }
-      .btn-habatan{
+      .hbt-btn{
         padding: 14px 24px;
         font-size: 14px;
         border-radius: 12px;
       }
-      .study-card{
+      .hbt-study-card{
         padding: 28px 20px;
         gap: 18px;
         border-radius: 20px;
       }
-      .question-word, .study-word{
+      .hbt-question-word, .hbt-study-word{
         font-size: clamp(28px, 7vw, 52px);
         margin: 20px 0 12px;
       }
-      .meaning-reveal{
+      .hbt-meaning-reveal{
         min-height: 100px;
         padding: 20px;
         font-size: 18px;
         border-radius: 16px;
       }
-      .choice{
+      .hbt-choice{
         min-height: 80px;
         padding: 14px;
         font-size: 14px;
         border-radius: 14px;
       }
-      .stat strong{
+      .hbt-stat strong{
         font-size: 28px;
       }
-      .mode-grid{border-radius: 8px; margin: 16px 0 20px;}
-      .mode-card{
+      .hbt-mode-grid{border-radius: 8px; margin: 16px 0 20px;}
+      .hbt-mode-card{
         padding: 12px 10px;
         font-size: 12px;
       }
-      .mode-card strong{font-size: 12px;}
-      .range-box{
+      .hbt-mode-card strong{font-size: 12px;}
+      .hbt-range-box{
         grid-template-columns:1fr;
         gap: 16px;
       }
-      .direction-buttons{gap: 10px;}
-      .direction-btn{
+      .hbt-direction-buttons{gap: 10px;}
+      .hbt-direction-btn{
         padding: 12px 16px;
         font-size: 13px;
       }
@@ -529,115 +527,114 @@
 {% endblock %}
 
 {% block content %}
-<div class="habatan-container">
+<div class="hbt-container">
   
   <div class="mb-4">
     <h2 class="mb-1" style="color: var(--primary); font-weight: 800;">はば単2500</h2>
     <p class="text-muted mb-0">兵庫県教育委員会「はば単2500」英単語学習ツール</p>
   </div>
 
-  <nav class="tabs">
-    <button class="tab active" data-tab="home">学習・確認</button>
-    <button class="tab" data-tab="wordlist">はば単2500一覧</button>
-    <button class="tab" data-tab="bookmarks">マークした単語一覧</button>
-    <button class="tab" data-tab="stats">学習進捗状況</button>
+  <nav class="hbt-tabs">
+    <button class="hbt-tab hbt-active" data-tab="hbt-home">学習・確認</button>
+    <button class="hbt-tab" data-tab="hbt-wordlist">はば単2500一覧</button>
+    <button class="hbt-tab" data-tab="hbt-bookmarks">マークした単語一覧</button>
+    <button class="hbt-tab" data-tab="hbt-stats">学習進捗状況</button>
   </nav>
 
-  <section id="home" class="panel active">
-    <div class="card hero-card">
+  <section id="hbt-home" class="hbt-panel hbt-active">
+    <div class="hbt-card hbt-hero-card">
       <h2>学習・確認の切り替えと単語範囲を選択</h2>
-      <p class="note">学習と確認を切り替えながら、範囲を決めて効率よく英単語を習得します。</p>
+      <p class="hbt-note">学習と確認を切り替えながら、範囲を決めて効率よく英単語を習得します。</p>
       
-      <div class="mode-grid">
-        <button class="mode-card active" id="studyModeBtn" type="button">
+      <div class="hbt-mode-grid">
+        <button class="hbt-mode-card hbt-active" id="hbt-studyModeBtn" type="button">
           <strong>英語・日本語を見て、単語を学習</strong>
         </button>
-        <button class="mode-card" id="testModeBtn" type="button">
+        <button class="hbt-mode-card" id="hbt-testModeBtn" type="button">
           <strong>英語・日本語を見て、覚えているか確認</strong>
         </button>
       </div>
 
-      <div id="studyDirectionSetting" class="direction-setting">
+      <div id="hbt-studyDirectionSetting" class="hbt-direction-setting">
         <label>英語 ⇔ 日本語 を選ぶ</label>
-        <div class="direction-buttons">
-          <button type="button" class="direction-btn active" id="englishToJapaneseBtn">英語 ⇒ 日本語</button>
-          <button type="button" class="direction-btn" id="japaneseToEnglishBtn">日本語 ⇒ 英語</button>
+        <div class="hbt-direction-buttons">
+          <button type="button" class="hbt-direction-btn hbt-active" id="hbt-englishToJapaneseBtn">英語 ⇒ 日本語</button>
+          <button type="button" class="hbt-direction-btn" id="hbt-japaneseToEnglishBtn">日本語 ⇒ 英語</button>
         </div>
       </div>
 
-      <div class="range-section">
-        <label class="section-heading">単語の範囲</label>
-        <div class="range-box">
+      <div class="hbt-range-section">
+        <label class="hbt-section-heading">単語の範囲</label>
+        <div class="hbt-range-box">
           <div>
-            <label for="markedOnly">マークした単語</label>
-            <input id="markedOnly" type="checkbox">
+            <label for="hbt-markedOnly">マークした単語</label>
+            <input id="hbt-markedOnly" type="checkbox">
           </div>
-          <div><label for="startNumber">開始</label><input id="startNumber" type="number" min="1" max="2500" value="1"></div>
-          <div><label for="rangeQuestionCount">単語数</label><input id="rangeQuestionCount" type="number" min="1" max="2500" value="50"></div>
-          <div><label for="wordOrder">出題順</label><select id="wordOrder"><option value="number">abc順</option><option value="frequency">頻度順</option></select></div>
-          <!-- <div id="choiceSetting"><label for="choiceCount">選択肢数</label><select id="choiceCount"><option value="4">4択</option><option value="5">5択</option><option value="6">6択</option></select></div> -->
+          <div><label for="hbt-startNumber">開始</label><input id="hbt-startNumber" type="number" min="1" max="2500" value="1"></div>
+          <div><label for="hbt-rangeQuestionCount">単語数</label><input id="hbt-rangeQuestionCount" type="number" min="1" max="2500" value="50"></div>
+          <div><label for="hbt-wordOrder">出題順</label><select id="hbt-wordOrder"><option value="number">abc順</option><option value="frequency">頻度順</option></select></div>
         </div>
       </div>
 
-      <p class="range-summary mt-3 mb-2" id="rangeSummary" style="font-weight: 800;">1〜50：50語</p>
-      <p class="note mt-3">出題順がabc順の場合は、開始番号：101、単語数：50 と入力すると、abc順に101〜150までの50語を出題します。<br>出題順が頻度順の場合は、開始番号以降の頻度の単語を頻度順に並べて出題します。</p>
-      <div class="actions">
-        <button class="btn btn-habatan btn-primary-habatan start-main-btn" id="startModeBtn" type="button">学習開始</button>
+      <p class="hbt-range-summary mt-3 mb-2" id="hbt-rangeSummary" style="font-weight: 800;">1〜50：50語</p>
+      <p class="hbt-note mt-3">出題順がabc順の場合は、開始番号：101、単語数：50 と入力すると、abc順に101〜150までの50語を出題します。<br>出題順が頻度順の場合は、開始番号以降の頻度の単語を頻度順に並べて出題します。</p>
+      <div class="hbt-actions">
+        <button class="hbt-btn hbt-btn-primary hbt-start-main-btn" id="hbt-startModeBtn" type="button">学習開始</button>
       </div>
     </div>
-    <div class="card" id="activityCard" style="display:none">
-      <div id="activityArea"></div>
+    <div class="hbt-card" id="hbt-activityCard" style="display:none">
+      <div id="hbt-activityArea"></div>
     </div>
   </section>
 
-  <section id="wordlist" class="panel">
-    <div class="card">
-      <div class="stats-header mb-3">
+  <section id="hbt-wordlist" class="hbt-panel">
+    <div class="hbt-card">
+      <div class="hbt-stats-header mb-3">
         <div>
-          <h2>はば単2500一覧 <span id="wordListCount"></span></h2>
-          <p class="note">「はば単2500」の英単語、日本語・用法を確認できます。</p>
+          <h2>はば単2500一覧 <span id="hbt-wordListCount"></span></h2>
+          <p class="hbt-note">「はば単2500」の英単語、日本語・用法を確認できます。</p>
         </div>
         <div class="d-flex gap-2 align-items-center flex-grow-1 justify-content-md-end" style="min-width:320px">
-          <input id="wordSearch" type="search" placeholder="英単語・日本語で検索" style="max-width: 250px;">
-          <select id="wordListOrder" style="max-width: 150px;"><option value="number">abc順</option><option value="frequency">頻度順</option></select>
+          <input id="hbt-wordSearch" type="search" placeholder="英単語・日本語で検索" style="max-width: 250px;">
+          <select id="hbt-wordListOrder" style="max-width: 150px;"><option value="number">abc順</option><option value="frequency">頻度順</option></select>
         </div>
       </div>
-      <div id="allWordList" class="word-list"></div>
+      <div id="hbt-allWordList" class="hbt-word-list"></div>
     </div>
   </section>
 
-  <section id="bookmarks" class="panel">
-    <div class="card">
+  <section id="hbt-bookmarks" class="hbt-panel">
+    <div class="hbt-card">
       <h2>マークした単語</h2>
-      <p class="note">学習中に★を付けた単語だけを表示します。</p>
-      <div id="bookmarkList" class="word-list"></div>
+      <p class="hbt-note">学習中に★を付けた単語だけを表示します。</p>
+      <div id="hbt-bookmarkList" class="hbt-word-list"></div>
     </div>
   </section>
 
-  <section id="stats" class="panel">
-    <div class="card">
-      <div class="stats-header mb-3">
+  <section id="hbt-stats" class="hbt-panel">
+    <div class="hbt-card">
+      <div class="hbt-stats-header mb-3">
         <div>
           <h2>学習進捗状況</h2>
-          <p class="note">学習・確認の進捗状況です。</p>
+          <p class="hbt-note">学習・確認の進捗状況です。</p>
         </div>
-        <select id="historyDays" style="width:auto"><option value="7" selected>過去1週間</option><option value="28">過去4週間</option><option value="90">過去3か月</option><option value="180">過去半年</option></select>
+        <select id="hbt-historyDays" style="width:auto"><option value="7" selected>過去1週間</option><option value="28">過去4週間</option><option value="90">過去3か月</option><option value="180">過去半年</option></select>
       </div>
-      <div class="stats progress-stats">
-        <div class="stat"><strong id="studyDays">0</strong>学習回数</div>
-        <div class="stat"><strong id="studiedWords">0</strong>学習単語数</div>
-        <div class="stat"><strong id="totalAnswers">0</strong>確認単語数</div>
-        <div class="stat"><strong id="correctAnswers">0</strong>正答数</div>
-        <div class="stat"><strong id="accuracy">0%</strong>正答率</div>
-        <div class="stat"><strong id="bookmarkTotal">0</strong>マーク数</div>
+      <div class="hbt-stats hbt-progress-stats">
+        <div class="hbt-stat"><strong id="hbt-studyDays">0</strong>学習回数</div>
+        <div class="hbt-stat"><strong id="hbt-studiedWords">0</strong>学習単語数</div>
+        <div class="hbt-stat"><strong id="hbt-totalAnswers">0</strong>確認単語数</div>
+        <div class="hbt-stat"><strong id="hbt-correctAnswers">0</strong>正答数</div>
+        <div class="hbt-stat"><strong id="hbt-accuracy">0%</strong>正答率</div>
+        <div class="hbt-stat"><strong id="hbt-bookmarkTotal">0</strong>マーク数</div>
       </div>
     </div>
-    <div class="card">
+    <div class="hbt-card">
       <h2>学習進捗状況グラフ</h2>
-      <div class="chart-wrap">
-        <canvas id="studyChart" aria-label="学習進捗状況グラフ" style="max-height: 350px;"></canvas>
+      <div class="hbt-chart-wrap">
+        <canvas id="hbt-studyChart" aria-label="学習進捗状況グラフ" style="max-height: 350px;"></canvas>
       </div>
-      <div class="chart-legend"></div>
+      <div class="hbt-chart-legend"></div>
     </div>
   </section>
 
@@ -647,7 +644,7 @@
     </div>
   {% endif %}
 
-  <p class="footer-note mt-4" id="pronunciation-note">発音はブラウザの機能を使用しているので、正しくない場合があります。</p>
+  <p class="hbt-footer-note mt-4" id="hbt-pronunciation-note">発音はブラウザの機能を使用しているので、正しくない場合があります。</p>
 </div>
 {% endblock %}
 
