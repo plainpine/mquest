@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_file, Response, get_flashed_messages, jsonify, send_from_directory
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, Response, get_flashed_messages, jsonify, send_from_directory
 from sqlalchemy import func, case
 from sqlalchemy.exc import IntegrityError, OperationalError
-from flask_login import LoginManager, login_user, login_required, logout_user, UserMixin, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash
 from datetime import datetime, timezone, timedelta
 from models import QuestHistory, Quest, Question, QuestAttemptLog
 import os
