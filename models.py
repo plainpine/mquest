@@ -218,3 +218,16 @@ class HabatanDailyHistory(db.Model):
     )
 
     user = db.relationship('User', backref=db.backref('habatan_daily_history', cascade='all, delete-orphan'))
+
+
+class SubjectLevel(db.Model):
+    __tablename__ = 'subject_levels'
+    __bind_key__ = 'content'
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(100), nullable=False) # 例: "math", "english"
+    level_code = db.Column(db.String(10), nullable=False) # 例: "Lv1", "Lv2"
+    level_alias = db.Column(db.String(50), nullable=True) # 例: "入門", "基礎"
+
+    __table_args__ = (
+        UniqueConstraint('subject', 'level_code', name='unique_subject_level_code'),
+    )

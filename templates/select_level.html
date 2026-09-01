@@ -8,8 +8,8 @@
 
 <ul class="selectable-list">
   {% for level in levels %}
-    <li data-url="{{ url_for('select_quest_by_title_level', title=title, level=level) }}" onclick="window.location.href=this.dataset.url">
-      {{ level }}
+    <li data-url="{{ url_for('select_quest_by_title_level', title=title, level=level.code) }}" onclick="window.location.href=this.dataset.url">
+      {{ level.label }}
     </li>
   {% endfor %}
 </ul>

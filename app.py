@@ -48,7 +48,7 @@ SUBJECT_KEY_TO_JP = {
 # 日本語名から英語キーへの逆引きマップ
 SUBJECT_JP_TO_KEY = {v: k for k, v in SUBJECT_KEY_TO_JP.items()}
 
-from models import db, User, Quest, UserProgress, HabatanBookmark, HabatanStudyStats, HabatanDailyHistory
+from models import db, User, Quest, UserProgress, HabatanBookmark, HabatanStudyStats, HabatanDailyHistory, SubjectLevel
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__, template_folder=os.path.join(basedir, 'templates'))
@@ -665,11 +665,19 @@ def select_title():
 @app.route('/select_level/<title>')
 @login_required
 def select_level(title):
-    print(f"Title: {title}")
     title_key = SUBJECT_JP_TO_KEY.get(title, title)
-    levels = safe_query_all(db.session.query(Quest.level).filter_by(title=title_key).distinct())
-    print(f"Levels: {levels}")
-    return render_template('select_level.html', title=title, levels=[l[0] for l in levels])
+    
+    # 既存のクエストからレベルを取得するのではなく、設定されたレベルを取得
+    levels_query = SubjectLevel.query.filter(SubjectLevel.subject == title_key, SubjectLevel.level_code != 'Lv0')
+    levels = safe_query_all(levels_query.order_by(SubjectLevel.level_code))
+    
+    # 画面に渡す用データ (level_code, alias)
+    level_data = []
+    for l in levels:
+        label = l.level_alias if l.level_alias else l.level_code
+        level_data.append({'code': l.level_code, 'label': label})
+        
+    return render_template('select_level.html', title=title, levels=level_data)
 
 @app.route('/select_quest/<title>/<level>')
 @login_required
@@ -1646,6 +1654,76 @@ def add_teacher():
 
 
 # ==================================================
+# レベル設定 (Subject Level Management)
+# ==================================================
+
+@app.route('/manage/subject_levels', methods=['GET'])
+@login_required
+def manage_subject_levels():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    levels = safe_query_all(SubjectLevel.query.order_by(SubjectLevel.subject, SubjectLevel.level_code))
+    return render_template('manage_subject_levels.html', levels=levels)
+
+@app.route('/manage/subject_levels/add', methods=['POST'])
+@login_required
+def add_subject_level():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    subject = request.form.get('subject')
+    level_code = request.form.get('level_code')
+    level_alias = request.form.get('level_alias')
+    
+    if not subject or not level_code:
+        flash("科目とレベルコードは必須です。", "danger")
+        return redirect(url_for('manage_subject_levels'))
+        
+    try:
+        new_level = SubjectLevel(subject=subject, level_code=level_code, level_alias=level_alias)
+        db.session.add(new_level)
+        safe_commit()
+        flash("レベルを追加しました。", "success")
+    except IntegrityError:
+        db.session.rollback()
+        flash("その科目とレベルコードの組み合わせは既に存在します。", "danger")
+    
+    return redirect(url_for('manage_subject_levels'))
+
+@app.route('/manage/subject_levels/update/<int:level_id>', methods=['POST'])
+@login_required
+def update_subject_level(level_id):
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    level = safe_get(SubjectLevel, level_id)
+    if not level:
+        flash("レベルが見つかりません。", "danger")
+        return redirect(url_for('manage_subject_levels'))
+        
+    level.level_alias = request.form.get('level_alias')
+    safe_commit()
+    flash("レベルの別名を更新しました。", "success")
+    
+    return redirect(url_for('manage_subject_levels'))
+
+@app.route('/manage/subject_levels/delete/<int:level_id>', methods=['POST'])
+@login_required
+def delete_subject_level(level_id):
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    level = safe_get(SubjectLevel, level_id)
+    if level:
+        db.session.delete(level)
+        safe_commit()
+        flash("レベルを削除しました。", "success")
+    
+    return redirect(url_for('manage_subject_levels'))
+
+
+# ==================================================
 # ユーザー情報のJSONエクスポート・インポート
 # ==================================================
 
@@ -2091,19 +2169,20 @@ def manage_quests():
     selected_title_jp = request.args.get('title', '')
     selected_level = request.args.get('level', '')
 
-    # 全てのユニークなタイトルを取得
-    all_titles_raw = safe_query_all(db.session.query(Quest.title).distinct())
-    jp_titles = sorted(list(set([SUBJECT_KEY_TO_JP.get(t[0], t[0]) for t in all_titles_raw])))
+    # 全てのユニークなタイトルを取得 (SubjectLevelテーブルから)
+    all_subjects_raw = safe_query_all(db.session.query(SubjectLevel.subject).distinct())
+    jp_titles = sorted(list(set([SUBJECT_KEY_TO_JP.get(s[0], s[0]) for s in all_subjects_raw])))
 
-    # 全てのユニークなレベルを取得
-    all_levels_raw = safe_query_all(db.session.query(Quest.level).distinct())
+    # 新：全てのユニークなレベルを取得（SubjectLevelテーブルから）
+    all_levels_raw = safe_query_all(db.session.query(SubjectLevel.level_code).distinct())
     all_levels = sorted(list(set([l[0] for l in all_levels_raw])))
 
     # 科目ごとのレベルマッピングを作成
     title_to_levels = {}
     for jp_title in jp_titles:
         title_key = SUBJECT_JP_TO_KEY.get(jp_title, jp_title)
-        levels_raw = safe_query_all(db.session.query(Quest.level).filter_by(title=title_key).distinct())
+        # 新：SubjectLevelから科目ごとのレベルを取得
+        levels_raw = safe_query_all(db.session.query(SubjectLevel.level_code).filter_by(subject=title_key).distinct())
         title_to_levels[jp_title] = sorted(list(set([l[0] for l in levels_raw])))
 
     quest_query = Quest.query

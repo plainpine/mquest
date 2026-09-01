@@ -56,6 +56,7 @@
     <button type="submit" name="action" value="challenge" onclick="setClickedAction(this.value)" class="btn btn-primary">問題確認</button>
     <button type="button" onclick="handleExportJson()" class="btn btn-secondary">JSONエクスポート</button>
     <button type="button" onclick="location.href='{{ url_for('import_questions_gui') }}'" class="btn btn-secondary">JSONインポート</button>
+    <button type="button" onclick="location.href='{{ url_for('manage_subject_levels') }}'" class="btn btn-info">レベル設定</button>
   </div>
 
   <script>
