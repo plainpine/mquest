@@ -538,6 +538,7 @@
     <button class="hbt-tab hbt-active" data-tab="hbt-home">学習・確認</button>
     <button class="hbt-tab" data-tab="hbt-wordlist">はば単2500一覧</button>
     <button class="hbt-tab" data-tab="hbt-bookmarks">マークした単語一覧</button>
+    <button class="hbt-tab" data-tab="hbt-checked">非表示設定の単語一覧</button>
     <button class="hbt-tab" data-tab="hbt-stats">学習進捗状況</button>
   </nav>
 
@@ -635,6 +636,14 @@
         <canvas id="hbt-studyChart" aria-label="学習進捗状況グラフ" style="max-height: 350px;"></canvas>
       </div>
       <div class="hbt-chart-legend"></div>
+    </div>
+  </section>
+
+  <section id="hbt-checked" class="hbt-panel">
+    <div class="hbt-card">
+      <h2>非表示設定の単語</h2>
+      <p class="hbt-note">学習・確認で表示されないようにした単語一覧です。</p>
+      <div id="hbt-checkedList" class="hbt-word-list"></div>
     </div>
   </section>
 

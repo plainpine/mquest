@@ -187,6 +187,19 @@ class HabatanBookmark(db.Model):
 
     user = db.relationship('User', backref=db.backref('habatan_bookmarks', cascade='all, delete-orphan'))
 
+class HabatanCheckedWord(db.Model):
+    __tablename__ = 'habatan_checked_words'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    number = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'number', name='unique_habatan_checked_word_per_user'),
+    )
+
+    user = db.relationship('User', backref=db.backref('habatan_checked_words', cascade='all, delete-orphan'))
+
 
 class HabatanStudyStats(db.Model):
     __tablename__ = 'habatan_study_stats'

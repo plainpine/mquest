@@ -45,6 +45,7 @@
   let words = [];
   let stats = {"total":0,"correct":0};
   let bookmarks = [];
+  let checkedWords = [];
   let dailyHistory = {};
   let studyDirection = 'en-ja';
   let wordOrder = 'number';
@@ -69,6 +70,7 @@
           words = data.words;
           stats = data.stats || {"total":0,"correct":0};
           bookmarks = (data.bookmarks || []).map(Number);
+          checkedWords = (data.checked_words || []).map(Number);
           dailyHistory = data.dailyHistory || {};
           studyDirection = data.studyDirection || 'en-ja';
           wordOrder = normalizeOrder(data.wordOrder);
@@ -76,6 +78,7 @@
           localStorage.setItem('habatan2500Words', JSON.stringify(words));
           localStorage.setItem('vocabStats', JSON.stringify(stats));
           localStorage.setItem('habatan2500Bookmarks', JSON.stringify(bookmarks));
+          localStorage.setItem('habatan2500CheckedWords', JSON.stringify(checkedWords));
           localStorage.setItem('habatan2500DailyHistory', JSON.stringify(dailyHistory));
           localStorage.setItem('habatanStudyDirection', studyDirection);
           localStorage.setItem('habatanWordOrder', wordOrder);
@@ -100,6 +103,7 @@
     words = JSON.parse(localStorage.getItem('habatan2500Words') || 'null') || (window.SAMPLE_WORDS || []);
     stats = JSON.parse(localStorage.getItem('vocabStats') || '{"total":0,"correct":0}');
     bookmarks = JSON.parse(localStorage.getItem('habatan2500Bookmarks') || '[]').map(Number);
+    checkedWords = JSON.parse(localStorage.getItem('habatan2500CheckedWords') || '[]').map(Number);
     dailyHistory = JSON.parse(localStorage.getItem('habatan2500DailyHistory') || '{}');
     studyDirection = localStorage.getItem('habatanStudyDirection') || 'en-ja';
     wordOrder = normalizeOrder(localStorage.getItem('habatanWordOrder'));
@@ -110,6 +114,7 @@
     localStorage.setItem('habatan2500Words', JSON.stringify(words));
     localStorage.setItem('vocabStats', JSON.stringify(stats));
     localStorage.setItem('habatan2500Bookmarks', JSON.stringify(bookmarks));
+    localStorage.setItem('habatan2500CheckedWords', JSON.stringify(checkedWords));
     localStorage.setItem('habatan2500DailyHistory', JSON.stringify(dailyHistory));
     localStorage.setItem('habatanStudyDirection', studyDirection);
     localStorage.setItem('habatanWordOrder', wordOrder);
@@ -119,6 +124,7 @@
     syncWithServer({
       stats,
       bookmarks,
+      checked_words: checkedWords,
       dailyHistory,
       studyDirection,
       wordOrder
@@ -288,6 +294,7 @@
         <div class="hbt-word-actions">
           <span class="hbt-header-action-label">発音</span>
           <span class="hbt-header-action-label">マーク</span>
+          <span class="hbt-header-action-label">非表示</span>
         </div>
       </div>
     `;
@@ -303,6 +310,7 @@
         <div class="hbt-word-actions">
           <button type="button" class="hbt-icon-btn hbt-speak-btn" data-number="${w.number}" title="発音">🔊</button>
           <button type="button" class="hbt-icon-btn hbt-bookmark-btn" data-number="${w.number}" title="マーク">${bookmarks.includes(Number(w.number)) ? '♥' : '♡'}</button>
+          <button type="button" class="hbt-icon-btn hbt-check-btn" data-number="${w.number}" title="非表示">${checkedWords.includes(Number(w.number)) ? '☑' : '☐'}</button>
         </div>
       </div>
     `).join('');
@@ -315,6 +323,13 @@
       toggleBookmark(Number(button.dataset.number));
       renderAllWords();
       renderBookmarks();
+      renderCheckedWords();
+    }));
+    $$('.hbt-check-btn').forEach(button => button.addEventListener('click', () => {
+      toggleChecked(Number(button.dataset.number));
+      renderAllWords();
+      renderBookmarks();
+      renderCheckedWords();
     }));
   }
 
@@ -347,6 +362,40 @@
       toggleBookmark(Number(button.dataset.number));
       renderBookmarks();
       renderAllWords();
+      renderCheckedWords();
+    }));
+  }
+
+  function renderCheckedWords(){
+    const box = $('#hbt-checkedList');
+    if(!box) return;
+    const checked = sortWords(words.filter(w => checkedWords.includes(Number(w.number))), listOrder);
+    if(!checked.length){
+      box.innerHTML = '<div class="hbt-empty">非表示設定の単語はありません。</div>';
+      return;
+    }
+    box.innerHTML = checked.map(w => `
+      <div class="hbt-word-row">
+        <div class="hbt-word-main">
+          <div class="hbt-word-line"><span class="hbt-word-number">${w.number}</span><span class="hbt-word-text">${escapeHtml(w.word)}</span></div>
+          <div class="hbt-meaning">${escapeHtml(w.meaning || '')}</div>
+        </div>
+        <div class="hbt-word-actions">
+          <button type="button" class="hbt-icon-btn hbt-speak-btn" data-number="${w.number}" title="発音">🔊</button>
+          <button type="button" class="hbt-icon-btn hbt-remove-check-btn" data-number="${w.number}" title="非表示解除">☑</button>
+        </div>
+      </div>
+    `).join('');
+    $$('.hbt-speak-btn').forEach(button => button.addEventListener('click', () => {
+      const number = Number(button.dataset.number);
+      const item = words.find(w => Number(w.number) === number);
+      if(item) speak(item.word, item.lang || 'en-US');
+    }));
+    $$('.hbt-remove-check-btn').forEach(button => button.addEventListener('click', () => {
+      toggleChecked(Number(button.dataset.number));
+      renderCheckedWords();
+      renderAllWords();
+      renderBookmarks();
     }));
   }
 
@@ -357,6 +406,17 @@
     } else {
       bookmarks.push(n);
       bookmarks = Array.from(new Set(bookmarks)).sort((a,b) => a - b);
+    }
+    persistState();
+  }
+
+  function toggleChecked(number){
+    const n = Number(number);
+    if(checkedWords.includes(n)){
+      checkedWords = checkedWords.filter(x => x !== n);
+    } else {
+      checkedWords.push(n);
+      checkedWords = Array.from(new Set(checkedWords)).sort((a,b) => a - b);
     }
     persistState();
   }
@@ -394,7 +454,7 @@
   function getSelectedRange(){
     const markedOnly = $('#hbt-markedOnly')?.checked;
     if(markedOnly){
-      const items = sortWords(words.filter(w => bookmarks.includes(Number(w.number))), wordOrder);
+      const items = sortWords(words.filter(w => bookmarks.includes(Number(w.number)) && !checkedWords.includes(Number(w.number))), wordOrder);
       return items.length ? { items } : { error: 'マークした単語がありません。' };
     }
     const start = Number($('#hbt-startNumber')?.value || 1);
@@ -403,13 +463,13 @@
       return { error: '開始番号と単語数を、1〜2500の範囲で正しく入力してください。' };
     }
     if(wordOrder === 'frequency'){
-      const filtered = words.filter(w => Number(w.frequency) >= start);
+      const filtered = words.filter(w => Number(w.frequency) >= start && !checkedWords.includes(Number(w.number)));
       const items = sortWords(filtered, 'frequency').slice(0, count);
       return items.length ? { start, count, items } : { error: '指定された範囲に単語がありません。' };
     }
     const filtered = words.filter(w => {
       const n = Number(w.number);
-      return n >= start && n <= Math.min(2500, start + count - 1);
+      return n >= start && n <= Math.min(2500, start + count - 1) && !checkedWords.includes(n);
     });
     const items = sortWords(filtered, 'number').slice(0, count);
     return items.length ? { start, count, items } : { error: '指定された範囲に単語がありません。' };
@@ -480,6 +540,7 @@
         <div class="hbt-study-controls">
           <button type="button" class="btn btn-light" id="hbt-studySpeakBtn">🔊 発音</button>
           <button type="button" class="btn btn-light" id="hbt-bookmarkToggleBtn">${bookmarked ? '♥ マーク解除' : '♡ マーク'}</button>
+          <button type="button" class="btn btn-light" id="hbt-checkToggleBtn">${checkedWords.includes(Number(item.number)) ? '☑ 非表示解除' : '☐ 非表示'}</button>
         </div>
         <div class="hbt-meaning-reveal" id="hbt-meaningReveal"><span>${meaningRevealText}</span></div>
         <div class="hbt-study-controls">
@@ -493,6 +554,14 @@
       toggleBookmark(item.number);
       renderAllWords();
       renderBookmarks();
+      renderCheckedWords();
+      showStudyWord();
+    });
+    $('#hbt-checkToggleBtn')?.addEventListener('click', () => {
+      toggleChecked(item.number);
+      renderAllWords();
+      renderBookmarks();
+      renderCheckedWords();
       showStudyWord();
     });
     $('#hbt-meaningReveal')?.addEventListener('click', () => {
@@ -539,6 +608,7 @@
       <div class="hbt-study-controls">
         <button type="button" class="btn btn-light" id="hbt-testSpeakBtn">🔊 発音</button>
         <button type="button" class="btn btn-light" id="hbt-testBookmarkBtn">${bookmarks.includes(Number(item.number)) ? '♥ マーク解除' : '♡ マーク'}</button>
+        <button type="button" class="btn btn-light" id="hbt-testCheckBtn">${checkedWords.includes(Number(item.number)) ? '☑ 非表示解除' : '☐ 非表示'}</button>
       </div>
       <div class="hbt-choices">${options.map(option => `
         <button type="button" class="hbt-choice" data-number="${option.number}">${escapeHtml(studyDirection === 'en-ja' ? option.meaning : option.word)}</button>
@@ -551,6 +621,14 @@
       toggleBookmark(item.number);
       renderAllWords();
       renderBookmarks();
+      renderCheckedWords();
+      showTestQuestion();
+    });
+    $('#hbt-testCheckBtn')?.addEventListener('click', () => {
+      toggleChecked(item.number);
+      renderAllWords();
+      renderBookmarks();
+      renderCheckedWords();
       showTestQuestion();
     });
     $$('.hbt-choice').forEach(button => button.addEventListener('click', () => {
@@ -590,6 +668,7 @@
     $('#hbt-wordListOrder') && ($('#hbt-wordListOrder').value = listOrder);
     renderAllWords();
     renderBookmarks();
+    renderCheckedWords();
     renderStats();
     updateRangeSummary();
 
@@ -599,6 +678,7 @@
       $$('.hbt-panel').forEach(p => p.classList.toggle('hbt-active', p.id === target));
       if(target === 'hbt-wordlist') renderAllWords();
       if(target === 'hbt-bookmarks') renderBookmarks();
+      if(target === 'hbt-checked') renderCheckedWords();
       if(target === 'hbt-stats') renderStats();
       // Show pronunciation note only when speaking buttons are visible
       const pronounceNote = $('#hbt-pronunciation-note');

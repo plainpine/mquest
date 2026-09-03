@@ -48,7 +48,7 @@ SUBJECT_KEY_TO_JP = {
 # 日本語名から英語キーへの逆引きマップ
 SUBJECT_JP_TO_KEY = {v: k for k, v in SUBJECT_KEY_TO_JP.items()}
 
-from models import db, User, Quest, UserProgress, HabatanBookmark, HabatanStudyStats, HabatanDailyHistory, SubjectLevel
+from models import db, User, Quest, UserProgress, HabatanBookmark, HabatanCheckedWord, HabatanStudyStats, HabatanDailyHistory, SubjectLevel
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__, template_folder=os.path.join(basedir, 'templates'))
@@ -413,6 +413,7 @@ def get_habatan_state(session_id=None):
         'words': file_words,
         'stats': {'total': 0, 'correct': 0},
         'bookmarks': [],
+        'checked_words': [],
         'studyDirection': 'en-ja',
         'dailyHistory': {},
         'wordOrder': 'number',
@@ -422,10 +423,12 @@ def get_habatan_state(session_id=None):
         user_id = current_user.id
         stats_row = HabatanStudyStats.query.filter_by(user_id=user_id).first()
         bookmarks = [row.number for row in HabatanBookmark.query.filter_by(user_id=user_id).order_by(HabatanBookmark.number).all()]
+        checked_words = [row.number for row in HabatanCheckedWord.query.filter_by(user_id=user_id).order_by(HabatanCheckedWord.number).all()]
         history_rows = HabatanDailyHistory.query.filter_by(user_id=user_id).all()
         daily_history = {row.date_key: {'studied': row.studied, 'answered': row.answered, 'correct': row.correct} for row in history_rows}
         default_state['stats'] = {'total': stats_row.total if stats_row else 0, 'correct': stats_row.correct if stats_row else 0}
         default_state['bookmarks'] = bookmarks
+        default_state['checked_words'] = checked_words
         default_state['dailyHistory'] = daily_history
 
     if state is None:
@@ -439,6 +442,7 @@ def get_habatan_state(session_id=None):
     else:
         merged_state['stats'] = state.get('stats', default_state['stats'])
         merged_state['bookmarks'] = state.get('bookmarks', default_state['bookmarks'])
+        merged_state['checked_words'] = state.get('checked_words', default_state['checked_words'])
         merged_state['studyDirection'] = state.get('studyDirection', default_state['studyDirection'])
         merged_state['dailyHistory'] = state.get('dailyHistory', default_state['dailyHistory'])
         merged_state['wordOrder'] = state.get('wordOrder', default_state['wordOrder'])
@@ -452,6 +456,7 @@ def save_habatan_state(payload, session_id=None):
         user_id = current_user.id
         stats_payload = payload.get('stats', current_state.get('stats', {'total': 0, 'correct': 0}))
         bookmarks_payload = payload.get('bookmarks', current_state.get('bookmarks', []))
+        checked_words_payload = payload.get('checked_words', current_state.get('checked_words', []))
         daily_history_payload = payload.get('dailyHistory', current_state.get('dailyHistory', {}))
 
         stats_row = HabatanStudyStats.query.filter_by(user_id=user_id).first()
@@ -475,6 +480,19 @@ def save_habatan_state(payload, session_id=None):
             seen_bookmarks.add(num)
             db.session.add(HabatanBookmark(user_id=user_id, number=num))
 
+        HabatanCheckedWord.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+
+        seen_checked_words = set()
+        for number in checked_words_payload:
+            try:
+                num = int(number)
+            except (TypeError, ValueError):
+                continue
+            if num in seen_checked_words:
+                continue
+            seen_checked_words.add(num)
+            db.session.add(HabatanCheckedWord(user_id=user_id, number=num))
+
         with db.session.no_autoflush:
             for date_key, values in daily_history_payload.items():
                 existing = HabatanDailyHistory.query.filter_by(user_id=user_id, date_key=date_key).first()
@@ -497,6 +515,7 @@ def save_habatan_state(payload, session_id=None):
     current_state.update({
         'stats': payload.get('stats', current_state.get('stats', {'total': 0, 'correct': 0})),
         'bookmarks': payload.get('bookmarks', current_state.get('bookmarks', [])),
+        'checked_words': payload.get('checked_words', current_state.get('checked_words', [])),
         'studyDirection': payload.get('studyDirection', current_state.get('studyDirection', 'en-ja')),
         'dailyHistory': payload.get('dailyHistory', current_state.get('dailyHistory', {})),
         'wordOrder': payload.get('wordOrder', current_state.get('wordOrder', 'number')),
@@ -2230,7 +2249,7 @@ def handle_quest_action():
             export_filename += '.json'
 
         # レベル設定を先に取得
-        subject_levels = safe_query_all(SubjectLevel.query.all())
+        subject_levels = safe_query_all(SubjectLevel.query)
         export_data = []
         for sl in subject_levels:
             export_data.append({
