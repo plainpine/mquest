@@ -20,6 +20,29 @@
   </div>
 </form>
 
+<div style="margin-bottom: 1rem;">
+  <button type="button" onclick="exportLevels()" class="btn btn-secondary">JSONエクスポート</button>
+  <form id="importForm" action="{{ url_for('import_subject_levels') }}" method="post" enctype="multipart/form-data" style="display: inline-block;">
+    <input type="file" name="file" id="importFile" accept=".json" style="display: none;" onchange="document.getElementById('importForm').submit()">
+    <button type="button" onclick="document.getElementById('importFile').click()" class="btn btn-secondary">JSONインポート</button>
+  </form>
+</div>
+
+<script>
+  function exportLevels() {
+      fetch("{{ url_for('export_subject_levels') }}")
+          .then(response => response.json())
+          .then(data => {
+              const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'subject_levels.json';
+              a.click();
+          });
+  }
+</script>
+
 <table border="1" cellpadding="8">
   <thead>
     <tr>

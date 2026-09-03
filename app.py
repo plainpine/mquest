@@ -1741,6 +1741,47 @@ def delete_subject_level(level_id):
     
     return redirect(url_for('manage_subject_levels'))
 
+@app.route('/manage/subject_levels/export', methods=['GET'])
+@login_required
+def export_subject_levels():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    levels = SubjectLevel.query.all()
+    data = [{'subject': l.subject, 'level_code': l.level_code, 'level_alias': l.level_alias} for l in levels]
+    return jsonify(data)
+
+@app.route('/manage/subject_levels/import', methods=['POST'])
+@login_required
+def import_subject_levels():
+    if not current_user.is_admin():
+        return redirect(url_for('login'))
+    
+    if 'file' not in request.files:
+        flash("ファイルが選択されていません。", "danger")
+        return redirect(url_for('manage_subject_levels'))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash("ファイルが選択されていません。", "danger")
+        return redirect(url_for('manage_subject_levels'))
+    
+    try:
+        data = json.load(file)
+        for item in data:
+            existing = SubjectLevel.query.filter_by(subject=item['subject'], level_code=item['level_code']).first()
+            if existing:
+                existing.level_alias = item.get('level_alias')
+            else:
+                new_level = SubjectLevel(subject=item['subject'], level_code=item['level_code'], level_alias=item.get('level_alias'))
+                db.session.add(new_level)
+        safe_commit()
+        flash("レベルをインポートしました。", "success")
+    except Exception as e:
+        flash(f"インポートに失敗しました: {e}", "danger")
+    
+    return redirect(url_for('manage_subject_levels'))
+
 
 # ==================================================
 # ユーザー情報のJSONエクスポート・インポート
