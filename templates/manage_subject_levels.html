@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}レベル設定{% endblock %}
+{% block content %}
+<h2>レベル設定</h2>
+
+<form method="post" action="{{ url_for('add_subject_level') }}" style="margin-bottom: 2rem;">
+  <div style="margin-bottom: 1rem;">
+    <label>科目:</label>
+    <select name="subject" required>
+      <option value="math">数学</option>
+      <option value="english">英語</option>
+      <option value="japanese">国語</option>
+      <option value="misc">その他</option>
+    </select>
+    <label>レベルコード (例: Lv1):</label>
+    <input type="text" name="level_code" required>
+    <label>レベル別名 (例: 基礎):</label>
+    <input type="text" name="level_alias">
+    <button type="submit">追加</button>
+  </div>
+</form>
+
+<table border="1" cellpadding="8">
+  <thead>
+    <tr>
+      <th>科目</th>
+      <th>レベルコード</th>
+      <th>別名</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for level in levels %}
+    <tr>
+      <td>{{ level.subject }}</td>
+      <td>{{ level.level_code }}</td>
+      <td>
+        <form method="post" action="{{ url_for('update_subject_level', level_id=level.id) }}">
+          <input type="text" name="level_alias" value="{{ level.level_alias or '' }}">
+          <button type="submit">更新</button>
+        </form>
+      </td>
+      <td>
+        <form method="post" action="{{ url_for('delete_subject_level', level_id=level.id) }}" onsubmit="return confirm('本当に削除しますか？')">
+          <button type="submit">削除</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">設定されたレベルはありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<br>
+<a href="{{ url_for('manage_quests') }}" class="button">問題管理に戻る</a>
+{% endblock %}

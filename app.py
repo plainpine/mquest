@@ -2229,9 +2229,19 @@ def handle_quest_action():
         if not export_filename.endswith('.json'):
             export_filename += '.json'
 
+        # レベル設定を先に取得
+        subject_levels = safe_query_all(SubjectLevel.query.all())
+        export_data = []
+        for sl in subject_levels:
+            export_data.append({
+                'record_type': 'subject_level',
+                'subject': sl.subject,
+                'level_code': sl.level_code,
+                'level_alias': sl.level_alias
+            })
+
         selected_quests = safe_query_all(Quest.query.filter(Quest.id.in_(quest_ids)).order_by(Quest.id))
         
-        export_data = []
         for quest in selected_quests:
             # 1. Output Quest metadata record
             export_data.append({
@@ -3374,13 +3384,31 @@ def import_questions_action():
         
         app.logger.debug(f"Normalized: {len(normalized_quests)} quests, {len(normalized_questions)} questions")
 
-        # --- Phase 1: Process Quests ---
+        # --- Phase 1: Process Subject Levels ---
+        for entry in normalized_quests:
+            if entry.get('record_type') == 'subject_level':
+                subject = entry.get('subject')
+                level_code = entry.get('level_code')
+                level_alias = entry.get('level_alias')
+                
+                if subject and level_code:
+                    level = safe_query_first(SubjectLevel.query.filter_by(subject=subject, level_code=level_code))
+                    if level:
+                        level.level_alias = level_alias
+                    else:
+                        new_level = SubjectLevel(subject=subject, level_code=level_code, level_alias=level_alias)
+                        db.session.add(new_level)
+                continue
+
+        # --- Phase 2: Process Quests ---
         updated_quest_count = 0
         inserted_quest_count = 0
         quest_id_map = {} # Identifier (from JSON) to real DB ID
         quest_name_map = {} # questname to real DB ID
 
         for q_row in normalized_quests:
+            if q_row.get('record_type') == 'subject_level': continue
+            
             qid_json = q_row.get('id')
             title_raw = q_row.get('title', 'misc')
             title = SUBJECT_JP_TO_KEY.get(title_raw, title_raw)
